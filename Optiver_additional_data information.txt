@@ -1,0 +1,21 @@
+Information about the contents of Optiver_additional_data.zip
+
+- "order_book_feature.csv" and "order_book_target.csv" contain information on order book snapshots, like the dataset we are using now. The parquet files store the same dataset indicated by the file name.
+
+- "stock_ids.csv" contains the names of stocks.
+
+- "time_id_reference.csv" contains the real-time of each time id.
+
+- "trades.csv" contains stock transaction information, including the stock price and size.
+
+- "train.csv" contains the "target", which is the actual volatility for a 30-minute window.
+
+Some remarks:
+
+1. Time id is sequential now and 1 time id represents 1 hour.
+
+2. You need to combine two order book files together to do further study. With the same time id, the "feature" contains the information for the first 30 min (seconds_in_bucket from 0 - 1799), and the "target" contains the information for the last 30 min (seconds_in_bucket from 1800 - 3599).
+
+3. "trades.csv" is arguably less useful for this project RE: calculating realized volatility from log-returns (the order book files would be preferrable here), but may be an interesting feature as it can indicate market liquidity.
+
+4. The "target" in "train.csv" is the volatility for the last 30 minutes in one hour, so it can be calculated from the "order_book_target" file directly. You can ignore this file too.
