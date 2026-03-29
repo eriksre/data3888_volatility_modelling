@@ -1,0 +1,9 @@
+
+#Ignore cursor AI rules
+.cursor/rules/codacy.mdc
+
+# Data files
+*.xlsx
+*.xls
+*.csv
+*.parquet
