@@ -1,0 +1,77 @@
+---
+title: "parquet_check"
+output: html_document
+date: "2026-03-31"
+---
+
+
+```{r}
+library(arrow)
+library(dplyr)
+library(purrr)
+```
+```{r}
+parquet_dir <- "individual_book_train_parquet"
+ds <- open_dataset(parquet_dir, format = "parquet")
+```
+
+```{r}
+#Price not zero
+price_errors <- ds %>%
+  select(stock_id, bid_price1, ask_price1) %>%
+  filter(bid_price1 <= 0 | ask_price1 <= 0 | bid_price1 >= ask_price1) %>%
+  group_by(stock_id) %>%
+  count() %>%
+  collect()
+
+print("Price Error:")
+print(price_errors)
+```
+```{r}
+#Size not zero
+size_errors <- ds %>%
+  select(stock_id, bid_size1, ask_size1) %>%
+  filter((bid_size1 + ask_size1) == 0) %>%
+  group_by(stock_id) %>%
+  count() %>%
+  collect()
+
+print("Size error:")
+print(size_errors)
+```
+
+```{r}
+#N/A prescence ?
+na_errors <- ds %>%
+  filter(is.na(bid_price1) | is.na(ask_price1) | is.na(bid_size1) | is.na(ask_size1)) %>%
+  group_by(stock_id) %>%
+  count() %>%
+  collect()
+
+print("N/A:")
+print(na_errors)
+```
+
+```{r}
+#outliers in price (Both)?
+ds %>% summarize(min_p = min(bid_price1), max_p = max(ask_price1)) %>% collect()
+```
+```{r}
+#continous
+stale_check <- ds %>%
+  select(stock_id, time_id, bid_price1) %>%
+  collect() %>%
+  group_by(stock_id, time_id) %>%
+  do({
+    runs <- rle(.$bid_price1)
+    data.frame(max_stale_secs = max(runs$lengths))
+  }) %>%
+  group_by(stock_id) %>%
+  summarize(
+    avg_max_stale = mean(max_stale_secs),
+    absolute_max_stale = max(max_stale_secs)
+  )
+
+stale_check %>% arrange(desc(absolute_max_stale)) %>% head(10)
+```
+
