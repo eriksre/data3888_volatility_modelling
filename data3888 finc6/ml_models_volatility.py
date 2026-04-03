@@ -11,7 +11,8 @@ import lightgbm as lgb
 import warnings
 warnings.filterwarnings('ignore')
 
-data_dir = Path(r"c:\Users\Ayush\Downloads\DATA3888\data3888 finc6\Optiver_additional_data_extracted\Optiver_additional data")
+#data_dir = Path(r"c:\Users\Ayush\Downloads\DATA3888\data3888 finc6\Optiver_additional_data_extracted\Optiver_additional data")
+data_dir  = Path(__file__).parent.parent / "Optiver_additional data"
 
 # Load data
 print("Loading data...")
