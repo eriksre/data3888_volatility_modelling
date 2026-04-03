@@ -58,6 +58,7 @@ ds %>% summarize(min_p = min(bid_price1), max_p = max(ask_price1)) %>% collect()
 ```
 ```{r}
 #continous
+#warning to self: takes at least 3 min at time of writing
 stale_check <- ds %>%
   select(stock_id, time_id, bid_price1) %>%
   collect() %>%
@@ -73,5 +74,61 @@ stale_check <- ds %>%
   )
 
 stale_check %>% arrange(desc(absolute_max_stale)) %>% head(10)
+
+#ye [redacted] there might be a problem here
+```
+```{r}
+#stock 31 seems very suspicious
+density_vs_stale <- ds %>%
+  group_by(stock_id, time_id) %>%
+  summarize(
+    num_rows = n(),
+    max_s = max(seconds_in_bucket) - min(seconds_in_bucket)
+  ) %>%
+  collect() %>%
+  group_by(stock_id) %>%
+  summarize(
+    avg_ticks_per_window = mean(num_rows),
+    avg_time_coverage = mean(max_s)
+  ) %>%
+  left_join(stale_check, by = "stock_id")
+
+density_vs_stale %>% arrange(desc(absolute_max_stale)) %>% head(10)
+```
+```{r}
+#stock 31 was not as "flat-lined" as I thought
+library(ggplot2)
+
+sample_window <- ds %>%
+  filter(stock_id == 31, time_id == 5)
+  collect()
+
+ggplot(sample_window, aes(x = seconds_in_bucket, y = bid_price1)) +
+  geom_step(color = "steelblue", size = 1) +
+  labs(title = "Stock",
+       x = "Seconds_in_Bucket",
+       y = "Bid_Price") +
+  theme_minimal()
+```
+```{r}
+stock_life <- ds %>%
+  filter(stock_id == 31) %>%
+  group_by(time_id) %>%
+  summarize(
+    mean_price = mean(bid_price1),
+    max_price = max(bid_price1),
+    min_price = min(bid_price1)
+  ) %>%
+  collect() %>%
+  arrange(time_id) %>%
+  mutate(pseudo_time = row_number())
+
+ggplot(stock_life, aes(x = pseudo_time)) +
+  # The ribbon shows the 'wiggle room' in each 10-minute bucket
+  geom_ribbon(aes(ymin = min_price, ymax = max_price), fill = "lightblue", alpha = 0.5) +
+  # The line shows the general trend
+  geom_line(aes(y = mean_price), color = "darkblue", size = 0.5) +
+  labs(x = "Time_ID") +
+  theme_minimal()
 ```
 
