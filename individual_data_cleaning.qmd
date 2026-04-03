@@ -1,0 +1,161 @@
+---
+title: "data3888_CM1_draft"
+format: html
+editor: visual
+---
+
+```{r}
+library(arrow)
+library(dplyr)
+
+ds <- open_dataset("/Users/vaniakumar/Desktop/data3888/data3888_volatility_modelling/individual_book_train_parquet")
+```
+
+same rows for more than 1 col
+
+using WAP to find problems
+
+```{r}
+colnames(ds)
+```
+
+```{r}
+ds$schema
+```
+
+ds_filtered \<- ds %\>%
+
+filter(
+
+bid_price1 \> 0,
+
+ask_price1 \> 0,
+
+bid_price1 \< ask_price1
+
+)
+
+```{r}
+library(arrow)
+library(dplyr)
+
+# Open the dataset
+ds <- open_dataset("/Users/vaniakumar/Desktop/data3888/data3888_volatility_modelling/individual_book_train_parquet")
+
+# Get all stock IDs
+stock_ids <- ds %>% distinct(stock_id) %>% collect() %>% pull(stock_id)
+
+# Loop over each stock and process separately
+for (sid in stock_ids) {
+  
+  # 1️⃣ Filter, compute WAP and spreads (Arrow can handle this)
+  stock_clean <- ds %>%
+    filter(
+      stock_id == sid,
+      bid_price1 > 0,
+      ask_price1 > 0,
+      bid_price1 < ask_price1,
+      bid_size1 + ask_size1 != 0
+    ) %>%
+    mutate(
+      wap = (bid_price1 * ask_size1 + ask_price1 * bid_size1) / (bid_size1 + ask_size1),
+      spread = ask_price1 - bid_price1,
+      rel_spread = (ask_price1 - bid_price1) / ((bid_price1 + ask_price1)/2)
+    ) %>%
+    arrange(time_id, seconds_in_bucket) %>%
+    collect()  # pull into R memory for this stock only
+
+  # 2️⃣ Compute log returns after collecting
+  stock_clean <- stock_clean %>%
+    mutate(
+      log_return = log(wap / lag(wap))
+    )
+}
+```
+
+```{r}
+library(dplyr)
+library(arrow)
+
+ds <- open_dataset("/Users/vaniakumar/Desktop/data3888/data3888_volatility_modelling/individual_book_train_parquet")
+
+# Get all stock IDs
+stock_ids <- ds %>% distinct(stock_id) %>% collect() %>% pull(stock_id)
+
+# Loop over each stock
+for (sid in stock_ids) {
+  
+  cat("\n====================\nStock", sid, "\n====================\n")
+  
+  # 1 Filter, compute WAP and spreads
+  stock_clean <- ds %>%
+    filter(
+      stock_id == sid,
+      bid_price1 > 0,
+      ask_price1 > 0,
+      bid_price1 < ask_price1,
+      bid_size1 + ask_size1 != 0
+    ) %>%
+    mutate(
+      wap = (bid_price1 * ask_size1 + ask_price1 * bid_size1) / (bid_size1 + ask_size1),
+      spread = ask_price1 - bid_price1,
+      rel_spread = (ask_price1 - bid_price1) / ((bid_price1 + ask_price1)/2)
+    ) %>%
+    arrange(time_id, seconds_in_bucket) %>%
+    collect()  # only pull this stock into memory
+
+  # 2 Compute log returns
+  stock_clean <- stock_clean %>%
+    mutate(
+      log_return = log(wap / lag(wap)),
+      is_zero = log_return == 0
+    )
+
+  # --------- CASE 1: consecutive zero log returns ---------
+  zero_runs <- rle(stock_clean$is_zero)
+  zero_lengths <- zero_runs$lengths[zero_runs$values == TRUE]
+  cat("Case 1: Consecutive zero log returns\n")
+  print(summary(zero_lengths))  # see if there are long sequences
+  if(max(zero_lengths, na.rm = TRUE) > 10){
+    cat("  ⚠️ There are very long stretches of zero log returns!\n")
+  } else {
+    cat("  No unusual long stretches of zeros.\n")
+  }
+  
+  # --------- CASE 2: huge spikes in log returns ---------
+  spikes <- stock_clean %>% filter(abs(log_return) > 0.05)  # adjust threshold
+  cat("Case 2: Huge log return spikes\n")
+  print(summary(spikes$log_return))
+  if(nrow(spikes) > 0){
+    cat("  ⚠️ Some spikes detected.\n")
+  } else {
+    cat("  No spikes detected.\n")
+  }
+
+  # --------- CASE 3: abnormal relative spreads ---------
+  wide_spreads <- stock_clean %>% filter(rel_spread > 0.1)
+  cat("Case 3: Abnormal relative spreads (>10%)\n")
+  print(summary(wide_spreads$rel_spread))
+  if(nrow(wide_spreads) > 0){
+    cat("  ⚠️ Some unusually wide spreads detected.\n")
+  } else {
+    cat("  No wide spreads detected.\n")
+  }
+  
+  # --------- CASE 4: tiny WAP change but large spread ---------
+  suspicious <- stock_clean %>% filter(abs(wap - lag(wap)) < 1e-5 & spread > 0.05)
+  cat("Case 4: Tiny WAP change but large spread\n")
+  print(head(suspicious, 10))  # show first few rows
+  if(nrow(suspicious) > 0){
+    cat("  ⚠️ Some suspicious rows detected.\n")
+  } else {
+    cat("No suspicious rows detected.\n")
+  }
+  
+  cat("\n-------------------------------------\n")
+}
+```
+
+```{r}
+View(wide_spreads)
+```
