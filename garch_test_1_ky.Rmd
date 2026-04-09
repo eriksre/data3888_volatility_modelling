@@ -43,6 +43,20 @@ print(sd0)
 print(k)
 ```
 ```{r}
+#Note to self: ported over from parquet check, takes at time of writing, 3 minutes to see
+stale_check <- ds %>%
+  select(stock_id, time_id, bid_price1) %>%
+  collect() %>%
+  group_by(stock_id, time_id) %>%
+  do({
+    runs <- rle(.$bid_price1)
+    data.frame(max_stale_secs = max(runs$lengths))
+  }) %>%
+  group_by(stock_id) %>%
+  summarize(
+    avg_max_stale = mean(max_stale_secs),
+    absolute_max_stale = max(max_stale_secs)
+  )
 density_vs_stale <- ds %>%
   filter(stock_id == id) %>%
   group_by(stock_id, time_id) %>%
@@ -58,7 +72,6 @@ density_vs_stale <- ds %>%
   ) %>%
   left_join(stale_check, by = "stock_id")
 
-density_vs_stale
 ```
 ```{r}
 # Any clusters of spikes ? and no a couple individual spikes does not count
