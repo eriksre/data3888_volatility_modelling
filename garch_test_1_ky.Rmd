@@ -1,0 +1,114 @@
+---
+title: "garch_test_1"
+output: html_document
+date: "2026-04-08"
+---
+
+```{r}
+#sig_t^2 = omega + alpha*epsilon_t-1^2 + beta*sig_t-1^2
+#sig_t^2 => predicted value (variance)
+# omega => constant, basically a c
+# alpha*epsilon => coefficient times squared of residual (or error if there's ever a population)
+# beta*sig =? coefficient times previous var
+```
+
+
+```{r}
+library(arrow)
+library(dplyr)
+library(rugarch)
+library(ggplot2) 
+```
+
+```{r}
+parquet_dir <- "individual_book_train_parquet"
+ds <- open_dataset(parquet_dir, format = "parquet")
+```
+
+
+```{r}
+id <- 10
+data <- ds %>%
+  filter(stock_id == id, time_id == 1000) %>%
+  collect() %>%
+  arrange(seconds_in_bucket) %>%
+  mutate(log_ret = log(bid_price1 / lag(bid_price1))) %>%
+  filter(!is.na(log_ret))
+sd0 <- sd(data$log_ret, na.rm = TRUE)
+k <- 1/sd0
+data <- data %>%
+  mutate(log_ret_scaled = log_ret * k)
+#Warning, from this point, post k scaled sd/variance is in units of sd, not raw % anymore
+print(sd0)
+print(k)
+```
+```{r}
+density_vs_stale <- ds %>%
+  filter(stock_id == id) %>%
+  group_by(stock_id, time_id) %>%
+  summarize(
+    num_rows = n(),
+    max_s = max(seconds_in_bucket) - min(seconds_in_bucket)
+  ) %>%
+  collect() %>%
+  group_by(stock_id) %>%
+  summarize(
+    avg_ticks_per_window = mean(num_rows),
+    avg_time_coverage = mean(max_s)
+  ) %>%
+  left_join(stale_check, by = "stock_id")
+
+density_vs_stale
+```
+```{r}
+# Any clusters of spikes ? and no a couple individual spikes does not count
+ggplot(data, aes(x = seconds_in_bucket, y = log_ret_scaled^2)) +
+  geom_line() +
+  labs(title = "Squared Returns", x = "Seconds", y = "Squared Returns") +
+  theme_minimal()
+```
+```{r}
+# Log returns oscillating consistently ?
+ggplot(data, aes(x = seconds_in_bucket, y = log_ret_scaled)) +
+  geom_line() +
+  labs(title = "Log Returns", x = "Seconds", y = "Returns") +
+  theme_minimal()
+```
+```{r}
+#kurtosis (prescence or lack thereof in the far ends ? if prescence, t distribution, otherwise normal)
+ggplot(data, aes(x = log_ret_scaled)) +
+  geom_histogram(bins = 50) +
+  labs(title = "Return Distribution", x = "Scaled Log Returns", y = "Frequency") +
+  theme_minimal()
+```
+```{r}
+#correlation between a data point and it's own past values at difference time lags
+#At least one poking past blue line ?
+acf(data$log_ret_scaled^2, main = "ACF of Squared Returns")
+```
+```{r}
+#modelling
+#sGARCH => standard GARCH
+#garchOrder => n past shocks and n period ago's volatility
+#armaOrder => momentum, if 0,0, "random"
+#std => t distribution
+spec <- ugarchspec(
+  variance.model = list(model = "sGARCH", garchOrder = c(1, 1)),
+  mean.model = list(armaOrder = c(0, 0), include.mean = TRUE),
+  distribution.model = "std" 
+)
+```
+```{r}
+fit <- ugarchfit(spec = spec, data = data$log_ret_scaled, solver = "hybrid")
+show(fit)
+#omega = interecept
+#alpha = slope
+#beta = memory ?
+#shape = DF, larger value => normal, smaller => fat tails
+#Weighted Ljungs => As long as P-val is not significant, then it means everything was captured properly
+#Akaike, Bayes, etc => take lowest (Warning, "k" affects them, at best just compare on same dataset, IE same factor)
+#Nyblom Stability Test as long as Joint Stat is lower than either 1.47 or 1.88 (Test whether the coefficients stayed consistent across the lifetime of the sample)
+#Sign Bias Test Does model account for direction of shock ? (significant = no it does not)
+#Adjusted Pearson Does model fit the distribution chosen ? (significant = no it does not)
+```
+
