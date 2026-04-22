@@ -1,0 +1,146 @@
+---
+title: "Untitled"
+output: html_document
+date: "2026-04-22"
+---
+
+```{r}
+library(arrow)
+library(dplyr)
+library(purrr)
+library(glmnet)
+#install.packages("ranger")
+library(ranger)
+```
+
+```{r}
+parquet_dir <- "individual_book_train_parquet"
+ds <- open_dataset(parquet_dir, format = "parquet")
+colnames(ds)
+```
+
+"time_id"           "seconds_in_bucket" "bid_price1"       "ask_price1" "bid_size1"         "ask_size1"  "stock_id"   
+
+```{r}
+ds_3_18 <- ds %>%
+  filter(stock_id %in% c(3, 18)) %>%
+  select(stock_id, time_id, seconds_in_bucket, bid_price1, ask_price1, bid_size1, ask_size1) %>%
+  collect()
+ds_ret <- ds_3_18 %>%
+  group_by(stock_id, time_id) %>%
+  mutate(
+    wap = (bid_price1 * ask_size1 + ask_price1 * bid_size1) / (bid_size1 + ask_size1),
+    log_ret = log(wap / lag(wap))
+  ) %>%
+  filter(!is.na(log_ret))
+
+```
+
+```{r}
+length(unique(ds_3_18$time_id))
+length(unique(ds_ret$time_id))
+```
+Possible considerations for predictors here include:
+mean, median, sd, min, max.
+
+```{r}
+target <- ds_ret %>%
+  filter(seconds_in_bucket > 300) %>%
+  summarise(
+    vol_second_half = log(sqrt(sum(log_ret^2))), 
+    .groups = "drop"
+  )
+predictor <- ds_3_18 %>%
+  filter(seconds_in_bucket <= 300) %>%
+  group_by(stock_id, time_id) %>%
+  summarise(
+    bid_price1_first_half = mean(bid_price1),
+    ask_price1_first_half = mean(ask_price1),
+    bid_size1_first_half  = mean(bid_size1),
+    ask_size1_first_half  = mean(ask_size1),
+    .groups = "drop"
+  )
+
+data <- inner_join(predictor, target, by = c("stock_id", "time_id"))
+
+set.seed(3182004)
+n <- nrow(data)
+train_indices <- sample(1:n, size = floor(0.8 * n))
+
+train_data <- data[train_indices, ]
+test_data  <- data[-train_indices, ]
+```
+
+```{r}
+model_ran <- ranger(
+  formula = vol_second_half ~ . -stock_id -time_id, 
+  data = train_data, 
+  num.trees = 500 #Out of Bag Error Curve may be needed to determine best num.tree, though for most purposes 500 to 1000 is sufficient for sub 100 predictors
+)
+
+predicted_ran    <- as.vector(predict(model_ran, data = test_data)$predictions)
+```
+
+
+```{r}
+x_train <- as.matrix(train_data %>% select(-vol_second_half, -stock_id, -time_id))
+y_train <- train_data$vol_second_half
+
+x_test  <- as.matrix(test_data %>% select(-vol_second_half, -stock_id, -time_id))
+
+model_las <- cv.glmnet(x_train, y_train, alpha = 1)
+#lambda <- model_las$lambda.min #Only keep if need to know what optimal value is
+
+predicted_las <- as.vector(predict(model_las, newx = x_test, s = "lambda.min"))
+```
+
+Note: base E
+
+RMSE to vol => How many units off
+RMSE to Log(vol) => Approximates to how many % off, interaction being: $Ln(1+x) \approx x$
+RMSPE to vol => how many % off
+
+Jensen's Inequality => Mean of Logs $\ne$ Log of Mean(vol_second_half_OR_model_pred_vol) => median => (can't be used for exact total sum of vol)
+
+$Error_{log} = ln(y) - ln(\hat{y}) = ln(\frac{y}{\hat{y}})$
+
+$ln(1+x) = x - \frac{x^2}{2} + \frac{x^3}{3} - . . .$ As long as $x$ is close to 0.
+
+```{r}
+result_data <- test_data %>%
+  select(stock_id, time_id, vol_second_half) %>%
+  mutate(
+    vol_raw_act = exp(vol_second_half),
+    vol_raw_pred_ran = exp(predicted_ran),
+    vol_raw_pred_las = exp(predicted_las)
+  )
+
+pm_rmse <- function(vol_log_act_pm_rmse, vol_log_pred_pm_rmse) {
+  return(sqrt(mean((vol_log_act_pm_rmse - vol_log_pred_pm_rmse)^2)))
+}
+
+pm_qlike <- function(vol_log_act_pm_qlike, vol_log_pred_pm_qlike) {
+  vol_raw_act_pm <- exp(vol_log_act_pm_qlike)
+  vol_raw_pred_pm <- exp(vol_log_pred_pm_qlike)
+  return(mean(vol_raw_act_pm / vol_raw_pred_pm - (vol_log_act_pm_qlike - vol_log_pred_pm_qlike) - 1))
+}
+
+performance_ran <- c(
+  RMSE  = pm_rmse(result_data$vol_second_half, predicted_ran),
+  QLIKE = pm_qlike(result_data$vol_second_half, predicted_ran)
+)
+
+performance_las <- c(
+  RMSE  = pm_rmse(result_data$vol_second_half, predicted_las),
+  QLIKE = pm_qlike(result_data$vol_second_half, predicted_las)
+)
+
+performance_ran
+performance_las
+```
+
+
+```{r}
+
+```
+
