@@ -1,0 +1,180 @@
+---
+title: "Data3888 baseline models"
+format: html
+editor: visual
+---
+
+```{r}
+#packages for RF
+library(data.table)
+library(dplyr)
+library(randomForest)
+library(arrow)
+
+#packages for LASSO
+library(glmnet)
+```
+
+# STOCK 27
+
+```{r}
+df <- read_parquet("/Users/vaniakumar/Desktop/data3888/data3888_volatility_modelling/individual_book_train_parquet/stock_27.parquet")
+df <- as.data.frame(df)
+```
+
+```{r}
+df <- df %>%
+  select(-ask_size2, -bid_price2, -bid_size2, -ask_price2)
+```
+
+Each bucket = 10min (split into first 5 mins and second 5 mins)
+
+```{r}
+df <- df %>%
+  mutate(
+    half = ifelse(seconds_in_bucket < 300, "first", "second"),
+  )
+```
+
+```{r}
+df <- df %>%
+  mutate(spread = ask_price1 - bid_price1)
+```
+
+Adding spead - Bid-ask spread captures market liquidity and trading frictions, which are strongly linked to volatility
+
+```{r}
+spread_df <- df %>%
+  group_by(time_id, half) %>%
+  summarise(avg_spread = mean(spread, na.rm = TRUE)) %>%
+  ungroup()
+```
+
+log returns using mid-price
+
+```{r}
+df <- df %>%
+  mutate(mid_price = (bid_price1 + ask_price1) / 2)
+
+df <- df %>%
+  group_by(time_id) %>%
+  arrange(seconds_in_bucket) %>%
+  mutate(log_return = log(mid_price / lag(mid_price))) %>%
+  ungroup()
+```
+
+Volatility per half
+
+```{r}
+vol_df <- df %>%
+  group_by(time_id, half) %>%
+  summarise(vol = sqrt(sum(log_return^2, na.rm = TRUE))) %>%
+  ungroup()
+```
+
+```{r}
+features <- vol_df %>%
+  left_join(spread_df, by = c("time_id", "half"))
+```
+
+reshaping so that feature = volatility of first half and target = log (volatility of second half)
+
+```{r}
+vol_wide <- features %>%
+  tidyr::pivot_wider(names_from = half,
+                     values_from = c(vol, avg_spread))
+
+vol_wide <- vol_wide %>%
+  mutate(target = log(vol_second)) %>%
+  filter(!is.na(vol_first), !is.na(target), vol_second > 0)
+```
+
+```{r}
+set.seed(42)
+
+n <- nrow(vol_wide)
+train_idx <- sample(1:n, size = 0.8 * n)
+
+train <- vol_wide[train_idx, ]
+test  <- vol_wide[-train_idx, ]
+```
+
+## Random Forest - Stock 27
+
+```{r}
+rf_model <- randomForest(
+  target ~ vol_first + avg_spread_first,
+  data = train,
+  ntree = 100
+)
+```
+
+```{r}
+pred <- predict(rf_model, newdata = test)
+```
+
+```{r}
+# RMSE
+rmse <- sqrt(mean((test$target - pred)^2))
+
+# QLIKE (convert back from log)
+actual_vol <- exp(test$target)
+pred_vol   <- exp(pred)
+
+qlike <- mean((actual_vol / pred_vol) - log(actual_vol / pred_vol) - 1)
+
+cat("RMSE:", rmse, "\n")
+cat("QLIKE:", qlike, "\n")
+```
+
+## LASSO - Stock 27
+
+```{r}
+X_train <- as.matrix(train[, c("vol_first", "avg_spread_first")])
+X_test  <- as.matrix(test[, c("vol_first", "avg_spread_first")])
+```
+
+```{r}
+y_train <- train$target
+y_test  <- test$target
+```
+
+standardisation
+
+```{r}
+X_mean <- apply(X_train, 2, mean)
+X_sd   <- apply(X_train, 2, sd)
+
+X_train <- scale(X_train, center = X_mean, scale = X_sd)
+X_test  <- scale(X_test, center = X_mean, scale = X_sd)
+```
+
+```{r}
+lasso_model <- glmnet(
+  X_train,
+  y_train,
+  alpha = 1,       # LASSO
+  lambda = 0.01    # fixed value
+)
+```
+
+```{r}
+pred <- predict(lasso_model, newx = X_test)
+pred <- as.numeric(pred)
+```
+
+```{r}
+# RMSE
+rmse <- sqrt(mean((y_test - pred)^2))
+
+# QLIKE
+actual_vol <- exp(y_test)
+pred_vol   <- exp(pred)
+
+qlike <- mean((actual_vol / pred_vol) - log(actual_vol / pred_vol) - 1)
+
+cat("RMSE:", rmse, "\n")
+cat("QLIKE:", qlike, "\n")
+```
+
+## 
