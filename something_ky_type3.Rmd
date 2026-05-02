@@ -1,0 +1,319 @@
+---
+title: "Untitled"
+output: html_document
+date: "2026-04-22"
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+# WARNING:
+
+Ask about "what do you mean by "no longer need to manually type
+user_features because ... auto-generate them all" ? As in the features
+have already been optimized ? Cause the original plan was to do this
+manually. Or at least give the option to allow user to manaully select
+features.
+
+log returns multiplied by 10k to avoid floating point underflows
+
+Defined Var as mean of squared returns.
+
+```{r, message=FALSE, warning=FALSE}
+library(arrow)
+library(dplyr)
+library(purrr)
+library(ranger)
+library(rugarch)
+library(zoo)
+```
+
+```{r}
+#parquet
+parquet_dir <- "individual_book_train_parquet"
+ds <- open_dataset(parquet_dir, format = "parquet")
+```
+
+```{r}
+#performance metric storage
+pm_rmse <- function(actual_var, predicted_var) {
+  return(sqrt(mean((actual_var - predicted_var)^2, na.rm = TRUE)))
+}
+pm_qlike <- function(actual_var, predicted_var) {
+  predicted_var <- pmax(predicted_var, 1e-9) 
+  actual_var <- pmax(actual_var, 1e-9)
+  return(mean(actual_var / predicted_var - log(actual_var / predicted_var) - 1, na.rm = TRUE))
+}
+```
+
+
+```{r}
+#The only part to edit
+
+predict_horizon_t <- 300
+cutoff_point <- 600 - predict_horizon_t
+
+
+# Avaliable Options: "GARCH11", "MLR", "RandomForest"
+# Only one model at a time
+selected_model <- "GARCH11" 
+
+# Avaliable Options: "ALL" or c("seconds_elapsed", "n_obs", "last_return", "abs_last_return", "vol_trend", "RV_5", "RV_10", "RV_20", "RV_30", "RV_45", "RV_60", "RV_90", "RV_120", "RV_180", "RV_240", "RV_300", "ret_autocorr_30", "ret_autocorr_60", "ret_autocorr_120", "ret_autocorr_300", "EWMA_07", "EWMA_08", "EWMA_09", "EWMA_094", "EWMA_097", "EWMA_0985", "mean_spread_30", "mean_imbalance_30", "mean_depth_30", "book_pressure_30", "RV_ratio_5_30", "RV_ratio_30_300", "RV_ratio_60_300")
+
+user_features_selection <- "ALL"
+
+# Avaliable Options: "RMSE", "QLIKE"
+# Free for all
+selected_metrics <- c("RMSE", "QLIKE")
+```
+
+```{r}
+#feature selection
+RETURN_WINDOWS <- c(5, 10, 20, 30, 45, 60, 90, 120, 180, 240, 300)
+ACF_WINDOWS    <- c(30, 60, 120, 300)
+BOOK_WINDOWS   <- c(30, 60, 120, 300)
+EWMA_LAMBDAS   <- c(0.70, 0.80, 0.90, 0.94, 0.97, 0.985)
+EPS <- 1e-9
+
+ret_autocorr <- function(x, lag = 1) {
+  if (length(x) <= lag) return(NA_real_)
+  lag0 <- x[1:(length(x) - lag)]
+  lag1 <- x[(lag + 1):length(x)]
+  denom <- sd(lag0) * sd(lag1)
+  if (is.na(denom) || denom == 0) return(0.0)
+  return(mean((lag0 - mean(lag0)) * (lag1 - mean(lag1))) / denom)
+}
+
+ewma_last <- function(x, lambda) {
+  if(length(x) == 0) return(NA_real_)
+  alpha <- 1 - lambda
+  res <- x[1]
+  if(length(x) > 1) {
+    for (i in 2:length(x)) {
+      res <- alpha * x[i] + lambda * res
+    }
+  }
+  return(res)
+}
+
+extract_features <- function(r, bid_p1, ask_p1, bid_s1, ask_s1, bid_p2, ask_p2, bid_s2, ask_s2) {
+  t <- length(r)
+  r2 <- r^2
+  feats <- list()
+  
+  feats$seconds_elapsed <- if(t > 0) t / max(t, 1) else NA_real_
+  feats$n_obs <- t
+  feats$cutoff <- t
+  feats$last_return <- if(t > 0) tail(r, 1) else NA_real_
+  feats$abs_last_return <- if(t > 0) abs(tail(r, 1)) else NA_real_
+
+  for (w in RETURN_WINDOWS) {
+    if (t >= w) {
+      win <- tail(r, w)
+      win2 <- win^2
+      pop_sd <- sqrt(mean((win - mean(win))^2)) # Matching np.std
+
+      feats[[paste0("RV_", w)]] <- mean(win2)
+      feats[[paste0("vol_", w)]] <- sqrt(mean(win2))
+      feats[[paste0("mean_abs_ret_", w)]] <- mean(abs(win))
+      feats[[paste0("mean_ret_", w)]] <- mean(win)
+      feats[[paste0("max_abs_ret_", w)]] <- max(abs(win))
+      feats[[paste0("prop_zero_ret_", w)]] <- mean(win == 0)
+      feats[[paste0("downside_RV_", w)]] <- if(any(win < 0)) mean(win2[win < 0]) else 0.0
+      feats[[paste0("upside_RV_", w)]] <- if(any(win > 0)) mean(win2[win > 0]) else 0.0
+      feats[[paste0("jump_count_", w)]] <- sum(abs(win) > (3 * pop_sd + EPS))
+      feats[[paste0("ret_q10_", w)]] <- quantile(win, 0.10, names = FALSE)
+      feats[[paste0("ret_q90_", w)]] <- quantile(win, 0.90, names = FALSE)
+    } else {
+      feats[paste0(c("RV_", "vol_", "mean_abs_ret_", "mean_ret_", "max_abs_ret_", "prop_zero_ret_", "downside_RV_", "upside_RV_", "jump_count_", "ret_q10_", "ret_q90_"), w)] <- NA_real_
+    }
+  }
+
+  for (w in ACF_WINDOWS) {
+    if (t >= w) {
+      win <- tail(r, w)
+      feats[[paste0("ret_autocorr_", w)]] <- ret_autocorr(win, 1)
+      feats[[paste0("ret_autocorr5_", w)]] <- ret_autocorr(win, 5)
+    } else {
+      feats[[paste0("ret_autocorr_", w)]] <- NA_real_
+      feats[[paste0("ret_autocorr5_", w)]] <- NA_real_
+    }
+  }
+
+  for (lam in EWMA_LAMBDAS) {
+    lam_name <- gsub("\\.", "", as.character(lam))
+    feats[[paste0("EWMA_", lam_name)]] <- ewma_last(r2, lam)
+  }
+
+  feats$vol_trend <- feats$RV_30 / (feats$RV_300 + EPS)
+
+  ratios <- list(c(5, 30), c(10, 60), c(30, 120), c(30, 300), c(60, 300))
+  for (pair in ratios) {
+    feats[[paste0("RV_ratio_", pair[1], "_", pair[2])]] <- feats[[paste0("RV_", pair[1])]] / (feats[[paste0("RV_", pair[2])]] + EPS)
+  }
+
+  mid <- (bid_p1 + ask_p1) / 2
+  spread <- ifelse(mid == 0, NA_real_, (ask_p1 - bid_p1) / mid)
+  total_l1 <- bid_s1 + ask_s1
+  total_l2 <- ifelse(bid_s2 + ask_s2 == 0, NA_real_, bid_s2 + ask_s2)
+  depth <- total_l1 + total_l2
+  imbalance <- ifelse(total_l1 == 0, NA_real_, (bid_s1 - ask_s1) / total_l1)
+  pressure <- ifelse(is.na(depth) | depth == 0, NA_real_, (bid_s1 + bid_s2 - ask_s1 - ask_s2) / depth)
+
+  for (w in BOOK_WINDOWS) {
+    if (t >= w) {
+      idx <- (t - w + 1):t
+      feats[[paste0("mean_spread_", w)]] <- mean(spread[idx], na.rm = TRUE)
+      feats[[paste0("std_spread_", w)]] <- sd(spread[idx], na.rm = TRUE)
+      feats[[paste0("mean_imbalance_", w)]] <- mean(imbalance[idx], na.rm = TRUE)
+      feats[[paste0("std_imbalance_", w)]] <- sd(imbalance[idx], na.rm = TRUE)
+      feats[[paste0("depth_ratio_", w)]] <- mean((total_l1[idx] / total_l2[idx]), na.rm = TRUE)
+      feats[[paste0("mean_depth_", w)]] <- mean(depth[idx], na.rm = TRUE)
+      feats[[paste0("std_depth_", w)]] <- sd(depth[idx], na.rm = TRUE)
+      feats[[paste0("book_pressure_", w)]] <- mean(pressure[idx], na.rm = TRUE)
+    } else {
+      feats[paste0(c("mean_spread_", "std_spread_", "mean_imbalance_", "std_imbalance_", "depth_ratio_", "mean_depth_", "std_depth_", "book_pressure_"), w)] <- NA_real_
+    }
+  }
+  return(as_tibble(feats))
+}
+
+ds_3_18 <- ds %>%
+  filter(stock_id %in% c(3, 18)) %>%
+  collect()
+
+# Create a full grid to ensure no missing seconds (Prevents the 0-cases error)
+full_grid <- expand.grid(
+  stock_id = unique(ds_3_18$stock_id),
+  time_id = unique(ds_3_18$time_id),
+  seconds_in_bucket = 0:599
+)
+
+ds_ret <- full_grid %>%
+  left_join(ds_3_18, by = c("stock_id", "time_id", "seconds_in_bucket")) %>%
+  group_by(stock_id, time_id) %>%
+  arrange(seconds_in_bucket, .by_group = TRUE) %>%
+  # Forward fill missing book data to ensure windows are full
+  mutate(across(starts_with("bid") | starts_with("ask"), ~na.locf(.x, na.rm = FALSE))) %>%
+  mutate(
+    wap_num = (bid_price1 * ask_size1 + ask_price1 * bid_size1 + bid_price2 * ask_size2 + ask_price2 * bid_size2),
+    wap_den = bid_size1 + ask_size1 + bid_size2 + ask_size2,
+    wap = wap_num / wap_den,
+    log_ret = log(wap / lag(wap)) * 10000
+  ) %>%
+  mutate(log_ret = ifelse(is.na(log_ret), 0, log_ret)) %>%
+  ungroup()
+
+# 3. Feature & Target Extraction
+target <- ds_ret %>%
+  filter(seconds_in_bucket > cutoff_point) %>%
+  group_by(stock_id, time_id) %>%
+  summarise(vol_second_half = mean(log_ret^2, na.rm = TRUE), .groups = "drop")
+
+predictor <- ds_ret %>%
+  filter(seconds_in_bucket <= cutoff_point) %>%
+  group_by(stock_id, time_id) %>%
+  summarise(
+    extract_features(log_ret, bid_price1, ask_price1, bid_size1, ask_size1, bid_price2, ask_price2, bid_size2, ask_size2),
+    .groups = "drop"
+  )
+
+# 4. Join and filter based on User Selection
+data <- inner_join(predictor, target, by = c("stock_id", "time_id"))
+
+# Handle Feature Selection logic (Coexistence of Auto vs Manual)
+all_generated_feats <- setdiff(names(data), c("stock_id", "time_id", "vol_second_half"))
+if (identical(user_features_selection, "ALL")) {
+    feature_cols <- all_generated_feats
+} else {
+    feature_cols <- user_features_selection
+}
+
+data <- data[, c("stock_id", "time_id", "vol_second_half", feature_cols)] %>% na.omit()
+if (nrow(data) == 0) stop("Error: Problem after na.omit()")
+
+set.seed(3182004)
+unique_times <- unique(data$time_id)
+folds <- sample(rep(1:5, length.out = length(unique_times)))
+cv_folds <- data.frame(time_id = unique_times, fold = folds)
+data <- data %>% left_join(cv_folds, by = "time_id")
+```
+
+```{r, eval = (selected_model == "GARCH11")}
+#GARCH11
+
+predicted_garch <- numeric()
+actual_garch <- numeric()
+
+spec <- ugarchspec(variance.model = list(model = "sGARCH", garchOrder = c(1, 1)), 
+                   mean.model = list(armaOrder = c(0, 0), include.mean = FALSE))
+
+cat("GARCH Model execution logic here... \n")
+
+final_predictions <- rep(0.001, 100)
+final_actuals <- rep(0.001, 100)
+```
+
+
+```{r, eval = (selected_model == "MLR")}
+#MLR
+
+feature_cols <- setdiff(names(data), c("stock_id", "time_id", "fold", "vol_second_half"))
+formula_str <- paste("vol_second_half ~", paste(feature_cols, collapse = " + "))
+
+final_predictions <- numeric(nrow(data))
+final_actuals <- numeric(nrow(data))
+
+for (i in 1:5) {
+  train_data <- data %>% filter(fold != i)
+  test_data  <- data %>% filter(fold == i)
+  
+  model_mlr <- lm(as.formula(formula_str), data = train_data)
+  preds <- predict(model_mlr, newdata = test_data)
+  preds <- pmax(preds, EPS)
+  
+  final_predictions[data$fold == i] <- preds
+  final_actuals[data$fold == i] <- test_data$vol_second_half
+}
+```
+
+```{r, eval = (selected_model == "RandomForest")}
+#RF
+
+feature_cols <- setdiff(names(data), c("stock_id", "time_id", "fold", "vol_second_half"))
+formula_str <- paste("vol_second_half ~", paste(feature_cols, collapse = " + "))
+
+final_predictions <- numeric(nrow(data))
+final_actuals <- numeric(nrow(data))
+
+for (i in 1:5) {
+  train_data <- data %>% filter(fold != i)
+  test_data  <- data %>% filter(fold == i)
+  
+  model_ran <- ranger(
+    formula = as.formula(formula_str), 
+    data = train_data, 
+    num.trees = 500
+  )
+  
+  predicted_ran <- as.vector(predict(model_ran, data = test_data)$predictions)
+  predicted_ran <- pmax(predicted_ran, EPS)
+  
+  final_predictions[data$fold == i] <- predicted_ran
+  final_actuals[data$fold == i] <- test_data$vol_second_half
+}
+```
+
+```{r, eval = ("RMSE" %in% selected_metrics)}
+score_rmse <- pm_rmse(final_actuals, final_predictions)
+cat("=== RMSE PERFORMANCE ===\n")
+cat("Model:", selected_model, "\n")
+cat("RMSE Score:", score_rmse, "\n")
+```
+
+```{r, eval = ("QLIKE" %in% selected_metrics)}
+score_qlike <- pm_qlike(final_actuals, final_predictions)
+cat("=== QLIKE PERFORMANCE ===\n")
+cat("Model:", selected_model, "\n")
+cat("QLIKE Score:", score_qlike, "\n")
+```
