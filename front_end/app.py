@@ -1,89 +1,87 @@
 """
 Volatility Modelling Dashboard
-Two screens:
-  1. Stock Universe   – correlation-based grouping / cluster map
-  2. Individual Stock – volatility deep-dive dashboard
+Three tabs (top navigation):
+  1. Model Specification  – model details, metrics, and data pipeline
+  2. Individual Stock     – volatility deep-dive with stock selector
+  3. Universe             – correlation-based grouping / cluster map
 """
 
-import streamlit as st
+import sys
+import os
 
-from stock_registry import ALL_BOOK_STEMS, ALL_NAMED_TICKERS
+# Ensure the front_end directory is on the path so page modules can import
+# charts, stock_registry, etc. as siblings.
+sys.path.insert(0, os.path.dirname(__file__))
+
+import streamlit as st
 
 st.set_page_config(
     page_title="Volatility Dashboard",
     page_icon="📈",
-    layout="wide",
-    initial_sidebar_state="expanded",
+    layout="wide"
 )
 
-if "screen" not in st.session_state:
-    st.session_state.screen = "universe"
-if "selected_stock" not in st.session_state:
-    st.session_state.selected_stock = None
+from pages.model_spec import render as render_model_spec
+from pages.individual import render as render_individual
+from pages.universe import render as render_universe
 
+# Fixed top nav bar — stays visible regardless of scroll position.
+st.markdown(
+    """
+    <style>
+    /* Remove Streamlit's own header so our bar sits at the true top */
+    header[data-testid="stHeader"] {
+        display: none;
+    }
 
-def render_universe() -> None:
-    with st.sidebar:
-        st.header("Stock Universe")
-        st.divider()
+    /* Fixed, full-width nav bar */
+    [data-baseweb="tab-list"] {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        z-index: 9999;
+        background-color: var(--background-color, #ffffff) !important;
+        background: var(--background-color, #ffffff) !important;
+        opacity: 1 !important;
+        isolation: isolate;
+        border-bottom: 1px solid rgba(128, 128, 128, 0.2) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+        padding: 0 2.5rem;
+        height: 3.25rem;
+    }
 
-        dataset = st.radio("Dataset", ["Named stocks (10)", "Book stocks (112)"])
-        stock_list = ALL_NAMED_TICKERS if dataset == "Named stocks (10)" else ALL_BOOK_STEMS
+    @media (prefers-color-scheme: dark) {
+        [data-baseweb="tab-list"] {
+            background-color: #0e1117 !important;
+            background: #0e1117 !important;
+        }
+    }
 
-        st.divider()
+    [data-baseweb="tab"] {
+        height: 3.25rem;
+        font-size: 0.95rem;
+        font-weight: 500;
+        padding: 0 1.25rem;
+    }
 
-        st.selectbox(
-            "Group by",
-            ["Correlation", "Sector", "Mean Volatility", "Volatility Std Dev"],
-        )
+    /* Push page content below the fixed bar */
+    .stMainBlockContainer {
+        padding-top: 4.5rem !important;
+    }
+    """,
+    unsafe_allow_html=True,
+)
 
-        st.slider("Top-N most volatile to highlight", min_value=0, max_value=20, value=5)
+tab_model, tab_individual, tab_universe = st.tabs(
+    ["📋  Model Specification", "📈  Individual Stock", "🌐  Universe"]
+)
 
-        st.divider()
+with tab_model:
+    render_model_spec()
 
-        chosen = st.selectbox("Open stock dashboard", stock_list)
-        if st.button("View stock →", type="primary", use_container_width=True):
-            st.session_state.selected_stock = chosen
-            st.session_state.screen = "individual"
-            st.rerun()
+with tab_individual:
+    render_individual()
 
-    st.title("Stock Universe")
-
-
-
-def render_individual() -> None:
-    stock_id = st.session_state.selected_stock
-
-    with st.sidebar:
-        st.header("Individual Stock")
-        st.divider()
-
-        if st.button("← Back to Universe", use_container_width=True):
-            st.session_state.screen = "universe"
-            st.rerun()
-
-        all_stocks = ALL_NAMED_TICKERS + ALL_BOOK_STEMS
-        idx = all_stocks.index(stock_id) if stock_id in all_stocks else 0
-        new_stock = st.selectbox("Switch stock", all_stocks, index=idx)
-        if st.button("Go", use_container_width=True):
-            st.session_state.selected_stock = new_stock
-            st.rerun()
-
-        st.divider()
-        st.slider("Rolling window (periods)", 3, 20, 7)
-        st.toggle("Show model forecast", value=True)
-
-    st.title(f"Stock {stock_id}")
-    st.info("add charts here")
-
-
-def main() -> None:
-    if st.session_state.screen == "universe":
-        render_universe()
-    else:
-        render_individual()
-
-
-main()
-
-
+with tab_universe:
+    render_universe()
