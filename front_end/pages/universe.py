@@ -168,7 +168,7 @@ def render() -> None:
                 "best_model": "Best model",
             }),
             hide_index=True,
-            width="stretch",
+            width='stretch',
             column_config={
                 "Mean volatility": st.column_config.NumberColumn(format="%.6f"),
                 "RMSE": st.column_config.NumberColumn(format="%.6f"),
@@ -176,19 +176,4 @@ def render() -> None:
             },
         )
 
-    with right:
-        st.subheader("Open Stock")
-        selected_stock = st.selectbox(
-            "Select a stock",
-            options=ranked_df["stock_id"].tolist(),
-            key="universe_selected_stock",
-        )
 
-        if st.button("Open in Individual Stock", type="primary", width="stretch"):
-            st.session_state.selected_stock = selected_stock
-            st.success(f"{selected_stock} is selected. Open the Individual Stock tab to view it.")
-
-        st.info(
-            "Use this view to compare stocks globally, find high-volatility names, "
-            "and identify instruments with similar behaviour."
-        )
