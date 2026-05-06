@@ -7,3 +7,16 @@
 *.xls
 *.csv
 *.parquet
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Generated plots (re-created by running the scripts)
+plots/cluster_models/
+plots/cluster_validation/
+plots/individual_models/
+plots/recluster/
+plots/recluster_v2/
+plots/timeseries_models_v2/
