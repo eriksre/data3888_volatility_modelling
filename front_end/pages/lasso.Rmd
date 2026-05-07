@@ -1,0 +1,326 @@
+---
+title: "3888 lasso"
+output: html_document
+date: "2026-04-07"
+---
+
+```{r}
+library(data.table)
+library(glmnet)
+setwd("/Users/ansonding/3888")
+files <- list.files(
+  path = "individual_book_train",
+  pattern = "\\.csv$",
+  full.names = TRUE
+)
+qlike <- function(y, yhat, eps = 1e-8) {
+  y <- pmax(y, eps)
+  yhat <- pmax(yhat, eps)
+  mean(y / yhat - log(y / yhat) - 1)
+}
+
+
+
+# STEP 4. 单只股票数据处理函数
+
+make_stock_data <- function(file_path) {
+  
+
+  # 读取数据
+
+  dt <- fread(file_path)
+  
+  # 提取stock_id
+  stock_id_num <- as.integer(gsub(".*stock_|\\.csv", "", file_path))
+  dt[, stock_id := stock_id_num]
+  
+  # 排序
+  setorder(dt, time_id, seconds_in_bucket)
+  
+
+  # WAP
+  
+  dt[, wap1 := (bid_price1 * ask_size1 + ask_price1 * bid_size1) /
+                (bid_size1 + ask_size1)]
+  
+  dt[, wap2 := (bid_price2 * ask_size2 + ask_price2 * bid_size2) /
+                (bid_size2 + ask_size2)]
+  
+  dt <- dt[
+    is.finite(wap1) & wap1 > 0 &
+    is.finite(wap2) & wap2 > 0
+  ]
+  
+  
+ 
+  # log returns
+  
+  dt[, log_ret1 := c(NA_real_, diff(log(wap1))), by = time_id]
+  dt[, log_ret2 := c(NA_real_, diff(log(wap2))), by = time_id]
+  
+  
+  
+  # 市场结构变量
+  
+  dt[, spread1 := ask_price1 - bid_price1]
+  dt[, spread2 := ask_price2 - bid_price2]
+  
+  dt[, volume1 := bid_size1 + ask_size1]
+  dt[, volume2 := bid_size2 + ask_size2]
+  dt[, volume_total := volume1 + volume2]
+  
+  dt[, imbalance1 := (bid_size1 - ask_size1) /
+                      (bid_size1 + ask_size1)]
+  
+  dt[, imbalance2 := (bid_size2 - ask_size2) /
+                      (bid_size2 + ask_size2)]
+  
+
+  # 前5分钟 / 后5分钟
+
+  first_half  <- dt[seconds_in_bucket <= 300]
+  second_half <- dt[seconds_in_bucket > 300]
+
+  # 前5分钟特征
+ 
+  features <- first_half[, .(
+    
+    # Price
+    bid_price1_mean = mean(bid_price1, na.rm = TRUE),
+    ask_price1_mean = mean(ask_price1, na.rm = TRUE),
+    bid_price2_mean = mean(bid_price2, na.rm = TRUE),
+    ask_price2_mean = mean(ask_price2, na.rm = TRUE),
+    
+    bid_price1_sd = sd(bid_price1, na.rm = TRUE),
+    ask_price1_sd = sd(ask_price1, na.rm = TRUE),
+    bid_price2_sd = sd(bid_price2, na.rm = TRUE),
+    ask_price2_sd = sd(ask_price2, na.rm = TRUE),
+    
+    # Size
+    bid_size1_mean = mean(bid_size1, na.rm = TRUE),
+    ask_size1_mean = mean(ask_size1, na.rm = TRUE),
+    bid_size2_mean = mean(bid_size2, na.rm = TRUE),
+    ask_size2_mean = mean(ask_size2, na.rm = TRUE),
+    
+    bid_size1_sd = sd(bid_size1, na.rm = TRUE),
+    ask_size1_sd = sd(ask_size1, na.rm = TRUE),
+    bid_size2_sd = sd(bid_size2, na.rm = TRUE),
+    ask_size2_sd = sd(ask_size2, na.rm = TRUE),
+    
+    # WAP
+    wap1_mean = mean(wap1, na.rm = TRUE),
+    wap2_mean = mean(wap2, na.rm = TRUE),
+    wap1_sd = sd(wap1, na.rm = TRUE),
+    wap2_sd = sd(wap2, na.rm = TRUE),
+    
+    # Return / volatility
+    rv_first_wap1 = sqrt(sum(log_ret1^2, na.rm = TRUE)),
+    rv_first_wap2 = sqrt(sum(log_ret2^2, na.rm = TRUE)),
+    
+    ret1_mean = mean(log_ret1, na.rm = TRUE),
+    ret1_sd = sd(log_ret1, na.rm = TRUE),
+    ret1_max = max(log_ret1, na.rm = TRUE),
+    ret1_min = min(log_ret1, na.rm = TRUE),
+    
+    ret2_mean = mean(log_ret2, na.rm = TRUE),
+    ret2_sd = sd(log_ret2, na.rm = TRUE),
+    
+    # Spread
+    spread1_mean = mean(spread1, na.rm = TRUE),
+    spread2_mean = mean(spread2, na.rm = TRUE),
+    
+    spread1_sd = sd(spread1, na.rm = TRUE),
+    spread2_sd = sd(spread2, na.rm = TRUE),
+    
+    # Volume
+    volume_total_mean = mean(volume_total, na.rm = TRUE),
+    volume_total_sd = sd(volume_total, na.rm = TRUE),
+    
+    # Imbalance
+    imbalance1_mean = mean(imbalance1, na.rm = TRUE),
+    imbalance2_mean = mean(imbalance2, na.rm = TRUE),
+    
+    imbalance1_sd = sd(imbalance1, na.rm = TRUE),
+    imbalance2_sd = sd(imbalance2, na.rm = TRUE)
+    
+  ), by = .(stock_id, time_id)]
+  
+  
+
+  # 后5分钟 target
+
+  target <- second_half[, .(
+    rv_second = sqrt(sum(log_ret1^2, na.rm = TRUE))
+  ), by = .(stock_id, time_id)]
+  
+  target[, target := log(pmax(rv_second, 1e-8))]
+ 
+  
+
+  # 合并
+
+  stock_data <- merge(
+    features,
+    target[, .(stock_id, time_id, target, rv_second)],
+    by = c("stock_id", "time_id")
+  )
+  
+  stock_data <- stock_data[complete.cases(stock_data)]
+  
+  return(stock_data)
+}
+
+
+
+stock_data <- make_stock_data(files[2])
+
+names(stock_data)
+dim(stock_data)
+head(stock_data)
+summary(stock_data)
+```
+
+
+
+```{r}
+fit_lasso_stock <- function(file_path) {
+  
+  cat("\n====================================\n")
+  cat("Processing:", file_path, "\n")
+  
+  stock_data <- make_stock_data(file_path)
+  
+  # 数据太少则跳过
+  if (nrow(stock_data) < 50) {
+    cat("Too few observations, skipped.\n")
+    return(NULL)
+  }
+  
+  # 时间序列切分
+
+  setorder(stock_data, time_id)
+  
+  n <- nrow(stock_data)
+  split_point <- floor(0.8 * n)
+  
+  train_set <- stock_data[1:split_point]
+  test_set  <- stock_data[(split_point + 1):n]
+  
+
+  # 准备矩阵
+  x_train <- as.matrix(
+    train_set[, !c("stock_id", "time_id", "target", "rv_second")]
+  )
+  
+  y_train <- train_set$target
+  
+  x_test <- as.matrix(
+    test_set[, !c("stock_id", "time_id", "target", "rv_second")]
+  )
+  
+  y_test <- test_set$target
+  
+  
+  set.seed(123)
+  
+  lasso_model <- cv.glmnet(
+    x = x_train,
+    y = y_train,
+    alpha = 1
+  )
+  
+  pred_log <- as.numeric(
+    predict(
+      lasso_model,
+      s = "lambda.min",
+      newx = x_test
+    )
+  )
+  
+  
+
+  rmse_log <- sqrt(mean((y_test - pred_log)^2))
+  
+  actual_vol <- exp(y_test)
+  pred_vol <- exp(pred_log)
+  
+  qlike_score <- qlike(actual_vol, pred_vol)
+  
+
+  result <- data.table(
+    stock_id = unique(stock_data$stock_id),
+    n_obs = nrow(stock_data),
+    rmse_log = rmse_log,
+    qlike = qlike_score,
+    lambda = lasso_model$lambda.min
+  )
+  
+  predictions <- data.table(
+    stock_id = unique(stock_data$stock_id),
+    time_id = test_set$time_id,
+    actual_log_vol = y_test,
+    predicted_log_vol = pred_log,
+    actual_vol = actual_vol,
+    predicted_vol = pred_vol
+  )
+  
+  coefficients <- data.table(
+    stock_id = unique(stock_data$stock_id),
+    variable = rownames(coef(lasso_model, s = "lambda.min")),
+    coefficient = as.numeric(coef(lasso_model, s = "lambda.min"))
+  )
+  
+  return(list(
+    result = result,
+    predictions = predictions,
+    coefficients = coefficients
+  ))
+}
+
+
+# STEP 6. 对所有股票自动循环
+all_outputs <- lapply(files, fit_lasso_stock)
+
+# 去除NULL
+all_outputs <- Filter(Negate(is.null), all_outputs)
+
+
+# STEP 7. 汇总所有股票结果
+all_results <- rbindlist(
+  lapply(all_outputs, function(x) x$result),
+  fill = TRUE
+)
+
+all_predictions <- rbindlist(
+  lapply(all_outputs, function(x) x$predictions),
+  fill = TRUE
+)
+
+all_coefficients <- rbindlist(
+  lapply(all_outputs, function(x) x$coefficients),
+  fill = TRUE
+)
+
+
+# STEP 8. 输出整体表现
+cat("\n====================================\n")
+cat("ALL STOCK RESULTS:\n")
+print(all_results)
+
+cat("\nAverage Performance:\n")
+print(all_results[, .(
+  mean_rmse = mean(rmse_log, na.rm = TRUE),
+  mean_qlike = mean(qlike, na.rm = TRUE)
+)])
+
+# STEP 9. 查看所有股票未来波动率
+cat("\n====================================\n")
+cat("ALL FUTURE VOLATILITY PREDICTIONS:\n")
+print(head(all_predictions))
+
+
+
+```
+
+
+
