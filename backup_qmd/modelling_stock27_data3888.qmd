@@ -1,0 +1,697 @@
+---
+title: "stock_27 modelling data3888"
+format: html
+editor: visual
+---
+
+```{r}
+library(dplyr)
+library(data.table)
+library(arrow)
+library(zoo)
+library(stats)
+library(ggplot2)
+
+# load parquet
+df <- read_parquet("/Users/vaniakumar/Desktop/data3888/data3888_volatility_modelling/individual_book_train_parquet/stock_27.parquet")
+```
+
+```{r}
+length(unique(df$time_id))
+
+dup_check <- df %>%
+  group_by(time_id, seconds_in_bucket) %>%
+  filter(n() > 1)
+
+if (nrow(dup_check) > 0) {
+  print("Duplicates found!")
+} else {
+  print("No duplicates: Each (time_id, seconds_in_bucket) pair is unique.")
+}
+```
+
+```{r}
+make_equally_spaced <- function(df) {
+  all_time_ids <- unique(df$time_id)
+  df_list <- list()
+  
+  for (tid in all_time_ids) {
+    sub <- df %>%
+      filter(time_id == tid) %>%
+      arrange(seconds_in_bucket)
+    
+    full_index <- data.frame(seconds_in_bucket = 0:599)
+    
+    sub_full <- full_index %>%
+      left_join(sub, by = "seconds_in_bucket") %>%
+      mutate(time_id = tid) %>%
+      arrange(seconds_in_bucket)
+    
+    # forward fill only
+    sub_full <- sub_full %>%
+      tidyr::fill(everything(), .direction = "down")
+    
+    df_list[[as.character(tid)]] <- sub_full
+  }
+  
+  bind_rows(df_list)
+}
+
+df <- make_equally_spaced(df)
+```
+
+```{r}
+df <- df %>%
+  mutate(
+    weighted_price = (
+      bid_price1 * ask_size1 + ask_price1 * bid_size1 +
+      bid_price2 * ask_size2 + ask_price2 * bid_size2
+    ) / (bid_size1 + ask_size1 + bid_size2 + ask_size2)
+  ) %>%
+  group_by(time_id) %>%
+  arrange(seconds_in_bucket) %>%
+  mutate(
+    log_price = log(weighted_price),
+    log_price_diff = log_price - lag(log_price)
+  ) %>%
+  ungroup()
+```
+
+vol_proxy = (change in log(P))\^2 \
+so that we can do ACF + PACF of squared returns
+
+```{r}
+library(stats)
+
+max_lag <- 20
+all_pacf <- list()
+all_n <- c()
+
+for (tid in unique(df$time_id)) {
+  
+  chunk <- df %>%
+    filter(time_id == tid) %>%
+    arrange(seconds_in_bucket)
+  
+  vol_proxy <- na.omit(chunk$log_price_diff)^2
+  
+  if (length(vol_proxy) < (max_lag + 1) || sd(vol_proxy) == 0) next
+  
+  pacf_vals <- pacf(vol_proxy, lag.max = max_lag, plot = FALSE)$acf
+  
+  all_pacf[[length(all_pacf) + 1]] <- pacf_vals
+  all_n <- c(all_n, length(vol_proxy))
+}
+
+average_pacf <- Reduce("+", all_pacf) / length(all_pacf)
+mean_n <- as.integer(mean(all_n))
+
+conf_int <- ifelse(mean_n > 0, 1.96 / sqrt(mean_n), NA)
+```
+
+```{r}
+pacf_df <- data.frame(
+  lag = 0:max_lag,
+  value = c(1, average_pacf)  # include lag 0
+)
+
+ggplot(pacf_df, aes(x = lag, y = value)) +
+  geom_segment(aes(xend = lag, yend = 0)) +
+  geom_hline(yintercept = 0) +
+  geom_hline(yintercept = conf_int, linetype = "dashed", color = "red") +
+  geom_hline(yintercept = -conf_int, linetype = "dashed", color = "red") +
+  ggtitle("Average PACF of Squared Log Returns") +
+  theme_minimal()
+```
+
+volatility is predictable in a linear in squares sense - we know that a model like **GARCH** or **stochastic volatility** can forecast next period’s variance better than a constant-variance assumption
+
+```{r}
+all_acf <- list()
+all_n <- c()
+
+for (tid in unique(df$time_id)) {
+  
+  chunk <- df %>%
+    filter(time_id == tid) %>%
+    arrange(seconds_in_bucket)
+  
+  vol_proxy <- na.omit(chunk$log_price_diff)^2
+  
+  if (length(vol_proxy) < (max_lag + 1) || sd(vol_proxy) == 0) next
+  
+  acf_vals <- acf(vol_proxy, lag.max = max_lag, plot = FALSE)$acf
+  
+  all_acf[[length(all_acf) + 1]] <- acf_vals
+  all_n <- c(all_n, length(vol_proxy))
+}
+
+average_acf <- Reduce("+", all_acf) / length(all_acf)
+mean_n <- as.integer(mean(all_n))
+
+conf_int <- ifelse(mean_n > 0, 1.96 / sqrt(mean_n), NA)
+```
+
+```{r}
+acf_df <- data.frame(
+  lag = 0:max_lag,
+  value = average_acf
+)
+
+ggplot(acf_df, aes(x = lag, y = value)) +
+  geom_segment(aes(xend = lag, yend = 0)) +
+  geom_hline(yintercept = 0) +
+  geom_hline(yintercept = conf_int, linetype = "dashed", color = "red") +
+  geom_hline(yintercept = -conf_int, linetype = "dashed", color = "red") +
+  ggtitle("Average ACF of Squared Log Returns") +
+  theme_minimal()
+```
+
+The slowly decaying ACF rules out simple i.i.d. returns (no clustering).
+
+overall:\
+
+|                                                   |                                  |
+|---------------------------------------------------|----------------------------------|
+| Volatility clustering positive & slowly decaying? | Yes                              |
+| Volatility predictable?                           | Yes                              |
+| Modelling approach justified?                     | Yes (for GARCH/ARCH-type models) |
+
+**Modelling**
+
+Feature Engineering
+
+```{r}
+library(dplyr)
+
+# --- BASIC PREP ---
+df <- df %>%
+  mutate(
+    mid_price = (bid_price1 + ask_price1) / 2,
+    spread = ask_price1 - bid_price1,
+    imbalance = (bid_size1 - ask_size1) / (bid_size1 + ask_size1 + 1e-6)
+  ) %>%
+  group_by(time_id) %>%
+  arrange(seconds_in_bucket) %>%
+  mutate(
+    log_return = log(mid_price / lag(mid_price))
+  ) %>%
+  ungroup()
+
+# --- ONLY FIRST HALF ---
+df_first <- df %>%
+  filter(seconds_in_bucket < 300)
+
+# --- FEATURE ENGINEERING ---
+features <- df_first %>%
+  group_by(time_id) %>%
+  summarise(
+    
+    # =========================
+    # 🔥 VOLATILITY FEATURES
+    # =========================
+    rv_300 = sum(log_return^2, na.rm = TRUE),
+    vol_300 = sqrt(rv_300),
+    
+    rv_60  = sum(log_return[seconds_in_bucket < 60]^2, na.rm = TRUE),
+    rv_120 = sum(log_return[seconds_in_bucket < 120]^2, na.rm = TRUE),
+    
+    rv_ratio_60_300  = rv_60 / (rv_300 + 1e-8),
+    rv_ratio_120_300 = rv_120 / (rv_300 + 1e-8),
+    
+    # =========================
+    # 🔥 ROLLING VOL FEATURES (NEW)
+    # =========================
+    rolling_vol_mean = mean(abs(log_return), na.rm = TRUE),
+    rolling_vol_sd   = sd(abs(log_return), na.rm = TRUE),
+    rolling_vol_max  = max(abs(log_return), na.rm = TRUE),
+    
+    # =========================
+    # 🔥 RETURN FEATURES
+    # =========================
+    return_mean = mean(log_return, na.rm = TRUE),
+    return_sd   = sd(log_return, na.rm = TRUE),
+    return_skew = mean((log_return - return_mean)^3, na.rm = TRUE),
+    
+    max_return = max(abs(log_return), na.rm = TRUE),
+    
+    # =========================
+    # 🔥 SPREAD FEATURES
+    # =========================
+    avg_spread = mean(spread, na.rm = TRUE),
+    sd_spread  = sd(spread, na.rm = TRUE),
+    max_spread = max(spread, na.rm = TRUE),
+    
+    # =========================
+    # 🔥 IMBALANCE FEATURES
+    # =========================
+    avg_imb = mean(imbalance, na.rm = TRUE),
+    sd_imb  = sd(imbalance, na.rm = TRUE),
+    
+    imb_autocorr = cor(
+      imbalance,
+      dplyr::lag(imbalance),
+      use = "complete.obs"
+    ),
+    
+    # =========================
+    # 🔥 VOLUME / LIQUIDITY
+    # =========================
+    avg_bid_size = mean(bid_size1, na.rm = TRUE),
+    avg_ask_size = mean(ask_size1, na.rm = TRUE),
+    volume_imbalance = mean(bid_size1 - ask_size1, na.rm = TRUE),
+    
+    # =========================
+    # 🔥 PRICE FEATURES
+    # =========================
+    price_mean = mean(mid_price, na.rm = TRUE),
+    price_sd   = sd(mid_price, na.rm = TRUE),
+    
+    # =========================
+    # 🔥 MICROSTRUCTURE SIGNALS
+    # =========================
+    price_impact = cor(
+      log_return,
+      imbalance,
+      use = "complete.obs"
+    ),
+    
+    spread_return_corr = cor(
+      spread,
+      abs(log_return),
+      use = "complete.obs"
+    ),
+    
+    # =========================
+    # 🔥 TIME STRUCTURE
+    # =========================
+    early_vol = sum(log_return[seconds_in_bucket < 150]^2, na.rm = TRUE),
+    late_vol  = sum(log_return[seconds_in_bucket >= 150]^2, na.rm = TRUE),
+    
+    vol_trend = late_vol / (early_vol + 1e-8)
+    
+  ) %>%
+  ungroup()
+
+# =========================
+# 🎯 TARGET (SECOND HALF)
+# =========================
+df_second <- df %>%
+  filter(seconds_in_bucket >= 300) %>%
+  group_by(time_id) %>%
+  summarise(
+    rv_second = sum(log_return^2, na.rm = TRUE)
+  )
+
+# =========================
+# 🔥 FINAL DATASET
+# =========================
+final_df <- features %>%
+  left_join(df_second, by = "time_id") %>%
+  arrange(time_id) %>%
+  mutate(
+    target = log(rv_second + 1e-8),
+    
+    # =========================
+    # 🔥 LAGGED FEATURES (NEW)
+    # =========================
+    lag_log_vol = lag(target),              # MOST IMPORTANT
+    lag_vol     = lag(exp(target))          # optional (variance scale)
+  ) %>%
+  filter(!is.na(target))
+
+# =========================
+# ⚠️ CLEANING
+# =========================
+final_df[is.na(final_df)] <- 0
+```
+
+```{r}
+# remove time_id (not a feature)
+data_model <- final_df %>%
+  select(-time_id)
+
+# train/test split
+set.seed(42)
+n <- nrow(data_model)
+train_idx <- sample(1:n, size = 0.8 * n)
+
+train <- data_model[train_idx, ]
+test  <- data_model[-train_idx, ]
+```
+
+baseline model
+
+```{r}
+lm_base <- lm(
+  target ~ vol_300 + avg_spread,
+  data = train
+)
+
+pred_base <- predict(lm_base, newdata = test)
+```
+
+```{r}
+rmse_base <- sqrt(mean((test$target - pred_base)^2))
+
+actual_var <- exp(test$target)
+pred_var   <- exp(pred_base)
+
+qlike_base <- mean((actual_var / pred_var) - log(actual_var / pred_var) - 1)
+```
+
+```{r}
+rmse_base
+qlike_base
+```
+
+used LASSO to shrink non-important features to 0
+
+```{r}
+full_model <- lm(target ~ ., data = train)
+
+library(glmnet)
+
+X_train <- as.matrix(train %>% select(-target))
+y_train <- train$target
+
+cv_model <- cv.glmnet(X_train, y_train, alpha = 1)
+
+coef(cv_model, s = "lambda.min")
+
+importance(rf_model)
+```
+
+```{r}
+# -------------------------------
+# LASSO REGRESSION
+# -------------------------------
+# Why:
+# - Performs automatic feature selection
+# - Reduces overfitting
+# - Handles high-dimensional feature sets
+
+library(glmnet)
+
+X_train <- as.matrix(train %>% select(-target))
+X_test  <- as.matrix(test %>% select(-target))
+
+y_train <- train$target
+y_test  <- test$target
+
+# Cross-validated lambda (better than fixed)
+cv_lasso <- cv.glmnet(X_train, y_train, alpha = 1)
+
+pred_lasso <- predict(cv_lasso, newx = X_test, s = "lambda.min")
+pred_lasso <- as.numeric(pred_lasso)
+
+# Evaluation
+rmse_lasso <- sqrt(mean((y_test - pred_lasso)^2))
+
+actual_var <- exp(y_test)
+pred_var   <- exp(pred_lasso)
+
+qlike_lasso <- mean((actual_var / pred_var) - log(actual_var / pred_var) - 1)
+```
+
+```{r}
+rmse_lasso
+qlike_lasso
+```
+
+```{r}
+
+# -------------------------------
+# LINEAR REGRESSION
+# -------------------------------
+# Why:
+# - Simple benchmark
+# - Interpretable coefficients
+# - Tests linear relationship assumption
+
+lm_model <- lm(target ~ ., data = train)
+
+pred_lm <- predict(lm_model, newdata = test)
+
+# Evaluation
+rmse_lm <- sqrt(mean((test$target - pred_lm)^2))
+
+actual_var <- exp(test$target)
+pred_var   <- exp(pred_lm)
+
+qlike_lm <- mean((actual_var / pred_var) - log(actual_var / pred_var) - 1)
+```
+
+```{r}
+rmse_lm
+qlike_lm
+```
+
+```{r}
+# -------------------------------
+# RIDGE REGRESSION
+# -------------------------------
+# Why:
+# - Keeps all features but shrinks coefficients
+# - Handles multicollinearity better than OLS
+# - More stable than LASSO
+
+cv_ridge <- cv.glmnet(X_train, y_train, alpha = 0)
+
+pred_ridge <- predict(cv_ridge, newx = X_test, s = "lambda.min")
+pred_ridge <- as.numeric(pred_ridge)
+
+# Evaluation
+rmse_ridge <- sqrt(mean((y_test - pred_ridge)^2))
+
+pred_var <- exp(pred_ridge)
+
+qlike_ridge <- mean((actual_var / pred_var) - log(actual_var / pred_var) - 1)
+```
+
+```{r}
+rmse_ridge
+qlike_ridge
+```
+
+```{r}
+# -------------------------------
+# RANDOM FOREST
+# -------------------------------
+# Why:
+# - Captures nonlinear relationships
+# - Handles interactions automatically
+# - Robust to noise and outliers
+
+library(randomForest)
+
+rf_model <- randomForest(
+  target ~ .,
+  data = train,
+  ntree = 200
+)
+
+pred_rf <- predict(rf_model, newdata = test)
+
+# Evaluation
+rmse_rf <- sqrt(mean((test$target - pred_rf)^2))
+
+pred_var <- exp(pred_rf)
+
+qlike_rf <- mean((actual_var / pred_var) - log(actual_var / pred_var) - 1)
+```
+
+```{r}
+rmse_rf
+qlike_rf
+```
+
+```{r}
+# -------------------------------
+# DECISION TREE
+# -------------------------------
+# Why:
+# - Simple nonlinear model
+# - Easy to interpret splits
+# - Good comparison vs Random Forest
+
+library(rpart)
+
+tree_model <- rpart(
+  target ~ .,
+  data = train,
+  method = "anova",
+  control = rpart.control(maxdepth = 6)
+)
+
+pred_tree <- predict(tree_model, newdata = test)
+
+# Evaluation
+rmse_tree <- sqrt(mean((test$target - pred_tree)^2))
+
+pred_var <- exp(pred_tree)
+
+qlike_tree <- mean((actual_var / pred_var) - log(actual_var / pred_var) - 1)
+```
+
+```{r}
+rmse_tree
+qlike_tree
+```
+
+```{r}
+# -------------------------------
+# XGBOOST
+# -------------------------------
+
+library(xgboost)
+
+# Matrix format
+dtrain <- xgb.DMatrix(data = X_train, label = y_train)
+dtest  <- xgb.DMatrix(data = X_test)
+
+# Train model
+xgb_model <- xgboost::xgb.train(
+  params = list(
+    objective = "reg:squarederror",
+    max_depth = 4,
+    eta = 0.05,
+    subsample = 0.8,
+    colsample_bytree = 0.8
+  ),
+  data = dtrain,
+  nrounds = 200,
+  verbose = 0
+)
+
+# Predictions (log volatility)
+pred_xgb <- predict(xgb_model, newdata = dtest)
+
+# -------------------------------
+# EVALUATION
+# -------------------------------
+
+# RMSE (log scale)
+rmse_xgb <- sqrt(mean((y_test - pred_xgb)^2))
+
+# Convert back to variance scale
+actual_var <- exp(y_test)
+pred_var   <- exp(pred_xgb)
+
+# QLIKE
+qlike_xgb <- mean((actual_var / pred_var) - log(actual_var / pred_var) - 1)
+
+cat("RMSE:", rmse_xgb, "\n")
+cat("QLIKE:", qlike_xgb, "\n")
+```
+
+```{r}
+results <- data.frame(
+  Model = c("Linear", "LASSO", "Ridge", "Random Forest", "Decision Tree", "XGBoost"),
+  RMSE  = c(rmse_lm, rmse_lasso, rmse_ridge, rmse_rf, rmse_tree, rmse_xgb),
+  QLIKE = c(qlike_lm, qlike_lasso, qlike_ridge, qlike_rf, qlike_tree, qlike_xgb)
+)
+
+print(results)
+```
+
+using PCA
+
+```{r}
+library(dplyr)
+
+# -------------------------------
+# 1. SPLIT DATA
+# -------------------------------
+
+X_train <- train %>% select(-target)
+X_test  <- test  %>% select(-target)
+
+y_train <- train$target
+y_test  <- test$target
+
+# -------------------------------
+# 2. STANDARDISE FEATURES
+# -------------------------------
+
+X_mean <- apply(X_train, 2, mean)
+X_sd   <- apply(X_train, 2, sd)
+
+# avoid divide-by-zero
+X_sd[X_sd == 0] <- 1
+
+X_train_scaled <- scale(X_train, center = X_mean, scale = X_sd)
+X_test_scaled  <- scale(X_test,  center = X_mean, scale = X_sd)
+
+# -------------------------------
+# 3. PCA (TRAIN ONLY)
+# -------------------------------
+
+pca_model <- prcomp(X_train_scaled, center = FALSE, scale. = FALSE)
+
+# cumulative variance
+var_explained <- cumsum(pca_model$sdev^2 / sum(pca_model$sdev^2))
+
+# keep 90%–95% (more stable than strict 95%)
+k <- which(var_explained >= 0.90)[1]
+
+cat("Number of PCs used:", k, "\n")
+
+# -------------------------------
+# 4. TRANSFORM DATA
+# -------------------------------
+
+X_train_pca <- as.data.frame(pca_model$x[, 1:k])
+X_test_pca  <- as.data.frame(predict(pca_model, newdata = X_test_scaled)[, 1:k])
+
+# -------------------------------
+# 5. FIT MODEL
+# -------------------------------
+
+lm_pca <- lm(y_train ~ ., data = X_train_pca)
+
+pred_pca <- predict(lm_pca, newdata = X_test_pca)
+
+# -------------------------------
+# 6. SAFETY FIXES (IMPORTANT)
+# -------------------------------
+
+# remove NA / Inf
+pred_pca[!is.finite(pred_pca)] <- median(pred_pca, na.rm = TRUE)
+
+# cap extreme predictions (prevents QLIKE explosion)
+pred_pca <- pmax(pmin(pred_pca, 5), -5)
+
+# -------------------------------
+# 7. EVALUATION
+# -------------------------------
+
+# RMSE
+rmse_pca <- sqrt(mean((y_test - pred_pca)^2))
+
+# QLIKE (stabilised)
+actual_vol <- exp(y_test)
+
+pred_vol <- exp(pmax(pred_pca, -5))   # prevents underflow
+
+qlike_pca <- mean((actual_vol / pred_vol) -
+                  log(actual_vol / pred_vol) - 1)
+
+cat("PCA RMSE:", rmse_pca, "\n")
+cat("PCA QLIKE:", qlike_pca, "\n")
+```
+
+```{r}
+plot(var_explained, type = "l",
+     main = "Cumulative Variance Explained",
+     xlab = "Number of Components",
+     ylab = "Variance Explained")
+abline(h = 0.95, col = "red", lty = 2)
+```
+
+```{r}
+loadings <- pca_model$rotation[, 1:5]  # first 5 PCs
+print(loadings)
+```
+
+> PCA shows that dimensionality reduction alone is insufficient for volatility forecasting.
