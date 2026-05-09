@@ -7,11 +7,6 @@ from data import (
     preprocess_book_data
 )
 
-from features import (
-    compute_average_acf,
-    compute_average_pacf
-)
-
 from artifacts import (
     plot_acf,
     plot_pacf
@@ -39,21 +34,3 @@ def run_acf_pacf_pipeline(parquet_folder):
         )
 
         check_duplicates(df)
-
-        df = preprocess_book_data(df)
-
-        acf_df, acf_conf = compute_average_acf(df)
-
-        pacf_df, pacf_conf = compute_average_pacf(df)
-
-        plot_acf(
-            acf_df,
-            acf_conf,
-            stock_name
-        )
-
-        plot_pacf(
-            pacf_df,
-            pacf_conf,
-            stock_name
-        )
