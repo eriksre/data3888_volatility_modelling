@@ -158,12 +158,6 @@ def _render_builder() -> None:
 
     st.divider()
 
-    # ---- Cross-validation ----
-    st.markdown("**Cross-validation**")
-    st.caption("Each run uses 5 shuffled folds over time windows: 80% training and 20% held out per fold.")
-
-    st.divider()
-
     # ---- Loss functions ----
     st.markdown("**Loss function(s)**")
     selected_losses = st.multiselect(
