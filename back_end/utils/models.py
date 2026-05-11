@@ -10,9 +10,15 @@ from arch import arch_model
 def make_models():
     return {
         "MLR": LinearRegression(),
-        "Lasso": LassoCV(cv=5, random_state=42),
-        "Ridge": RidgeCV(cv=5),
-        "DT": DecisionTreeRegressor(max_depth=6, random_state=42),
+        "Lasso": LassoCV(
+            cv=5, random_state=42
+            ),
+        "Ridge": RidgeCV(
+            cv=5
+            ),
+        "DT": DecisionTreeRegressor(
+            max_depth=6, random_state=42
+            ),
         "RF": RandomForestRegressor(
             n_estimators=200, random_state=42, n_jobs=-1
         ),
