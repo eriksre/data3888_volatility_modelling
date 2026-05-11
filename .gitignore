@@ -7,3 +7,8 @@
 *.xls
 *.csv
 *.parquet
+
+# Generated backend run outputs
+artifacts/runs/**
+!artifacts/runs/
+!artifacts/runs/.gitkeep

@@ -10,8 +10,12 @@ import sys
 import os
 
 # Ensure the front_end directory is on the path so page modules can import
-# charts, stock_registry, etc. as siblings.
-sys.path.insert(0, os.path.dirname(__file__))
+# charts, stock_registry, etc. as siblings, and the repository root is present
+# so those pages can import the backend service package.
+FRONT_END_DIR = os.path.dirname(__file__)
+ROOT_DIR = os.path.dirname(FRONT_END_DIR)
+sys.path.insert(0, FRONT_END_DIR)
+sys.path.insert(0, ROOT_DIR)
 
 import streamlit as st
 

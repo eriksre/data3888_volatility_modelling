@@ -1,16 +1,9 @@
-# Main thread where the pipeline is run
-from pipeline import run_acf_pacf_pipeline
+from __future__ import annotations
 
-
-PARQUET_FOLDER = (
-    "/Users/vaniakumar/Desktop/data3888/"
-    "data3888_volatility_modelling/"
-    "individual_book_train_parquet"
-)
+from .pipeline import run_smoke_pipeline
 
 
 if __name__ == "__main__":
+    status = run_smoke_pipeline()
+    print(status)
 
-    run_acf_pacf_pipeline(
-        PARQUET_FOLDER
-    )

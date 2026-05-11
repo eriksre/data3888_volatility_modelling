@@ -11,7 +11,6 @@ st.set_page_config(
 # ---------------------------------------------------
 # use Dummy data
 # ---------------------------------------------------
-@st.cache_data
 def load_dummy_universe_data():
     np.random.seed(42)
 

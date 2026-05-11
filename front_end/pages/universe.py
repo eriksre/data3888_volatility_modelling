@@ -1,34 +1,13 @@
-import numpy as np
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from stock_registry import ALL_BOOK_STEMS
+from back_end.service import get_latest_or_selected_run, load_universe_page_data
 
 
-MODEL_OPTIONS = ["Transformer", "LSTM", "GRU", "XGBoost", "HAR-RV", "GARCH(1,1)"]
-
-
-@st.cache_data
 def _load_universe_data() -> tuple[pd.DataFrame, pd.DataFrame]:
-    rng = np.random.default_rng(42)
-    stocks = ALL_BOOK_STEMS
-
-    summary_df = pd.DataFrame({
-        "stock_id": stocks,
-        "mean_volatility": rng.uniform(0.0015, 0.0050, len(stocks)),
-        "rmse": rng.uniform(0.00015, 0.00060, len(stocks)),
-        "qlike": rng.uniform(0.010, 0.030, len(stocks)),
-        "best_model": rng.choice(MODEL_OPTIONS, len(stocks)),
-    })
-
-    factors = rng.normal(size=(len(stocks), 4))
-    corr = np.corrcoef(factors @ factors.T)
-    corr = np.nan_to_num(corr, nan=0.0)
-    np.fill_diagonal(corr, 1.0)
-    corr_df = pd.DataFrame(corr, index=stocks, columns=stocks)
-
-    return summary_df, corr_df
+    run_id = get_latest_or_selected_run(st.session_state.get("selected_run_id"))
+    return load_universe_page_data(run_id)
 
 
 def _ranking_chart(top_df: pd.DataFrame, metric_col: str, ranking_metric: str):
@@ -90,6 +69,9 @@ def render() -> None:
     summary_df, corr_df = _load_universe_data()
 
     st.caption("Cross-stock overview for volatility behaviour and model performance.")
+    if summary_df.empty or corr_df.empty:
+        st.info("Run models from the Model Specification tab to populate the universe view from backend artifacts.")
+        return
 
     st.subheader("Universe Controls")
     c1, c2, c3 = st.columns([1.2, 1.2, 1])
@@ -102,13 +84,15 @@ def render() -> None:
         )
 
     with c2:
+        max_top_n = min(30, len(summary_df))
         top_n = st.slider(
             "Top-N stocks to display",
-            min_value=5,
+            min_value=1,
             max_value=30,
-            value=10,
+            value=min(10, max_top_n),
             key="universe_top_n",
         )
+        top_n = min(top_n, max_top_n)
 
     with c3:
         sort_order = st.radio(
@@ -175,5 +159,4 @@ def render() -> None:
                 "QLIKE": st.column_config.NumberColumn(format="%.5f"),
             },
         )
-
 

@@ -1,19 +1,23 @@
 import streamlit as st
 
+from back_end.service import available_model_types, available_stocks, start_run_from_ui
+
 # ---------------------------------------------------------------------------
 # Static reference data (dummy for now)
 # ---------------------------------------------------------------------------
 
-AVAILABLE_MODELS = [
-    "Transformer",
-    "LSTM",
-    "GRU",
+FALLBACK_MODELS = [
     "XGBoost",
     "Random Forest",
     "HAR-RV",
     "GARCH(1,1)",
     "Linear Regression",
+    "Ridge Regression",
+    "LASSO",
+    "Decision Tree",
 ]
+
+AVAILABLE_MODELS = available_model_types() or FALLBACK_MODELS
 
 ALL_FEATURES = [
     "WAP Returns",
@@ -34,14 +38,14 @@ ALL_FEATURES = [
 ]
 
 AUTO_FEATURES: dict[str, list[str]] = {
-    "Transformer":        ["WAP Returns", "Rolling RV (5 s)", "Rolling RV (30 s)", "Order Book Imbalance", "Bid-Ask Spread"],
-    "LSTM":               ["WAP Returns", "Rolling RV (5 s)", "Rolling RV (30 s)", "Order Book Imbalance", "Bid-Ask Spread"],
-    "GRU":                ["WAP Returns", "Rolling RV (5 s)", "Rolling RV (30 s)", "Order Book Imbalance", "Bid-Ask Spread"],
     "XGBoost":            ["Lagged RV (1-step)", "Lagged RV (5-step)", "Rolling RV (60 s)", "Bid-Ask Spread", "Depth Ratio (Level 1)", "Time of Day"],
     "Random Forest":      ["Lagged RV (1-step)", "Lagged RV (5-step)", "Rolling RV (60 s)", "Bid-Ask Spread", "Depth Ratio (Level 1)", "Time of Day"],
     "HAR-RV":             ["Rolling RV (5 s)", "Rolling RV (300 s)", "Lagged RV (1-step)", "Lagged RV (5-step)"],
     "GARCH(1,1)":         ["Mid-Price Change"],
     "Linear Regression":  ["Lagged RV (1-step)", "Lagged RV (5-step)", "Rolling RV (60 s)"],
+    "Ridge Regression":   ["Lagged RV (1-step)", "Lagged RV (5-step)", "Rolling RV (60 s)", "Bid-Ask Spread"],
+    "LASSO":              ["Lagged RV (1-step)", "Lagged RV (5-step)", "Rolling RV (60 s)", "Bid-Ask Spread", "Order Book Imbalance"],
+    "Decision Tree":      ["Lagged RV (1-step)", "Lagged RV (5-step)", "Rolling RV (60 s)", "Depth Ratio (Level 1)", "Time of Day"],
 }
 
 LOSS_FUNCTIONS = ["RMSE", "RMSPE", "QLIKE", "MAE", "MAPE", "Huber"]
@@ -62,22 +66,43 @@ LOSS_DESCRIPTIONS = {
 def _init_state() -> None:
     if "model_list" not in st.session_state:
         st.session_state.model_list = []
+    else:
+        st.session_state.model_list = [
+            {
+                key: value
+                for key, value in model.items()
+                if key != "name"
+            }
+            for model in st.session_state.model_list
+            if model.get("type") in AVAILABLE_MODELS
+        ]
     if "builder_feature_mode" not in st.session_state:
         st.session_state.builder_feature_mode = "Auto"
+    if "run_status" not in st.session_state:
+        st.session_state.run_status = None
 
 
 def _model_type_icon(model_type: str) -> str:
     icons = {
-        "Transformer": "🤖",
-        "LSTM": "🔁",
-        "GRU": "🔂",
         "XGBoost": "🌲",
         "Random Forest": "🌳",
         "HAR-RV": "📐",
         "GARCH(1,1)": "📊",
         "Linear Regression": "📏",
+        "Ridge Regression": "📉",
+        "LASSO": "✂️",
+        "Decision Tree": "🌿",
     }
     return icons.get(model_type, "⚙️")
+
+
+def _model_display_name(models: list[dict], index: int) -> str:
+    model_type = models[index]["type"]
+    total_of_type = sum(1 for model in models if model.get("type") == model_type)
+    if total_of_type == 1:
+        return model_type
+    occurrence = sum(1 for model in models[: index + 1] if model.get("type") == model_type)
+    return f"{model_type} #{occurrence}"
 
 
 # ---------------------------------------------------------------------------
@@ -97,28 +122,8 @@ def _render_builder() -> None:
     # all values back to their defaults (equivalent to clear_on_submit).
     v = st.session_state.get("builder_v", 0)
 
-    # ---- Model type + name ----
-    c1, c2 = st.columns([1, 1])
-    with c1:
-        model_type = st.selectbox("Model architecture", AVAILABLE_MODELS, key=f"mt_{v}")
-    with c2:
-        model_name = st.text_input(
-            "Model name (optional)",
-            placeholder="Leave blank to auto-name",
-            key=f"mn_{v}",
-        )
-
-    st.divider()
-
-    # ---- Prediction target ----
-    st.markdown("**Prediction target**")
-    pred_seconds = st.slider(
-        "Forecast horizon (seconds of volatility to predict)",
-        min_value=30, max_value=300, value=60, step=30,
-        key=f"ps_{v}",
-        help="The model will predict mean realised volatility over this trailing window.",
-    )
-    st.caption(f"Target: mean RV over the last **{pred_seconds} s** of the evaluation window")
+    # ---- Model type ----
+    model_type = st.selectbox("Model architecture", AVAILABLE_MODELS, key=f"mt_{v}")
 
     st.divider()
 
@@ -145,7 +150,7 @@ def _render_builder() -> None:
         selected_features = st.multiselect(
             "Select features",
             options=ALL_FEATURES,
-            default=AUTO_FEATURES.get("LSTM", ALL_FEATURES[:5]),
+            default=AUTO_FEATURES.get(model_type, ALL_FEATURES[:5]),
             key=f"sf_{v}",
         )
         if not selected_features:
@@ -153,27 +158,9 @@ def _render_builder() -> None:
 
     st.divider()
 
-    # ---- Train / test split ----
-    st.markdown("**Train / test split**")
-    split_options = [f"{t} / {100-t} %" for t in range(50, 100, 10)]
-    split_label = st.select_slider(
-        "Training proportion",
-        options=split_options,
-        value="70 / 30 %",
-        key=f"sl_{v}",
-    )
-    train_pct = int(split_label.split(" / ")[0])
-    n_folds = round(1 / (1 - train_pct / 100))
-    st.markdown(
-        f'<div style="text-align:right; margin-top:-0.5rem;">'
-        f'<span style="'
-        f'display:inline-block; padding:0.3rem 0.9rem; border-radius:6px;'
-        f'border:1px solid rgba(128,128,128,0.3);'
-        f'font-size:0.85rem; font-weight:500;">'
-        f'{n_folds}-fold cross-validation'
-        f'</span></div>',
-        unsafe_allow_html=True,
-    )
+    # ---- Cross-validation ----
+    st.markdown("**Cross-validation**")
+    st.caption("Each run uses 5 shuffled folds over time windows: 80% training and 20% held out per fold.")
 
     st.divider()
 
@@ -204,24 +191,20 @@ def _render_builder() -> None:
 
     st.divider()
 
-    if st.button("➕  Add model to list", type="primary", use_container_width=True):
+    if st.button("➕  Add model to list", type="primary", width="stretch"):
         if feature_mode == "Manual" and not selected_features:
             st.error("Cannot add model: no features selected.")
             return
 
-        name = model_name.strip() or f"{model_type} #{len(st.session_state.model_list) + 1}"
         losses = list(selected_losses)
         if use_custom and custom_loss_name:
             losses.append(f"{custom_loss_name} (custom)")
 
         entry = {
-            "name": name,
             "type": model_type,
             "feature_mode": feature_mode,
             "features": selected_features,
-            "pred_seconds": pred_seconds,
-            "train_pct": train_pct,
-            "n_folds": n_folds,
+            "pred_seconds": 30,
             "losses": losses,
             "custom_loss": {"name": custom_loss_name, "expr": custom_loss_expr} if (use_custom and custom_loss_name) else None,
         }
@@ -242,12 +225,11 @@ def _render_model_list() -> None:
 
     for i, m in enumerate(models):
         icon = _model_type_icon(m["type"])
-        with st.expander(f"{icon}  **{m['name']}**  —  {m['type']}", expanded=True):
+        with st.expander(f"{icon}  **{_model_display_name(models, i)}**", expanded=True):
             col_left, col_right, col_del = st.columns([3, 3, 1])
 
             with col_left:
-                st.markdown(f"**Forecast horizon:** {m['pred_seconds']} s")
-                st.markdown(f"**Train / test split:** {m['train_pct']} / {100 - m['train_pct']} %  ·  {m.get('n_folds', '—')}-fold CV")
+                st.markdown("**Cross-validation:** 5 folds  ·  80 / 20 % per fold")
                 st.markdown(f"**Loss functions:** {', '.join(m['losses']) if m['losses'] else '—'}")
                 if m.get("custom_loss"):
                     st.caption(f"Custom: `{m['custom_loss']['name']}` — {m['custom_loss']['expr']}")
@@ -268,19 +250,56 @@ def _render_model_list() -> None:
 
     st.divider()
 
+    stock_options = available_stocks()
+    st.subheader("Run Scope")
+    st.caption(
+        f"Runs use all {len(stock_options)} stock parquet files and all available time windows per stock."
+        if stock_options
+        else "No stock parquet files were found."
+    )
+
     col_run, col_clear = st.columns([3, 1])
     with col_run:
-        st.button(
+        if st.button(
             "▶  Run all models",
             type="primary",
-            use_container_width=True,
-            disabled=True,
-            help="Execution coming soon.",
-        )
+            width="stretch",
+            disabled=not stock_options,
+            help="Train and evaluate the configured models on every real stock parquet file.",
+        ):
+            try:
+                with st.spinner("Running backend pipeline on real parquet data..."):
+                    status = start_run_from_ui(models)
+                st.session_state.run_status = status
+                st.session_state.selected_run_id = status["run_id"]
+                st.session_state.selected_stock = stock_options[0]
+                st.success(
+                    f"Run {status['run_id']} completed: "
+                    f"{status.get('n_predictions', 0):,} predictions across "
+                    f"{status.get('n_stocks', len(stock_options))} stock(s)."
+                )
+                if status.get("feature_source") == "cache":
+                    st.caption(f"Feature cache: {status.get('feature_cache_status')}")
+                elif status.get("feature_cache_status"):
+                    st.warning(f"Feature cache not used: {status.get('feature_cache_status')}")
+                if status.get("unsupported_model_types"):
+                    st.warning("Some requested models were skipped: " + "; ".join(status["unsupported_model_types"]))
+            except Exception as exc:
+                st.session_state.run_status = None
+                st.error(f"Run failed: {exc}")
     with col_clear:
-        if st.button("Clear all", use_container_width=True):
+        if st.button("Clear all", width="stretch"):
             st.session_state.model_list = []
             st.rerun()
+
+    status = st.session_state.get("run_status")
+    if status:
+        st.caption(
+            f"Latest run: {status['run_id']} · "
+            f"{status.get('n_feature_rows', 0):,} feature rows · "
+            f"{status.get('n_predictions', 0):,} predictions · "
+            f"features: {status.get('feature_source', 'unknown')}"
+        )
 
 
 def _render_loss_reference() -> None:
