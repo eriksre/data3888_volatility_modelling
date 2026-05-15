@@ -19,7 +19,10 @@ import json
 import os
 import sys
 import time
+import warnings
 from pathlib import Path
+
+warnings.filterwarnings("ignore", message="X does not have valid feature names")
 
 import numpy as np
 import pandas as pd
