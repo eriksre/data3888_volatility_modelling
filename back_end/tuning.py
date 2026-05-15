@@ -253,7 +253,7 @@ def run_tuning():
         from sklearn.linear_model import Lasso
         from sklearn.pipeline import Pipeline
         from sklearn.preprocessing import StandardScaler
-        results["LASSO"] = tune_model(
+        raw = tune_model(
             "LASSO",
             Pipeline([
                 ("scaler", StandardScaler()),
@@ -262,6 +262,8 @@ def run_tuning():
             {"reg__alpha": LASSO_GRID["alpha"]},
             X, y,
         )
+        # strip pipeline prefix so params match Erik's Lasso(alpha=...) directly
+        results["LASSO"] = {k.replace("reg__", ""): v for k, v in raw.items()}
     else:
         print("\nLASSO — already tuned, skipping.")
 
