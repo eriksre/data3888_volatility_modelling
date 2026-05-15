@@ -32,6 +32,8 @@ cluster_models.py      <- train models on each cluster
 individual_models.py   <- train models on each stock individually
 timeseries_models.py   <- HAR-RV and GARCH benchmarks
 recluster_v2.py        <- alternative clustering methods (GMM, correlation)
+
+report.qmd
 ```
 
 ## Run order
@@ -42,6 +44,7 @@ python cluster_validation.py  # ~5 min
 python cluster_models.py      # ~15 min
 python individual_models.py   # ~20 min
 python timeseries_models.py   # ~5 min
+quarto preview report.qmd
 ```
 
 All outputs go to `plots/`.
