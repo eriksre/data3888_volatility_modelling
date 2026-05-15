@@ -33,15 +33,6 @@ def stock_path(stock: str | int, source_dir: str | Path) -> Path:
     return Path(source_dir) / f"{stock_name}.parquet"
 
 
-def source_fingerprint(path: Path) -> dict[str, object]:
-    stat = path.stat()
-    return {
-        "path": str(path),
-        "size": stat.st_size,
-        "mtime_ns": stat.st_mtime_ns,
-    }
-
-
 def load_raw_stock(stock: str | int, data_config: DataConfig) -> pd.DataFrame:
     path = stock_path(stock, data_config.source_dir)
     if not path.exists():

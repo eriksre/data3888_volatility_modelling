@@ -217,20 +217,3 @@ def resolve_manual_feature_labels(labels: tuple[str, ...], available_columns: li
             continue
         selected.extend(FEATURE_LABEL_MAP.get(label, []))
     return [col for col in dict.fromkeys(selected) if col in available_columns]
-
-
-def select_auto_features(X_train: pd.DataFrame, y_train: pd.Series, n_features: int) -> list[str]:
-    scores: list[tuple[str, float]] = []
-    y = y_train.to_numpy(dtype=float)
-    y_std = np.nanstd(y)
-    for col in X_train.columns:
-        x = X_train[col].to_numpy(dtype=float)
-        if np.nanstd(x) <= 0 or y_std <= 0:
-            score = 0.0
-        else:
-            score = float(abs(np.corrcoef(np.nan_to_num(x), np.nan_to_num(y))[0, 1]))
-            if not np.isfinite(score):
-                score = 0.0
-        scores.append((col, score))
-    scores.sort(key=lambda item: item[1], reverse=True)
-    return [col for col, _ in scores[: max(1, min(n_features, len(scores)))]]

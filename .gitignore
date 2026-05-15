@@ -1,6 +1,8 @@
 
 #Ignore cursor AI rules
 .cursor/rules/codacy.mdc
+AGENTS.md
+
 
 # Data files
 *.xlsx

@@ -1,0 +1,81 @@
+{
+  "total_seconds": 169.48230687499927,
+  "features_rows": 428932,
+  "feature_columns_loaded": 259,
+  "prediction_rows": 1715728,
+  "cache_status": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/features_all_stocks.parquet",
+  "component_seconds": [
+    {
+      "component": "cache compatibility check",
+      "seconds": 0.0021600000000034925
+    },
+    {
+      "component": "cache read + stock filter + sort",
+      "seconds": 0.7942532080005549
+    },
+    {
+      "component": "usable feature column scan",
+      "seconds": 1.160025209000196
+    },
+    {
+      "component": "training matrix copy",
+      "seconds": 0.15139537499999278
+    },
+    {
+      "component": "fold creation",
+      "seconds": 0.003979665999395365
+    },
+    {
+      "component": "fold train/test filtering total",
+      "seconds": 1.1163165830012076
+    },
+    {
+      "component": "auto feature selection total",
+      "seconds": 11.715759373997571
+    },
+    {
+      "component": "model fit total",
+      "seconds": 149.8028439160007
+    },
+    {
+      "component": "predict + prediction dataframe total",
+      "seconds": 3.5279694169985305
+    },
+    {
+      "component": "feature importance extraction total",
+      "seconds": 0.26763325099909707
+    },
+    {
+      "component": "concat prediction parts",
+      "seconds": 0.013736332999542356
+    },
+    {
+      "component": "concat importance parts",
+      "seconds": 0.000331166999785637
+    },
+    {
+      "component": "metrics summarization",
+      "seconds": 0.26102575000004435
+    },
+    {
+      "component": "universe similarity + clusters + summary",
+      "seconds": 0.30439920800017717
+    },
+    {
+      "component": "artifact parquet/json writes",
+      "seconds": 0.35140041599970573
+    }
+  ],
+  "model_total_seconds": {
+    "XGBoost": 4.835051874999408,
+    "Random Forest": 153.32256491599946,
+    "Linear Regression": 3.552797875999204,
+    "Ridge Regression": 3.60390741700121
+  },
+  "model_prediction_rows": {
+    "XGBoost": 428932,
+    "Random Forest": 428932,
+    "Linear Regression": 428932,
+    "Ridge Regression": 428932
+  }
+}

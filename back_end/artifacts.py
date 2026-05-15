@@ -50,7 +50,6 @@ def write_run_artifacts(
     feature_importance: pd.DataFrame,
     universe_summary: pd.DataFrame,
     similarity: pd.DataFrame,
-    clusters: pd.DataFrame,
 ) -> Path:
     directory = run_dir(run_id)
     write_json(directory / "config.json", config.to_dict() if hasattr(config, "to_dict") else config)
@@ -60,7 +59,6 @@ def write_run_artifacts(
     feature_importance.to_parquet(directory / "feature_importance.parquet", index=False)
     universe_summary.to_parquet(directory / "universe_summary.parquet", index=False)
     similarity.to_parquet(directory / "stock_similarity.parquet", index=True)
-    clusters.to_parquet(directory / "clusters.parquet", index=False)
     return directory
 
 

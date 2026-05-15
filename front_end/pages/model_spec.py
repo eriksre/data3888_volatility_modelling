@@ -1,23 +1,16 @@
 import streamlit as st
 
-from back_end.service import available_model_types, available_stocks, start_run_from_ui
+from back_end.service import available_model_catalog, available_stocks, load_pca_variance_explained, start_run_from_ui
+from charts import pca_cumulative_variance_chart, pca_variance_explained_chart
 
 # ---------------------------------------------------------------------------
-# Static reference data (dummy for now)
+# Static reference data
 # ---------------------------------------------------------------------------
 
-FALLBACK_MODELS = [
-    "XGBoost",
-    "Random Forest",
-    "HAR-RV",
-    "GARCH(1,1)",
-    "Linear Regression",
-    "Ridge Regression",
-    "LASSO",
-    "Decision Tree",
-]
-
-AVAILABLE_MODELS = available_model_types() or FALLBACK_MODELS
+MODEL_CATALOG = available_model_catalog()
+AVAILABLE_MODELS = [model["type"] for model in MODEL_CATALOG]
+MODEL_ICONS = {model["type"]: model["icon"] for model in MODEL_CATALOG}
+MAX_PCA_COMPONENTS = 30
 
 ALL_FEATURES = [
     "WAP Returns",
@@ -31,22 +24,9 @@ ALL_FEATURES = [
     "Depth Ratio (Levels 1-3)",
     "Volume Imbalance",
     "Mid-Price Change",
-    "Time of Day",
-    "Day of Week",
     "Lagged RV (1-step)",
     "Lagged RV (5-step)",
 ]
-
-AUTO_FEATURES: dict[str, list[str]] = {
-    "XGBoost":            ["Lagged RV (1-step)", "Lagged RV (5-step)", "Rolling RV (60 s)", "Bid-Ask Spread", "Depth Ratio (Level 1)", "Time of Day"],
-    "Random Forest":      ["Lagged RV (1-step)", "Lagged RV (5-step)", "Rolling RV (60 s)", "Bid-Ask Spread", "Depth Ratio (Level 1)", "Time of Day"],
-    "HAR-RV":             ["Rolling RV (5 s)", "Rolling RV (300 s)", "Lagged RV (1-step)", "Lagged RV (5-step)"],
-    "GARCH(1,1)":         ["Mid-Price Change"],
-    "Linear Regression":  ["Lagged RV (1-step)", "Lagged RV (5-step)", "Rolling RV (60 s)"],
-    "Ridge Regression":   ["Lagged RV (1-step)", "Lagged RV (5-step)", "Rolling RV (60 s)", "Bid-Ask Spread"],
-    "LASSO":              ["Lagged RV (1-step)", "Lagged RV (5-step)", "Rolling RV (60 s)", "Bid-Ask Spread", "Order Book Imbalance"],
-    "Decision Tree":      ["Lagged RV (1-step)", "Lagged RV (5-step)", "Rolling RV (60 s)", "Depth Ratio (Level 1)", "Time of Day"],
-}
 
 LOSS_FUNCTIONS = ["RMSE", "RMSPE", "QLIKE", "MAE", "MAPE", "Huber"]
 
@@ -75,25 +55,14 @@ def _init_state() -> None:
             }
             for model in st.session_state.model_list
             if model.get("type") in AVAILABLE_MODELS
+            and model.get("feature_mode", "PCA") in {"PCA", "Manual"}
         ]
-    if "builder_feature_mode" not in st.session_state:
-        st.session_state.builder_feature_mode = "Auto"
     if "run_status" not in st.session_state:
         st.session_state.run_status = None
 
 
 def _model_type_icon(model_type: str) -> str:
-    icons = {
-        "XGBoost": "🌲",
-        "Random Forest": "🌳",
-        "HAR-RV": "📐",
-        "GARCH(1,1)": "📊",
-        "Linear Regression": "📏",
-        "Ridge Regression": "📉",
-        "LASSO": "✂️",
-        "Decision Tree": "🌿",
-    }
-    return icons.get(model_type, "⚙️")
+    return MODEL_ICONS.get(model_type, "⚙️")
 
 
 def _model_display_name(models: list[dict], index: int) -> str:
@@ -109,14 +78,23 @@ def _model_display_name(models: list[dict], index: int) -> str:
 # Sub-sections
 # ---------------------------------------------------------------------------
 
+@st.cache_data(show_spinner=False)
+def _cached_pca_variance(stocks: tuple[str, ...]):
+    return load_pca_variance_explained(MAX_PCA_COMPONENTS, stocks)
+
+
 def _render_builder() -> None:
     """Configures and adds a model to the list.
 
-    Uses plain widgets (no st.form) so the Auto/Manual radio triggers an
+    Uses plain widgets (no st.form) so the feature-mode radio triggers an
     immediate rerender without waiting for a submit button.  A 'form version'
     counter in session state is incremented on submit to reset all widget keys.
     """
     st.subheader("Configure a Model")
+
+    if not AVAILABLE_MODELS:
+        st.error("No backend models are currently available.")
+        return
 
     # Version counter — incrementing it changes every widget key, which resets
     # all values back to their defaults (equivalent to clear_on_submit).
@@ -131,26 +109,39 @@ def _render_builder() -> None:
     st.markdown("**Features**")
     feature_mode = st.radio(
         "Feature selection",
-        ["Auto", "Manual"],
+        ["PCA", "Manual"],
+        index=0,
         horizontal=True,
         key=f"fm_{v}",
-        help="Auto: choose how many features to select automatically. Manual: pick specific features by name.",
+        help="PCA: compress all usable features into components. Manual: pick feature groups by name.",
     )
 
-    if feature_mode == "Auto":
+    if feature_mode == "PCA":
         n_features = st.slider(
-            "Number of features to auto-select",
-            min_value=1, max_value=30, value=5, step=1,
+            "Number of PCA components",
+            min_value=1,
+            max_value=MAX_PCA_COMPONENTS,
+            value=15,
+            step=1,
             key=f"nf_{v}",
-            help="The top N features will be ranked and selected at training time.",
+            help="All usable raw features are standardised, then compressed into N principal components.",
         )
         selected_features = list(range(n_features))
-        st.caption(f"{n_features} feature{'s' if n_features != 1 else ''} will be selected automatically at training time.")
+        with st.spinner("Computing PCA variance explained..."):
+            pca_variance = _cached_pca_variance(tuple(available_stocks()))
+        st.plotly_chart(
+            pca_variance_explained_chart(pca_variance, n_features),
+            width="stretch",
+        )
+        st.plotly_chart(
+            pca_cumulative_variance_chart(pca_variance, n_features),
+            width="stretch",
+        )
     else:
         selected_features = st.multiselect(
             "Select features",
             options=ALL_FEATURES,
-            default=AUTO_FEATURES.get(model_type, ALL_FEATURES[:5]),
+            default=[],
             key=f"sf_{v}",
         )
         if not selected_features:
@@ -158,14 +149,25 @@ def _render_builder() -> None:
 
     st.divider()
 
+    parameters = {}
+    if "GARCH" in model_type:
+        st.markdown("**Runtime**")
+        n_jobs = st.slider(
+            "Parallel workers",
+            min_value=1,
+            max_value=8,
+            value=4,
+            step=1,
+            key=f"gj_{v}",
+            help="Runs GARCH fits across stocks in separate worker processes.",
+        )
+        parameters["n_jobs"] = n_jobs
+        st.divider()
+
     # ---- Loss functions ----
     st.markdown("**Loss function(s)**")
-    selected_losses = st.multiselect(
-        "Evaluation metrics",
-        options=LOSS_FUNCTIONS,
-        default=["RMSE", "QLIKE"],
-        key=f"lo_{v}",
-    )
+    selected_losses = list(LOSS_FUNCTIONS)
+    st.caption(f"Using all built-in loss functions: {', '.join(selected_losses)}")
 
     use_custom = st.checkbox("Add a custom loss function", key=f"uc_{v}")
     custom_loss_name = ""
@@ -200,6 +202,7 @@ def _render_builder() -> None:
             "features": selected_features,
             "pred_seconds": 30,
             "losses": losses,
+            "parameters": parameters,
             "custom_loss": {"name": custom_loss_name, "expr": custom_loss_expr} if (use_custom and custom_loss_name) else None,
         }
         st.session_state.model_list.append(entry)
@@ -229,9 +232,9 @@ def _render_model_list() -> None:
                     st.caption(f"Custom: `{m['custom_loss']['name']}` — {m['custom_loss']['expr']}")
 
             with col_right:
-                if m.get("feature_mode") == "Auto":
+                if m.get("feature_mode") == "PCA":
                     n = len(m["features"])
-                    st.markdown(f"**Features:** {n} (auto-selected at training time)")
+                    st.markdown(f"**Features:** {n} PCA component{'s' if n != 1 else ''}")
                 else:
                     st.markdown(f"**Features ({len(m['features'])}):**")
                     badges = "  ".join(f"`{f}`" for f in m["features"])
@@ -276,8 +279,6 @@ def _render_model_list() -> None:
                     st.caption(f"Feature cache: {status.get('feature_cache_status')}")
                 elif status.get("feature_cache_status"):
                     st.warning(f"Feature cache not used: {status.get('feature_cache_status')}")
-                if status.get("unsupported_model_types"):
-                    st.warning("Some requested models were skipped: " + "; ".join(status["unsupported_model_types"]))
             except Exception as exc:
                 st.session_state.run_status = None
                 st.error(f"Run failed: {exc}")

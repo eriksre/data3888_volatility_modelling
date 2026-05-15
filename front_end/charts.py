@@ -238,3 +238,207 @@ def realised_vol_chart(
         hovermode="x unified",
     )
     return fig
+
+
+def realised_vs_predicted_scatter(stock_id: str, predictions: pd.DataFrame | None = None) -> go.Figure:
+    fig = go.Figure()
+    fig.update_layout(
+        title=dict(text=f"Realised vs Predicted Volatility — {stock_id}", font=dict(size=16)),
+        xaxis=dict(
+            title="Realised Volatility",
+            tickformat=".4f",
+            showgrid=True,
+            gridcolor="rgba(200,200,200,0.22)",
+        ),
+        yaxis=dict(
+            title="Predicted Volatility",
+            tickformat=".4f",
+            showgrid=True,
+            gridcolor="rgba(200,200,200,0.22)",
+        ),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        margin=dict(t=80, b=50),
+    )
+
+    if predictions is None or predictions.empty:
+        fig.add_annotation(
+            text="No backend predictions available for this stock.",
+            xref="paper",
+            yref="paper",
+            x=0.5,
+            y=0.5,
+            showarrow=False,
+            font=dict(color="#adb5bd"),
+        )
+        return fig
+
+    required = {"model", "actual_vol", "pred_vol"}
+    if not required.issubset(predictions.columns):
+        fig.add_annotation(
+            text="Prediction data is missing realised or predicted volatility columns.",
+            xref="paper",
+            yref="paper",
+            x=0.5,
+            y=0.5,
+            showarrow=False,
+            font=dict(color="#adb5bd"),
+        )
+        return fig
+
+    scatter_data = predictions.copy()
+    scatter_data["actual_vol"] = pd.to_numeric(scatter_data["actual_vol"], errors="coerce")
+    scatter_data["pred_vol"] = pd.to_numeric(scatter_data["pred_vol"], errors="coerce")
+    scatter_data = scatter_data.dropna(subset=["actual_vol", "pred_vol"])
+    scatter_data = scatter_data[np.isfinite(scatter_data["actual_vol"]) & np.isfinite(scatter_data["pred_vol"])]
+
+    if scatter_data.empty:
+        fig.add_annotation(
+            text="No finite realised/predicted volatility pairs are available for this stock.",
+            xref="paper",
+            yref="paper",
+            x=0.5,
+            y=0.5,
+            showarrow=False,
+            font=dict(color="#adb5bd"),
+        )
+        return fig
+
+    min_vol = float(scatter_data[["actual_vol", "pred_vol"]].min().min())
+    max_vol = float(scatter_data[["actual_vol", "pred_vol"]].max().max())
+    padding = (max_vol - min_vol) * 0.05 if max_vol > min_vol else max(max_vol * 0.05, 0.001)
+    axis_min = max(0.0, min_vol - padding)
+    axis_max = max_vol + padding
+
+    fig.add_trace(
+        go.Scattergl(
+            x=[axis_min, axis_max],
+            y=[axis_min, axis_max],
+            mode="lines",
+            line=dict(color="#adb5bd", width=1.5, dash="dot"),
+            name="Perfect prediction",
+            hoverinfo="skip",
+        )
+    )
+
+    has_hover_context = {"time_id", "fold"}.issubset(scatter_data.columns)
+    for idx, (model, frame) in enumerate(scatter_data.groupby("model", sort=False)):
+        fig.add_trace(
+            go.Scattergl(
+                x=frame["actual_vol"],
+                y=frame["pred_vol"],
+                mode="markers",
+                marker=dict(
+                    color=MODEL_COLORS[idx % len(MODEL_COLORS)],
+                    size=8,
+                    opacity=0.78,
+                    line=dict(width=0.5, color="rgba(255,255,255,0.55)"),
+                ),
+                name=str(model),
+                customdata=frame[["time_id", "fold"]].to_numpy() if has_hover_context else None,
+                hovertemplate=(
+                    "Realised: %{x:.6f}<br>"
+                    "Predicted: %{y:.6f}<br>"
+                    "Time ID: %{customdata[0]}<br>"
+                    "Fold: %{customdata[1]}<extra>%{fullData.name}</extra>"
+                    if has_hover_context
+                    else "Realised: %{x:.6f}<br>Predicted: %{y:.6f}<extra>%{fullData.name}</extra>"
+                ),
+            )
+        )
+
+    fig.update_xaxes(range=[axis_min, axis_max])
+    fig.update_yaxes(range=[axis_min, axis_max], scaleanchor="x", scaleratio=1)
+    return fig
+
+
+def pca_variance_explained_chart(variance: pd.DataFrame | None, n_components: int) -> go.Figure:
+    fig = go.Figure()
+    fig.update_layout(
+        height=280,
+        title=dict(text="Variance Explained by Principal Component", font=dict(size=15)),
+        xaxis=dict(title="Principal component", showgrid=False),
+        yaxis=dict(
+            title="Proportion of variance explained",
+            tickformat=".0%",
+            range=[0, 1],
+            showgrid=True,
+            gridcolor="rgba(200,200,200,0.22)",
+        ),
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        margin=dict(t=55, b=45, l=20, r=20),
+        showlegend=False,
+    )
+
+    if variance is None or variance.empty:
+        fig.add_annotation(
+            text="PCA variance data is not available.",
+            xref="paper",
+            yref="paper",
+            x=0.5,
+            y=0.5,
+            showarrow=False,
+            font=dict(color="#adb5bd"),
+        )
+        return fig
+
+    plot_df = variance.head(int(n_components)).copy()
+    max_ratio = float(plot_df["explained_variance_ratio"].max())
+    fig.update_yaxes(range=[0, min(1.0, max(max_ratio * 1.15, 0.05))])
+    fig.add_trace(
+        go.Bar(
+            x=plot_df["component"],
+            y=plot_df["explained_variance_ratio"],
+            marker_color="#4dabf7",
+            hovertemplate="%{x}<br>Variance explained: %{y:.2%}<extra></extra>",
+        )
+    )
+    return fig
+
+
+def pca_cumulative_variance_chart(variance: pd.DataFrame | None, n_components: int) -> go.Figure:
+    fig = go.Figure()
+    fig.update_layout(
+        height=280,
+        title=dict(text="Cumulative Variance Explained", font=dict(size=15)),
+        xaxis=dict(title="Principal component", showgrid=False),
+        yaxis=dict(
+            title="Cumulative variance",
+            tickformat=".0%",
+            range=[0, 1],
+            showgrid=True,
+            gridcolor="rgba(200,200,200,0.22)",
+        ),
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        margin=dict(t=55, b=45, l=20, r=20),
+        showlegend=False,
+    )
+
+    if variance is None or variance.empty:
+        fig.add_annotation(
+            text="PCA variance data is not available.",
+            xref="paper",
+            yref="paper",
+            x=0.5,
+            y=0.5,
+            showarrow=False,
+            font=dict(color="#adb5bd"),
+        )
+        return fig
+
+    plot_df = variance.head(int(n_components)).copy()
+    plot_df["cumulative_variance_ratio"] = plot_df["explained_variance_ratio"].cumsum()
+    fig.add_trace(
+        go.Scatter(
+            x=plot_df["component"],
+            y=plot_df["cumulative_variance_ratio"],
+            mode="lines+markers",
+            line=dict(color="#f59f00", width=2.5),
+            marker=dict(size=7, color="#f59f00"),
+            hovertemplate="%{x}<br>Cumulative variance explained: %{y:.2%}<extra></extra>",
+        )
+    )
+    return fig

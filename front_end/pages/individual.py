@@ -2,7 +2,7 @@ import pandas as pd
 import streamlit as st
 
 from back_end.service import available_stocks, get_latest_or_selected_run, load_individual_page_data
-from charts import realised_vol_chart
+from charts import realised_vol_chart, realised_vs_predicted_scatter
 from stock_registry import ALL_BOOK_STEMS
 
 
@@ -50,6 +50,14 @@ def render() -> None:
         width="stretch",
     )
 
+    st.plotly_chart(
+        realised_vs_predicted_scatter(
+            stock_id,
+            payload.get("stock_predictions"),
+        ),
+        width="stretch",
+    )
+
     st.subheader("Model Performance")
     st.caption("Prediction metrics over the last 5-minute window · inference time per prediction call")
 
@@ -58,9 +66,8 @@ def render() -> None:
         "inference_us": "Inference time (μs)",
         "rmse":         "RMSE",
         "qlike":        "QLIKE",
-        "pred_target":  "Mean 5-min Vol",
     })
-    for col in ["Inference time (μs)", "RMSE", "QLIKE", "Mean 5-min Vol"]:
+    for col in ["Inference time (μs)", "RMSE", "QLIKE"]:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")
     st.dataframe(
@@ -71,6 +78,5 @@ def render() -> None:
             "Inference time (μs)": st.column_config.NumberColumn(format="%.3f μs"),
             "RMSE":           st.column_config.NumberColumn(format="%.6f"),
             "QLIKE":          st.column_config.NumberColumn(format="%.5f"),
-            "Mean 5-min Vol": st.column_config.NumberColumn(format="%.6f"),
         },
     )

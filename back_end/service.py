@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import fields
 import json
 from typing import Any
 
@@ -7,33 +8,26 @@ import pandas as pd
 
 import numpy as np
 
-from .artifacts import latest_run_id, list_runs, load_run_config, load_run_frame
+from .artifacts import latest_run_id, load_run_config, load_run_frame
 from .config import (
     DataConfig,
     FeatureConfig,
     FRONTEND_MODEL_METRICS,
+    SUPPORTED_MODEL_TYPES,
     RunConfig,
     SplitConfig,
     UniverseConfig,
+    model_catalog,
     model_specs_from_ui,
     normalize_stock_id,
 )
 from .data import load_processed_stock, list_available_stocks
 from .evaluation import compute_metrics
+from .feature_cache import load_cached_features
+from .features import load_stock_features
 from .models import model_availability_issue
 from .pipeline import run_pipeline
-
-
-FRONTEND_RUNNABLE_MODEL_TYPES = (
-    "XGBoost",
-    "Random Forest",
-    "HAR-RV",
-    "GARCH(1,1)",
-    "Linear Regression",
-    "Ridge Regression",
-    "LASSO",
-    "Decision Tree",
-)
+from .universe import build_model_comparison, build_pca_variance_explained, build_stock_pca
 
 
 def available_stocks(source_dir: str | None = None) -> list[str]:
@@ -41,8 +35,13 @@ def available_stocks(source_dir: str | None = None) -> list[str]:
     return list_available_stocks(data_config.source_dir)
 
 
-def available_model_types() -> list[str]:
-    return [model_type for model_type in FRONTEND_RUNNABLE_MODEL_TYPES if model_availability_issue(model_type) is None]
+def available_model_catalog() -> list[dict[str, Any]]:
+    available_types = [
+        model_type
+        for model_type in SUPPORTED_MODEL_TYPES
+        if model_availability_issue(model_type) is None
+    ]
+    return model_catalog(available_types)
 
 
 def start_run_from_ui(
@@ -59,7 +58,6 @@ def start_run_from_ui(
         raise ValueError("No stock parquet files were found to run.")
 
     statuses = []
-    skipped_groups = []
     grouped_entries: dict[int, list[dict[str, Any]]] = {}
 
     for entry in model_entries:
@@ -68,16 +66,14 @@ def start_run_from_ui(
 
     for horizon, entries in grouped_entries.items():
         specs = model_specs_from_ui(entries)
-        runnable = [spec for spec in specs if model_availability_issue(spec.model_type) is None]
-        if not runnable:
-            skipped_groups.append({
-                "forecast_horizon": horizon,
-                "train_pct": 80,
-                "n_folds": 5,
-                "models": [spec.name for spec in specs],
-                "reason": "No requested models in this group are implemented in the backend yet.",
-            })
-            continue
+        issues = [
+            issue
+            for spec in specs
+            for issue in [model_availability_issue(spec.model_type)]
+            if issue is not None
+        ]
+        if issues:
+            raise ValueError("; ".join(sorted(set(issues))))
 
         config = RunConfig(
             data=DataConfig(
@@ -98,10 +94,7 @@ def start_run_from_ui(
         raise ValueError("No runnable backend model groups were produced from the UI model list.")
 
     if len(statuses) == 1:
-        status = statuses[0]
-        if skipped_groups:
-            status.setdefault("skipped_groups", skipped_groups)
-        return status
+        return statuses[0]
 
     return {
         "run_id": statuses[-1]["run_id"],
@@ -109,14 +102,9 @@ def start_run_from_ui(
         "grouped_run": True,
         "run_ids": [status["run_id"] for status in statuses],
         "groups": statuses,
-        "skipped_groups": skipped_groups,
         "n_feature_rows": sum(int(status.get("n_feature_rows", 0)) for status in statuses),
         "n_predictions": sum(int(status.get("n_predictions", 0)) for status in statuses),
     }
-
-
-def get_runs() -> list[dict[str, Any]]:
-    return list_runs()
 
 
 def get_latest_or_selected_run(run_id: str | None = None) -> str | None:
@@ -131,11 +119,6 @@ def load_metrics(run_id: str | None = None) -> pd.DataFrame:
 def load_predictions(run_id: str | None = None) -> pd.DataFrame:
     selected = get_latest_or_selected_run(run_id)
     return load_run_frame(selected, "predictions.parquet") if selected else pd.DataFrame()
-
-
-def load_feature_importance(run_id: str | None = None) -> pd.DataFrame:
-    selected = get_latest_or_selected_run(run_id)
-    return load_run_frame(selected, "feature_importance.parquet") if selected else pd.DataFrame()
 
 
 def load_universe_summary(run_id: str | None = None) -> pd.DataFrame:
@@ -202,22 +185,16 @@ def load_window_realized_series(run_id: str | None, stock_id: str, time_id: int)
 
     cutoff_idx = len(returns) - horizon
     split_second = int(seconds[cutoff_idx])
-    rolling_window = max(5, min(30, cutoff_idx))
-    observed_vol = (
-        pd.Series(returns[:cutoff_idx] ** 2)
+    rolling_window = 30
+    rolling_vol = (
+        pd.Series(returns ** 2)
         .rolling(rolling_window, min_periods=5)
-        .mean()
+        .sum()
         .pow(0.5)
         .to_numpy()
     )
-    forecast_returns = returns[cutoff_idx:]
-    forecast_vol = (
-        pd.Series(forecast_returns ** 2)
-        .expanding(min_periods=1)
-        .mean()
-        .pow(0.5)
-        .to_numpy()
-    )
+    observed_vol = rolling_vol[:cutoff_idx]
+    forecast_vol = rolling_vol[cutoff_idx:]
     observed = pd.DataFrame({
         "seconds_in_bucket": seconds[:cutoff_idx],
         "realized_vol": observed_vol,
@@ -296,7 +273,7 @@ def load_individual_model_metrics(run_id: str | None, stock_id: str, include_sca
     predictions = prediction_series(run_id, stock_id)
     use_scaffold = include_scaffold and metrics.empty and predictions.empty
     scaffold = pd.DataFrame(FRONTEND_MODEL_METRICS) if use_scaffold else pd.DataFrame(
-        columns=["model", "inference_us", "rmse", "qlike", "pred_target"]
+        columns=["model", "inference_us", "rmse", "qlike"]
     )
 
     if not metrics.empty:
@@ -312,7 +289,6 @@ def load_individual_model_metrics(run_id: str | None, stock_id: str, include_sca
                             "inference_us": np.nan,
                             "rmse": np.nan,
                             "qlike": np.nan,
-                            "pred_target": np.nan,
                         }]),
                     ],
                     ignore_index=True,
@@ -322,12 +298,7 @@ def load_individual_model_metrics(run_id: str | None, stock_id: str, include_sca
             scaffold.loc[idx, "qlike"] = row.get("qlike", np.nan)
 
     if not predictions.empty:
-        pred_target = predictions.groupby("model")["actual_vol"].mean()
         inference_us = predictions.groupby("model")["inference_ms"].mean() * 1000
-        for model, value in pred_target.items():
-            idx = scaffold.index[scaffold["model"] == model]
-            if len(idx):
-                scaffold.loc[idx, "pred_target"] = value
         for model, value in inference_us.items():
             idx = scaffold.index[scaffold["model"] == model]
             if len(idx) and pd.notna(value):
@@ -335,7 +306,7 @@ def load_individual_model_metrics(run_id: str | None, stock_id: str, include_sca
 
     order = {row["model"]: idx for idx, row in enumerate(FRONTEND_MODEL_METRICS)}
     scaffold["_order"] = scaffold["model"].map(order).fillna(len(order))
-    for col in ["inference_us", "rmse", "qlike", "pred_target"]:
+    for col in ["inference_us", "rmse", "qlike"]:
         scaffold[col] = pd.to_numeric(scaffold[col], errors="coerce")
     return scaffold.sort_values(["_order", "model"]).drop(columns=["_order"]).reset_index(drop=True)
 
@@ -349,6 +320,7 @@ def load_individual_page_data(run_id: str | None, stock_id: str, time_id: int | 
     realized_series = load_window_realized_series(run_id, stock_id, selected_time_id)
     return {
         "model_metrics": load_individual_model_metrics(run_id, stock_id),
+        "stock_predictions": predictions,
         "predictions": selected_predictions,
         "prediction_curves": build_prediction_curves(realized_series, selected_predictions),
         "realized_series": realized_series,
@@ -357,14 +329,69 @@ def load_individual_page_data(run_id: str | None, stock_id: str, time_id: int | 
     }
 
 
-def load_universe_page_data(run_id: str | None = None) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Return `(summary_df, corr_df)` with the columns expected by the Universe scaffold."""
+def load_pca_variance_explained(
+    n_components: int,
+    stocks: list[str] | tuple[str, ...] | None = None,
+) -> pd.DataFrame:
+    selected_stocks = tuple(normalize_stock_id(stock) for stock in (stocks or available_stocks()))
+    if not selected_stocks:
+        return pd.DataFrame(columns=["component", "explained_variance_ratio"])
+
+    data_config = DataConfig(stocks=selected_stocks)
+    feature_config = FeatureConfig()
+    cached, _ = load_cached_features(data_config, feature_config)
+    if cached is not None:
+        features = cached
+    else:
+        frames = [load_stock_features(stock, data_config, feature_config) for stock in selected_stocks]
+        frames = [frame for frame in frames if not frame.empty]
+        features = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
+
+    return build_pca_variance_explained(features, feature_config, n_components)
+
+
+def _dataclass_from_payload(cls, payload: dict[str, Any]):
+    defaults = cls()
+    values = {}
+    for field in fields(cls):
+        value = payload.get(field.name, getattr(defaults, field.name))
+        if isinstance(getattr(defaults, field.name), tuple):
+            value = tuple(value)
+        values[field.name] = value
+    return cls(**values)
+
+
+def _load_run_features(run_id: str | None) -> tuple[pd.DataFrame, FeatureConfig]:
+    selected = get_latest_or_selected_run(run_id)
+    if not selected:
+        return pd.DataFrame(), FeatureConfig()
+
+    config = load_run_config(selected)
+    data_config = _dataclass_from_payload(DataConfig, config.get("data", {}))
+    feature_config = _dataclass_from_payload(FeatureConfig, config.get("features", {}))
+
+    cached, _ = load_cached_features(data_config, feature_config)
+    if cached is not None:
+        return cached, feature_config
+
+    frames = [load_stock_features(stock, data_config, feature_config) for stock in data_config.stocks]
+    frames = [frame for frame in frames if not frame.empty]
+    if not frames:
+        return pd.DataFrame(), feature_config
+    return pd.concat(frames, ignore_index=True), feature_config
+
+
+def load_universe_page_data(run_id: str | None = None) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, list[float], pd.DataFrame]:
+    """Return data frames expected by the Universe scaffold."""
     summary = load_universe_summary(run_id)
     similarity = load_similarity(run_id)
     expected = ["stock_id", "mean_volatility", "rmse", "qlike", "best_model"]
     if summary.empty:
-        return pd.DataFrame(columns=expected), pd.DataFrame()
+        return pd.DataFrame(columns=expected), pd.DataFrame(), pd.DataFrame(), [], pd.DataFrame()
     for col in expected:
         if col not in summary.columns:
             summary[col] = np.nan if col != "best_model" else ""
-    return summary[expected].copy(), similarity.copy()
+    features, feature_config = _load_run_features(run_id)
+    pca_df, pca_explained = build_stock_pca(features, feature_config)
+    model_comparison = build_model_comparison(load_predictions(run_id), load_metrics(run_id))
+    return summary[expected].copy(), similarity.copy(), pca_df, pca_explained, model_comparison

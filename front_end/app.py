@@ -3,7 +3,7 @@ Volatility Modelling Dashboard
 Three tabs (top navigation):
   1. Model Specification  – model details, metrics, and data pipeline
   2. Individual Stock     – volatility deep-dive with stock selector
-  3. Universe             – correlation-based grouping / cluster map
+  3. Universe             – cross-stock metrics, similarity, and PCA map
 """
 
 import sys
@@ -36,6 +36,12 @@ st.markdown(
     /* Remove Streamlit's own header so our bar sits at the true top */
     header[data-testid="stHeader"] {
         display: none;
+    }
+
+    /* Remove Streamlit's sidebar shell and collapsed-sidebar control */
+    section[data-testid="stSidebar"],
+    div[data-testid="stSidebarCollapsedControl"] {
+        display: none !important;
     }
 
     /* Fixed, full-width nav bar */

@@ -12,7 +12,7 @@ from .data import load_processed_stock
 from .evaluation import make_time_id_folds, summarize_fold_metrics
 from .feature_cache import load_cached_features
 from .features import load_stock_features, usable_feature_columns
-from .models import model_availability_issue, run_garch_on_processed, run_model_for_fold
+from .models import is_arch_family_model, model_availability_issue, run_garch_on_processed, run_model_for_fold
 from .universe import build_universe
 
 
@@ -23,7 +23,7 @@ def _normalize_config(config: RunConfig) -> RunConfig:
 
 
 def _load_feature_inputs(config: RunConfig) -> tuple[pd.DataFrame, dict[str, pd.DataFrame], str, str | None]:
-    needs_processed = any(spec.model_type == "GARCH(1,1)" for spec in config.models)
+    needs_processed = any(is_arch_family_model(spec.model_type) for spec in config.models)
     cached, cache_status = load_cached_features(config.data, config.features)
     if cached is not None:
         processed_by_stock = {
@@ -42,6 +42,33 @@ def _load_feature_inputs(config: RunConfig) -> tuple[pd.DataFrame, dict[str, pd.
     if not frames:
         return pd.DataFrame(), processed_by_stock, "live", cache_status
     return pd.concat(frames, ignore_index=True), processed_by_stock, "live", cache_status
+
+
+def _run_garch_for_spec(
+    processed_by_stock: dict[str, pd.DataFrame],
+    spec: ModelSpec,
+    horizon: int,
+    fold: int,
+    test_ids: set[int],
+) -> pd.DataFrame:
+    processed_frames = list(processed_by_stock.values())
+    if not processed_frames:
+        return pd.DataFrame()
+
+    n_jobs = int(spec.parameters.get("n_jobs", 1) or 1)
+    if n_jobs == 1 or len(processed_frames) == 1:
+        parts = [
+            run_garch_on_processed(processed, spec, horizon, fold, test_ids)
+            for processed in processed_frames
+        ]
+    else:
+        from joblib import Parallel, delayed
+
+        parts = Parallel(n_jobs=n_jobs, backend="loky")(
+            delayed(run_garch_on_processed)(processed, spec, horizon, fold, test_ids)
+            for processed in processed_frames
+        )
+    return pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
 
 
 def _run_models(
@@ -63,7 +90,6 @@ def _run_models(
     folds = make_time_id_folds(data["time_id"], config.split)
     prediction_parts = []
     importance_parts = []
-    unsupported = []
 
     for split in folds:
         fold = int(split["fold"])
@@ -77,14 +103,15 @@ def _run_models(
         for spec in config.models:
             issue = model_availability_issue(spec.model_type)
             if issue is not None:
-                unsupported.append(issue)
-                continue
-            if spec.model_type == "GARCH(1,1)":
-                garch_parts = [
-                    run_garch_on_processed(processed, spec, config.features.forecast_horizon, fold, test_ids)
-                    for processed in processed_by_stock.values()
-                ]
-                garch_predictions = pd.concat(garch_parts, ignore_index=True) if garch_parts else pd.DataFrame()
+                raise ValueError(issue)
+            if is_arch_family_model(spec.model_type):
+                garch_predictions = _run_garch_for_spec(
+                    processed_by_stock,
+                    spec,
+                    config.features.forecast_horizon,
+                    fold,
+                    test_ids,
+                )
                 if not garch_predictions.empty:
                     prediction_parts.append(garch_predictions)
                 continue
@@ -95,7 +122,7 @@ def _run_models(
                 test,
                 fold,
                 config.features.feature_mode,
-                config.features.n_auto_features,
+                config.features.n_pca_components,
                 config.features.manual_features,
             )
             if not predictions.empty:
@@ -112,7 +139,7 @@ def _run_models(
         if importance_parts
         else pd.DataFrame(columns=["model", "fold", "feature", "importance"])
     )
-    return predictions, metrics, importance, sorted(set(unsupported))
+    return predictions, metrics, importance, []
 
 
 def run_pipeline(config: RunConfig | None = None) -> dict[str, Any]:
@@ -133,13 +160,14 @@ def run_pipeline(config: RunConfig | None = None) -> dict[str, Any]:
             if issue is not None
         }
     )
-    predictions, metrics, feature_importance, unsupported = _run_models(config, features, processed_by_stock)
-    unsupported = sorted(set(requested_model_issues + unsupported))
+    if requested_model_issues:
+        raise ValueError("; ".join(requested_model_issues))
+    predictions, metrics, feature_importance, _ = _run_models(config, features, processed_by_stock)
 
     if config.universe.enabled:
-        universe_summary, similarity, clusters = build_universe(features, predictions, config.universe)
+        universe_summary, similarity = build_universe(features, predictions)
     else:
-        universe_summary = similarity = clusters = pd.DataFrame()
+        universe_summary = similarity = pd.DataFrame()
 
     status = {
         "run_id": run_id,
@@ -150,7 +178,6 @@ def run_pipeline(config: RunConfig | None = None) -> dict[str, Any]:
         "n_predictions": int(len(predictions)),
         "train_pct": int(config.split.train_pct),
         "n_folds": int(config.split.n_folds),
-        "unsupported_model_types": unsupported,
         "feature_source": feature_source,
         "feature_cache_status": feature_cache_status,
     }
@@ -163,7 +190,6 @@ def run_pipeline(config: RunConfig | None = None) -> dict[str, Any]:
         feature_importance,
         universe_summary,
         similarity,
-        clusters,
     )
     status["artifact_dir"] = str(directory)
     return status
@@ -173,7 +199,7 @@ def run_smoke_pipeline(stocks: tuple[str, ...] = ("stock_0",), max_time_ids: int
     return run_pipeline(
         RunConfig(
             data=DataConfig(stocks=stocks, max_time_ids_per_stock=max_time_ids),
-            features=FeatureConfig(forecast_horizon=60, n_auto_features=8),
+            features=FeatureConfig(forecast_horizon=60, n_pca_components=8),
             models=(
                 ModelSpec(name="HAR-RV", model_type="HAR-RV"),
                 ModelSpec(name="Linear Regression", model_type="Linear Regression"),

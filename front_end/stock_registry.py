@@ -1,27 +1,4 @@
-"""
-Stock registry – all identifiers across both datasets.
-
-NAMED_STOCKS   : 10 labelled instruments from Optiver_additional data/stock_ids.csv
-                 { ticker: stock_id }
-
-BOOK_STOCKS    : 112 anonymous order-book files from individual_book_train/
-                 each entry is the stem of the file, e.g. "stock_0"
-"""
-
-# ── Dataset 1 : Optiver_additional data/stock_ids.csv ─────────────────────────
-# instrument  →  stock_id
-NAMED_STOCKS: dict[str, int] = {
-    "AAPL":     9323,
-    "AMZN":     22675,
-    "FACEBOOK": 22951,
-    "GOOGC":    22729,
-    "GS":       48219,
-    "JPM":      22753,
-    "NFLX":     22771,
-    "QQQ":      104919,
-    "SPY":      50200,
-    "TSLA":     8382,
-}
+"""Fallback stock identifiers for the anonymous order-book files."""
 
 # ── Dataset 2 : individual_book_train/ ────────────────────────────────────────
 # stems of every CSV present in individual_book_train/
@@ -140,6 +117,4 @@ BOOK_STOCKS: list[str] = [
     "stock_126",
 ]
 
-# ── Combined ──────────────────────────────────────────────────────────────────
-ALL_NAMED_TICKERS: list[str] = list(NAMED_STOCKS.keys())
 ALL_BOOK_STEMS: list[str] = BOOK_STOCKS
