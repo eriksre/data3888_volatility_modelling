@@ -187,7 +187,7 @@ def load_window_realized_series(run_id: str | None, stock_id: str, time_id: int)
     rolling_vol = (
         pd.Series(returns ** 2)
         .rolling(rolling_window, min_periods=5)
-        .sum()
+        .mean()
         .pow(0.5)
         .to_numpy()
     )
