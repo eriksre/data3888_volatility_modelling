@@ -8,6 +8,7 @@ from front_end.pages.universe import (
     _model_comparison_view,
     _parse_manual_stocks,
     _ranking_chart,
+    _select_display_stocks,
     _stock_summary_view,
 )
 
@@ -18,6 +19,20 @@ class UniverseViewTest(unittest.TestCase):
 
         self.assertEqual(selected, ["stock_0", "stock_2"])
         self.assertEqual(missing, ["stock_99"])
+
+    def test_select_display_stocks_adds_manual_stocks_without_duplicates(self):
+        ranked_df = pd.DataFrame(
+            [
+                {"stock_id": "stock_0", "rmse": 0.10},
+                {"stock_id": "stock_1", "rmse": 0.20},
+                {"stock_id": "stock_2", "rmse": 0.30},
+                {"stock_id": "stock_3", "rmse": 0.40},
+            ]
+        )
+
+        selected = _select_display_stocks(ranked_df, ["stock_1", "stock_3"], top_n=2)
+
+        self.assertEqual(selected["stock_id"].tolist(), ["stock_0", "stock_1", "stock_3"])
 
     def test_stock_summary_view_orders_stocks_numerically_and_formats_names(self):
         summary_df = pd.DataFrame(

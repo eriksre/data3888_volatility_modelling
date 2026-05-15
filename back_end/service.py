@@ -27,7 +27,7 @@ from .feature_cache import load_cached_features
 from .features import load_stock_features
 from .models import model_availability_issue
 from .pipeline import run_pipeline
-from .universe import build_model_comparison, build_pca_variance_explained, build_stock_pca
+from .universe import LOSS_METRICS, build_model_comparison, build_pca_variance_explained, build_stock_pca
 
 
 def available_stocks(source_dir: str | None = None) -> list[str]:
@@ -86,8 +86,6 @@ def start_run_from_ui(
             universe=UniverseConfig(enabled=True),
         )
         status = run_pipeline(config)
-        if any(entry.get("custom_loss") for entry in entries):
-            status.setdefault("warnings", []).append("Custom loss functions are stored in the UI spec but not computed yet.")
         statuses.append(status)
 
     if not statuses:
@@ -381,17 +379,51 @@ def _load_run_features(run_id: str | None) -> tuple[pd.DataFrame, FeatureConfig]
     return pd.concat(frames, ignore_index=True), feature_config
 
 
+def _backfill_universe_summary_loss_metrics(summary: pd.DataFrame, predictions: pd.DataFrame) -> pd.DataFrame:
+    if summary.empty or predictions.empty:
+        return summary
+
+    missing_metrics = [metric for metric in LOSS_METRICS if metric in summary.columns and summary[metric].isna().any()]
+    if not missing_metrics:
+        return summary
+
+    rows = []
+    for (stock_id, model), chunk in predictions.groupby(["stock_id", "model"], dropna=False):
+        rows.append({"stock_id": stock_id, **compute_metrics(chunk, str(model))})
+    if not rows:
+        return summary
+
+    stock_model_metrics = pd.DataFrame(rows)
+    best_metrics = (
+        stock_model_metrics.sort_values(["stock_id", "rmse"])
+        .groupby("stock_id", as_index=False)
+        .first()
+        .rename(columns={"model": "best_model"})
+    )
+    fill_cols = ["stock_id", "best_model", *missing_metrics]
+    backfill = best_metrics[[col for col in fill_cols if col in best_metrics.columns]]
+    filled = summary.merge(backfill, on=["stock_id", "best_model"], how="left", suffixes=("", "_backfill"))
+    for metric in missing_metrics:
+        backfill_col = f"{metric}_backfill"
+        if backfill_col in filled.columns:
+            filled[metric] = filled[metric].fillna(filled[backfill_col])
+            filled = filled.drop(columns=backfill_col)
+    return filled
+
+
 def load_universe_page_data(run_id: str | None = None) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, list[float], pd.DataFrame]:
     """Return data frames expected by the Universe scaffold."""
     summary = load_universe_summary(run_id)
     similarity = load_similarity(run_id)
-    expected = ["stock_id", "mean_volatility", "rmse", "qlike", "best_model"]
+    expected = ["stock_id", "mean_volatility", *LOSS_METRICS, "best_model"]
     if summary.empty:
         return pd.DataFrame(columns=expected), pd.DataFrame(), pd.DataFrame(), [], pd.DataFrame()
     for col in expected:
         if col not in summary.columns:
             summary[col] = np.nan if col != "best_model" else ""
+    predictions = load_predictions(run_id)
+    summary = _backfill_universe_summary_loss_metrics(summary, predictions)
     features, feature_config = _load_run_features(run_id)
     pca_df, pca_explained = build_stock_pca(features, feature_config)
-    model_comparison = build_model_comparison(load_predictions(run_id), load_metrics(run_id))
+    model_comparison = build_model_comparison(predictions, load_metrics(run_id))
     return summary[expected].copy(), similarity.copy(), pca_df, pca_explained, model_comparison

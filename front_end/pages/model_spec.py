@@ -11,6 +11,7 @@ MODEL_CATALOG = available_model_catalog()
 AVAILABLE_MODELS = [model["type"] for model in MODEL_CATALOG]
 MODEL_ICONS = {model["type"]: model["icon"] for model in MODEL_CATALOG}
 MAX_PCA_COMPONENTS = 30
+DEFAULT_GARCH_N_JOBS = 4
 
 ALL_FEATURES = [
     "WAP Returns",
@@ -51,7 +52,7 @@ def _init_state() -> None:
             {
                 key: value
                 for key, value in model.items()
-                if key != "name"
+                if key in {"type", "feature_mode", "features", "pred_seconds", "parameters"}
             }
             for model in st.session_state.model_list
             if model.get("type") in AVAILABLE_MODELS
@@ -72,6 +73,24 @@ def _model_display_name(models: list[dict], index: int) -> str:
         return model_type
     occurrence = sum(1 for model in models[: index + 1] if model.get("type") == model_type)
     return f"{model_type} #{occurrence}"
+
+
+def _model_entry(
+    model_type: str,
+    feature_mode: str,
+    selected_features: list[str] | list[int],
+    parameters: dict,
+) -> dict:
+    model_parameters = {}
+    if "GARCH" in model_type:
+        model_parameters["n_jobs"] = int(parameters.get("n_jobs", DEFAULT_GARCH_N_JOBS))
+    return {
+        "type": model_type,
+        "feature_mode": feature_mode,
+        "features": list(selected_features),
+        "pred_seconds": 30,
+        "parameters": model_parameters,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -156,7 +175,7 @@ def _render_builder() -> None:
             "Parallel workers",
             min_value=1,
             max_value=8,
-            value=4,
+            value=DEFAULT_GARCH_N_JOBS,
             step=1,
             key=f"gj_{v}",
             help="Runs GARCH fits across stocks in separate worker processes.",
@@ -166,48 +185,44 @@ def _render_builder() -> None:
 
     # ---- Loss functions ----
     st.markdown("**Loss function(s)**")
-    selected_losses = list(LOSS_FUNCTIONS)
-    st.caption(f"Using all built-in loss functions: {', '.join(selected_losses)}")
-
-    use_custom = st.checkbox("Add a custom loss function", key=f"uc_{v}")
-    custom_loss_name = ""
-    custom_loss_expr = ""
-    if use_custom:
-        cc1, cc2 = st.columns([1, 2])
-        with cc1:
-            custom_loss_name = st.text_input(
-                "Custom loss name", placeholder="e.g. Weighted RMSE", key=f"cln_{v}"
-            )
-        with cc2:
-            custom_loss_expr = st.text_input(
-                "Expression / parameters",
-                placeholder="e.g. w1=2.0, w2=0.5  or  lambda y, yhat: ...",
-                key=f"cle_{v}",
-            )
+    st.caption(f"Using all built-in loss functions: {', '.join(LOSS_FUNCTIONS)}")
 
     st.divider()
 
-    if st.button("➕  Add model to list", type="primary", width="stretch"):
-        if feature_mode == "Manual" and not selected_features:
-            st.error("Cannot add model: no features selected.")
-            return
+    col_add, col_add_all = st.columns([3, 1])
+    with col_add:
+        if st.button("➕  Add model to list", type="primary", width="stretch"):
+            if feature_mode == "Manual" and not selected_features:
+                st.error("Cannot add model: no features selected.")
+                return
 
-        losses = list(selected_losses)
-        if use_custom and custom_loss_name:
-            losses.append(f"{custom_loss_name} (custom)")
+            entry = _model_entry(model_type, feature_mode, selected_features, parameters)
+            st.session_state.model_list.append(entry)
+            st.session_state.builder_v = v + 1  # reset all widget values
+            st.rerun()
+    with col_add_all:
+        if st.button(
+            "Add all models",
+            width="stretch",
+            help="Add every available backend model that is not already configured.",
+        ):
+            if feature_mode == "Manual" and not selected_features:
+                st.error("Cannot add models: no features selected.")
+                return
 
-        entry = {
-            "type": model_type,
-            "feature_mode": feature_mode,
-            "features": selected_features,
-            "pred_seconds": 30,
-            "losses": losses,
-            "parameters": parameters,
-            "custom_loss": {"name": custom_loss_name, "expr": custom_loss_expr} if (use_custom and custom_loss_name) else None,
-        }
-        st.session_state.model_list.append(entry)
-        st.session_state.builder_v = v + 1  # reset all widget values
-        st.rerun()
+            configured_types = {model.get("type") for model in st.session_state.model_list}
+            entries = [
+                _model_entry(available_model, feature_mode, selected_features, parameters)
+                for available_model in AVAILABLE_MODELS
+                if available_model not in configured_types
+            ]
+            if not entries:
+                st.info("All available models are already configured.")
+                return
+
+            st.session_state.model_list.extend(entries)
+            st.session_state.builder_v = v + 1  # reset all widget values
+            st.rerun()
 
 
 def _render_model_list() -> None:
@@ -227,9 +242,7 @@ def _render_model_list() -> None:
 
             with col_left:
                 st.markdown("**Cross-validation:** 5 folds  ·  80 / 20 % per fold")
-                st.markdown(f"**Loss functions:** {', '.join(m['losses']) if m['losses'] else '—'}")
-                if m.get("custom_loss"):
-                    st.caption(f"Custom: `{m['custom_loss']['name']}` — {m['custom_loss']['expr']}")
+                st.markdown(f"**Loss functions:** {', '.join(LOSS_FUNCTIONS)}")
 
             with col_right:
                 if m.get("feature_mode") == "PCA":

@@ -8,7 +8,7 @@ import pandas as pd
 from back_end.config import FeatureConfig, ModelSpec
 from back_end.evaluation import summarize_fold_metrics
 from back_end.models import run_model_for_fold
-from back_end.universe import build_model_comparison, build_pca_variance_explained, build_stock_pca
+from back_end.universe import LOSS_METRICS, build_model_comparison, build_pca_variance_explained, build_stock_pca, build_universe_summary
 
 
 class PcaFeatureModeTest(unittest.TestCase):
@@ -121,6 +121,29 @@ class PcaFeatureModeTest(unittest.TestCase):
         self.assertEqual(model_a["feature_set"], "2 PCs")
         self.assertEqual(model_b["feature_set"], "3 PCs")
         self.assertAlmostEqual(model_a["mean_inference_ms"], 0.15)
+
+    def test_universe_summary_includes_all_loss_metrics_for_best_model(self):
+        features = pd.DataFrame(
+            [
+                {"stock_id": "stock_0", "time_id": 1, "target_var": 1.0, "target_vol": 1.0},
+                {"stock_id": "stock_0", "time_id": 2, "target_var": 4.0, "target_vol": 2.0},
+            ]
+        )
+        predictions = pd.DataFrame(
+            [
+                {"stock_id": "stock_0", "time_id": 1, "model": "Model A", "pred_var": 1.0, "actual_var": 1.0},
+                {"stock_id": "stock_0", "time_id": 2, "model": "Model A", "pred_var": 4.0, "actual_var": 4.0},
+                {"stock_id": "stock_0", "time_id": 1, "model": "Model B", "pred_var": 2.0, "actual_var": 1.0},
+                {"stock_id": "stock_0", "time_id": 2, "model": "Model B", "pred_var": 5.0, "actual_var": 4.0},
+            ]
+        )
+
+        summary = build_universe_summary(features, predictions)
+
+        self.assertEqual(summary.loc[0, "best_model"], "Model A")
+        for metric in LOSS_METRICS:
+            self.assertIn(metric, summary.columns)
+            self.assertEqual(summary.loc[0, metric], 0.0)
 
 
 if __name__ == "__main__":

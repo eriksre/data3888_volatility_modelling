@@ -10,6 +10,9 @@ from .evaluation import compute_metrics
 from .features import usable_feature_columns
 
 
+LOSS_METRICS = ["mse", "rmse", "mae", "mape", "rmspe", "qlike"]
+
+
 def build_similarity(features: pd.DataFrame) -> pd.DataFrame:
     if features.empty:
         return pd.DataFrame()
@@ -22,7 +25,7 @@ def build_similarity(features: pd.DataFrame) -> pd.DataFrame:
 
 def build_universe_summary(features: pd.DataFrame, predictions: pd.DataFrame) -> pd.DataFrame:
     if features.empty:
-        return pd.DataFrame(columns=["stock_id", "mean_volatility", "rmse", "qlike", "best_model"])
+        return pd.DataFrame(columns=["stock_id", "mean_volatility", *LOSS_METRICS, "best_model"])
     summary = (
         features.groupby("stock_id", as_index=False)
         .agg(mean_volatility=("target_vol", "mean"), mean_variance=("target_var", "mean"), n_windows=("time_id", "nunique"))
@@ -35,14 +38,14 @@ def build_universe_summary(features: pd.DataFrame, predictions: pd.DataFrame) ->
         best = (
             stock_model_metrics.sort_values(["stock_id", "rmse"])
             .groupby("stock_id", as_index=False)
-            .first()[["stock_id", "model", "rmse", "qlike"]]
+            .first()[["stock_id", "model", *LOSS_METRICS]]
             .rename(columns={"model": "best_model"})
         )
         summary = summary.merge(best, on="stock_id", how="left")
     else:
         summary["best_model"] = ""
-        summary["rmse"] = np.nan
-        summary["qlike"] = np.nan
+        for metric in LOSS_METRICS:
+            summary[metric] = np.nan
     return summary
 
 

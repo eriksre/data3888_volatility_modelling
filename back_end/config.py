@@ -184,7 +184,6 @@ class ModelSpec:
     feature_mode: Literal["PCA", "Manual"] | None = None
     n_pca_components: int | None = None
     manual_features: tuple[str, ...] = ()
-    metrics: tuple[str, ...] = ("RMSE", "QLIKE")
 
 
 @dataclass(frozen=True)
@@ -241,7 +240,6 @@ def model_spec_from_ui(entry: dict[str, Any], *, name: str | None = None) -> Mod
         feature_mode=feature_mode,
         n_pca_components=n_pca_components,
         manual_features=manual_features,
-        metrics=tuple(entry.get("losses") or ("RMSE", "QLIKE")),
     )
 
 

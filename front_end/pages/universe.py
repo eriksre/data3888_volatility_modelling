@@ -5,6 +5,16 @@ import streamlit as st
 from back_end.config import normalize_stock_id
 from back_end.service import get_latest_or_selected_run, load_universe_page_data
 
+RANKING_METRICS = {
+    "Mean Volatility": "mean_volatility",
+    "MSE": "mse",
+    "RMSE": "rmse",
+    "MAE": "mae",
+    "MAPE": "mape",
+    "RMSPE": "rmspe",
+    "QLIKE": "qlike",
+}
+
 
 def _stock_number(stock_id: str) -> int:
     text = str(stock_id)
@@ -51,7 +61,11 @@ def _stock_summary_view(summary_df: pd.DataFrame) -> pd.DataFrame:
         columns={
             "stock_label": "Stock",
             "mean_volatility": "Mean volatility",
+            "mse": "MSE",
             "rmse": "RMSE",
+            "mae": "MAE",
+            "mape": "MAPE",
+            "rmspe": "RMSPE",
             "qlike": "QLIKE",
             "best_model": "Best model",
         }
@@ -73,6 +87,12 @@ def _parse_manual_stocks(raw_stocks: str, available_stocks: list[str]) -> tuple[
             missing.append(stock)
 
     return selected, missing
+
+
+def _select_display_stocks(ranked_df: pd.DataFrame, manual_stocks: list[str], top_n: int) -> pd.DataFrame:
+    selected_stocks = ranked_df.head(top_n)["stock_id"].tolist()
+    selected_stocks.extend(stock for stock in manual_stocks if stock not in selected_stocks)
+    return ranked_df.set_index("stock_id").loc[selected_stocks].reset_index()
 
 
 def _load_universe_data() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, list[float], pd.DataFrame]:
@@ -167,7 +187,11 @@ def _pca_scatter(
             "stock_id": False,
             "stock_label": False,
             "mean_volatility": ":.6f",
+            "mse": ":.6f",
             "rmse": ":.6f",
+            "mae": ":.6f",
+            "mape": ":.3f",
+            "rmspe": ":.6f",
             "qlike": ":.5f",
             x_component: ":.3f",
             y_component: ":.3f",
@@ -176,7 +200,11 @@ def _pca_scatter(
             x_component: _pca_axis_label(x_component, explained),
             y_component: _pca_axis_label(y_component, explained),
             "mean_volatility": "Mean volatility",
+            "mse": "MSE",
             "rmse": "RMSE",
+            "mae": "MAE",
+            "mape": "MAPE",
+            "rmspe": "RMSPE",
             "qlike": "QLIKE",
             "stock_label": "Stock",
         },
@@ -237,48 +265,55 @@ def render() -> None:
         st.info("Run models from the Model Specification tab to populate the universe view from backend artifacts.")
         return
 
+    num_stocks = len(summary_df)
+    avg_vol = summary_df["mean_volatility"].mean()
+    most_volatile_stock = _stock_label(summary_df.loc[summary_df["mean_volatility"].idxmax(), "stock_id"])
+    hardest_stock = _stock_label(summary_df.loc[summary_df["rmse"].idxmax(), "stock_id"])
+
     st.subheader("Universe Controls")
-    c1, c2, c3 = st.columns([1.2, 1.2, 1])
+    c1, c2 = st.columns([1.1, 2.2])
 
     with c1:
         ranking_metric = st.selectbox(
             "Ranking metric",
-            ["Mean Volatility", "RMSE", "QLIKE"],
+            list(RANKING_METRICS),
             key="universe_ranking_metric",
+        )
+        manual_stock_input = st.text_area(
+            "Manual stock list",
+            placeholder="0, stock_1, stock_27",
+            help="Adds these stocks to the automatic Top-N set. Duplicates are ignored.",
+            key="universe_manual_stock_list",
+            height=118,
         )
 
     with c2:
-        max_top_n = min(30, len(summary_df))
-        top_n = st.slider(
-            "Top-N stocks to display",
-            min_value=1,
-            max_value=30,
-            value=min(10, max_top_n),
-            key="universe_top_n",
-        )
-        top_n = min(top_n, max_top_n)
-        manual_stock_input = st.text_area(
-            "Manual stock list",
-            placeholder="stock_0, stock_1, stock_27",
-            help="Enter stock ids separated by commas, spaces, or new lines. Leave blank to use automatic Top-N ranking.",
-            key="universe_manual_stock_list",
-            height=96,
-        )
+        top_controls, sort_controls = st.columns([1.4, 1])
+        with top_controls:
+            max_top_n = len(summary_df)
+            top_n = st.slider(
+                "Top-N stocks to display",
+                min_value=1,
+                max_value=max_top_n,
+                value=max_top_n,
+                key="universe_top_n",
+            )
+        with sort_controls:
+            sort_order = st.radio(
+                "Sort order",
+                ["Descending", "Ascending"],
+                horizontal=True,
+                key="universe_sort_order",
+            )
 
-    with c3:
-        sort_order = st.radio(
-            "Sort order",
-            ["Descending", "Ascending"],
-            horizontal=True,
-            key="universe_sort_order",
-        )
+        st.markdown("<div style='height: 1.5rem'></div>", unsafe_allow_html=True)
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("Stocks", f"{num_stocks}")
+        m2.metric("Average volatility", f"{avg_vol:.2f}")
+        m3.metric("Most volatile", most_volatile_stock)
+        m4.metric("Hardest to predict", hardest_stock)
 
-    metric_map = {
-        "Mean Volatility": "mean_volatility",
-        "RMSE": "rmse",
-        "QLIKE": "qlike",
-    }
-    metric_col = metric_map[ranking_metric]
+    metric_col = RANKING_METRICS[ranking_metric]
     ascending = sort_order == "Ascending"
 
     ranked_df = summary_df.sort_values(by=metric_col, ascending=ascending).reset_index(drop=True)
@@ -286,28 +321,22 @@ def render() -> None:
     if missing_stocks:
         st.warning(f"These stocks are not available in the current run: {', '.join(missing_stocks)}")
     if manual_stock_input.strip() and not manual_stocks:
-        st.info("Enter at least one stock from the current run, or clear the manual list to use automatic Top-N ranking.")
+        st.info("Enter at least one stock from the current run, or clear the manual list to use only automatic Top-N ranking.")
         return
 
-    if manual_stocks:
-        top_df = summary_df.set_index("stock_id").loc[manual_stocks].reset_index()
-        selected_count = len(manual_stocks)
-        selected_label = f"Selected {selected_count} Stock{'s' if selected_count != 1 else ''}"
-    else:
-        top_df = _sort_by_stock_number(ranked_df.head(top_n))
-        selected_label = f"Top {top_n} Stocks by {ranking_metric}"
+    top_df = _select_display_stocks(ranked_df, manual_stocks, top_n)
+    selected_count = len(top_df)
+    manual_additions = selected_count - top_n
+    selected_label = f"Top {top_n} by {ranking_metric}"
+    if manual_additions:
+        selected_label = f"{selected_label} + {manual_additions} Manual"
     stock_ordered_df = _sort_by_stock_number(summary_df)
 
-    num_stocks = len(summary_df)
-    avg_vol = summary_df["mean_volatility"].mean()
-    most_volatile_stock = _stock_label(summary_df.loc[summary_df["mean_volatility"].idxmax(), "stock_id"])
-    hardest_stock = _stock_label(summary_df.loc[summary_df["rmse"].idxmax(), "stock_id"])
-
-    m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Stocks", f"{num_stocks}")
-    m2.metric("Average volatility", f"{avg_vol:.6f}")
-    m3.metric("Most volatile", most_volatile_stock)
-    m4.metric("Hardest to predict", hardest_stock)
+    st.subheader(selected_label)
+    st.plotly_chart(
+        _ranking_chart(top_df, metric_col, ranking_metric),
+        width="stretch",
+    )
 
     st.divider()
 
@@ -322,21 +351,15 @@ def render() -> None:
             column_config={
                 "Mean inference (μs)": st.column_config.NumberColumn(format="%.3f"),
                 "# model wins": st.column_config.NumberColumn(format="%d"),
-                "RMSE": st.column_config.NumberColumn(format="%.3f"),
-                "QLIKE": st.column_config.NumberColumn(format="%.3f"),
-                "MAE": st.column_config.NumberColumn(format="%.3f"),
                 "MSE": st.column_config.NumberColumn(format="%.3f"),
+                "RMSE": st.column_config.NumberColumn(format="%.3f"),
+                "MAE": st.column_config.NumberColumn(format="%.3f"),
                 "MAPE": st.column_config.NumberColumn(format="%.3f"),
                 "RMSPE": st.column_config.NumberColumn(format="%.3f"),
+                "QLIKE": st.column_config.NumberColumn(format="%.3f"),
                 "Pearson r": st.column_config.NumberColumn(format="%.3f"),
             },
         )
-
-    st.subheader(selected_label)
-    st.plotly_chart(
-        _ranking_chart(top_df, metric_col, ranking_metric),
-        width="stretch",
-    )
 
     st.subheader("Stock Similarity")
     st.caption("Correlation view for the currently ranked stocks.")
@@ -386,7 +409,11 @@ def render() -> None:
             width='stretch',
             column_config={
                 "Mean volatility": st.column_config.NumberColumn(format="%.6f"),
+                "MSE": st.column_config.NumberColumn(format="%.6f"),
                 "RMSE": st.column_config.NumberColumn(format="%.6f"),
+                "MAE": st.column_config.NumberColumn(format="%.6f"),
+                "MAPE": st.column_config.NumberColumn(format="%.3f"),
+                "RMSPE": st.column_config.NumberColumn(format="%.6f"),
                 "QLIKE": st.column_config.NumberColumn(format="%.5f"),
             },
         )
