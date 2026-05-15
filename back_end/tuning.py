@@ -77,6 +77,17 @@ LGBM_GRID = {
     "reg_lambda":       [0, 0.01, 0.1, 1.0],
 }
 
+DT_GRID = {
+    "max_depth":        [3, 4, 5, 6, 8, 10, 15, None],
+    "min_samples_leaf": [1, 2, 5, 10, 20, 50],
+    "min_samples_split":[2, 5, 10, 20],
+    "max_features":     ["sqrt", "log2", 0.5, 0.7, None],
+}
+
+LASSO_GRID = {
+    "alpha": [1e-4, 5e-4, 1e-3, 5e-3, 0.01, 0.05, 0.1, 0.5, 1.0, 5.0, 10.0],
+}
+
 
 # ── Data loading ───────────────────────────────────────────────────────────────
 
@@ -180,39 +191,79 @@ def run_tuning():
     print("Loading tuning data...")
     X, y = load_tuning_data()
 
-    results: dict[str, dict] = {}
+    # Load existing results so already-tuned models are not re-run
+    if OUTPUT_PATH.exists():
+        with open(OUTPUT_PATH) as f:
+            results = json.load(f)
+        print(f"Loaded existing results for: {list(results.keys())}")
+    else:
+        results = {}
 
     # Random Forest
-    rf_best = tune_model(
-        "Random Forest",
-        RandomForestRegressor(random_state=RANDOM_SEED, n_jobs=-1),
-        RF_GRID, X, y,
-    )
-    results["Random Forest"] = rf_best
+    if "Random Forest" not in results:
+        results["Random Forest"] = tune_model(
+            "Random Forest",
+            RandomForestRegressor(random_state=RANDOM_SEED, n_jobs=-1),
+            RF_GRID, X, y,
+        )
+    else:
+        print("\nRandom Forest — already tuned, skipping.")
 
     # XGBoost
-    try:
-        from xgboost import XGBRegressor
-        xgb_best = tune_model(
-            "XGBoost",
-            XGBRegressor(random_state=RANDOM_SEED, n_jobs=-1, verbosity=0),
-            XGB_GRID, X, y,
-        )
-        results["XGBoost"] = xgb_best
-    except ImportError:
-        print("\nXGBoost not installed — skipping.")
+    if "XGBoost" not in results:
+        try:
+            from xgboost import XGBRegressor
+            results["XGBoost"] = tune_model(
+                "XGBoost",
+                XGBRegressor(random_state=RANDOM_SEED, n_jobs=-1, verbosity=0),
+                XGB_GRID, X, y,
+            )
+        except ImportError:
+            print("\nXGBoost not installed — skipping.")
+    else:
+        print("\nXGBoost — already tuned, skipping.")
 
     # LightGBM
-    try:
-        from lightgbm import LGBMRegressor
-        lgbm_best = tune_model(
-            "LightGBM",
-            LGBMRegressor(random_state=RANDOM_SEED, n_jobs=-1, verbose=-1),
-            LGBM_GRID, X, y,
+    if "LightGBM" not in results:
+        try:
+            from lightgbm import LGBMRegressor
+            results["LightGBM"] = tune_model(
+                "LightGBM",
+                LGBMRegressor(random_state=RANDOM_SEED, n_jobs=-1, verbose=-1),
+                LGBM_GRID, X, y,
+            )
+        except ImportError:
+            print("\nLightGBM not installed — skipping.")
+    else:
+        print("\nLightGBM — already tuned, skipping.")
+
+    # Decision Tree
+    if "Decision Tree" not in results:
+        from sklearn.tree import DecisionTreeRegressor
+        results["Decision Tree"] = tune_model(
+            "Decision Tree",
+            DecisionTreeRegressor(random_state=RANDOM_SEED),
+            DT_GRID, X, y,
         )
-        results["LightGBM"] = lgbm_best
-    except ImportError:
-        print("\nLightGBM not installed — skipping.")
+    else:
+        print("\nDecision Tree — already tuned, skipping.")
+
+    # LASSO
+    if "LASSO" not in results:
+        from sklearn.linear_model import Lasso
+        from sklearn.pipeline import Pipeline
+        from sklearn.preprocessing import StandardScaler
+        results["LASSO"] = tune_model(
+            "LASSO",
+            Pipeline([
+                ("scaler", StandardScaler()),
+                ("reg", Lasso(max_iter=5000)),
+            ]),
+            {"reg__alpha": LASSO_GRID["alpha"]},
+            X, y,
+        )
+    else:
+        print("\nLASSO — already tuned, skipping.")
 
     # Save results
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
