@@ -19,4 +19,4 @@ plots/cluster_validation/
 plots/individual_models/
 plots/recluster/
 plots/recluster_v2/
-plots/timeseries_models_v2/
+plots/timeseries_models_v2/*.pt

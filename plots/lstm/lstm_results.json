@@ -1,0 +1,13 @@
+{
+    "rmse": 0.24129547151388225,
+    "qlike": 0.12373913824558258,
+    "seq_len": 20,
+    "hidden_size": 128,
+    "num_layers": 2,
+    "dropout": 0.2,
+    "learning_rate": 0.0005,
+    "n_stocks": 112,
+    "n_train": 340568,
+    "n_test": 85676,
+    "epochs_trained": 51
+}

@@ -2,11 +2,15 @@
 LSTM model for short-term volatility forecasting.
 
 Each stock's time_ids are treated as a time series. Sliding windows of
-SEQ_LEN consecutive feature rows are fed into a stacked LSTM which predicts
-log(RV) for the next window.
+SEQ_LEN consecutive feature rows — including the current timestep — are
+fed into a stacked LSTM which predicts log(RV) for that window's second half.
 
 One model is trained on all 112 stocks combined (same scope as cluster_models.py)
 using a strict temporal split — no future data ever touches training.
+
+Key design note: the sequence window includes the current timestep so the
+model has access to rv_first (first-half realized volatility) when predicting
+log_rv_second — exactly the same information available to the tree-based models.
 
 Usage:
     pip install torch
@@ -24,7 +28,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.preprocessing import StandardScaler
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -43,13 +47,13 @@ except ImportError:
 # ── Hyperparameters ────────────────────────────────────────────────────────────
 
 SEQ_LEN       = 20     # consecutive windows fed as context to the LSTM
-HIDDEN_SIZE   = 64     # units per LSTM layer
+HIDDEN_SIZE   = 128    # units per LSTM layer
 NUM_LAYERS    = 2      # stacked LSTM layers
 DROPOUT       = 0.2    # dropout between layers and before output head
-LEARNING_RATE = 1e-3
+LEARNING_RATE = 5e-4
 BATCH_SIZE    = 256
-MAX_EPOCHS    = 50
-PATIENCE      = 5      # early stopping — stop if val loss doesn't improve
+MAX_EPOCHS    = 100
+PATIENCE      = 10     # early stopping — stop if val loss doesn't improve
 N_STOCKS      = 112    # use all stocks
 RANDOM_SEED   = 42
 
@@ -80,6 +84,14 @@ class SequenceDataset(Dataset):
 # ── Model ──────────────────────────────────────────────────────────────────────
 
 class LSTMVolatilityModel(nn.Module):
+    """
+    Stacked LSTM with a two-layer MLP head and layer normalisation.
+
+    The sequence window includes the current timestep, so the final hidden
+    state encodes both recent history and the current window's first-half
+    market microstructure features (spread, depth, imbalance, rv_first, etc.).
+    """
+
     def __init__(self, input_size: int, hidden_size: int = HIDDEN_SIZE,
                  num_layers: int = NUM_LAYERS, dropout: float = DROPOUT):
         super().__init__()
@@ -90,13 +102,19 @@ class LSTMVolatilityModel(nn.Module):
             dropout=dropout if num_layers > 1 else 0.0,
             batch_first=True,
         )
-        self.dropout = nn.Dropout(dropout)
-        self.fc      = nn.Linear(hidden_size, 1)
+        self.layer_norm = nn.LayerNorm(hidden_size)
+        self.head = nn.Sequential(
+            nn.Dropout(dropout),
+            nn.Linear(hidden_size, hidden_size // 2),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_size // 2, 1),
+        )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         out, _ = self.lstm(x)
-        out    = self.dropout(out[:, -1, :])   # only the last timestep
-        return self.fc(out).squeeze(-1)
+        out    = self.layer_norm(out[:, -1, :])   # last timestep, normalised
+        return self.head(out).squeeze(-1)
 
 
 # ── Sequence construction ──────────────────────────────────────────────────────
@@ -110,10 +128,14 @@ def make_sequences(
     """
     Build sliding window sequences per stock.
 
-    Returns X_train, y_train, X_test, y_test where train/test split is
-    determined by whether the LAST time_id in each sequence is <= cutoff.
-    Context windows that span the cutoff are allowed — this is not leakage
-    because we're conditioning on observed past values.
+    Each sequence spans [i-seq_len+1 ... i] (inclusive), so the final step
+    in every window IS the current timestep — giving the model access to
+    rv_first and all first-half microstructure features for the window being
+    predicted.  This mirrors the feature matrix used by LightGBM/RF and is
+    the correct setup for same-window volatility forecasting.
+
+    Train/test split: sequences whose last time_id <= cutoff go to train,
+    the rest go to test.
     """
     X_train, y_train = [], []
     X_test,  y_test  = [], []
@@ -124,9 +146,11 @@ def make_sequences(
         y_all = group["log_rv_second"].values.astype(np.float32)
         tids  = group["time_id"].values
 
-        for i in range(seq_len, len(X_all)):
-            seq_X = X_all[i - seq_len : i]   # (seq_len, n_features)
-            seq_y = y_all[i]                  # scalar — predict current window
+        # i is the index of the CURRENT (target) timestep
+        # window covers [i-seq_len+1 ... i]
+        for i in range(seq_len - 1, len(X_all)):
+            seq_X = X_all[i - seq_len + 1 : i + 1]  # (seq_len, n_features)
+            seq_y = y_all[i]
             if tids[i] <= cutoff_time_id:
                 X_train.append(seq_X)
                 y_train.append(seq_y)
@@ -210,13 +234,13 @@ def run_lstm():
     print(f"Temporal cutoff: time_id={cutoff}  "
           f"(train<={cutoff}, test>{cutoff})")
 
-    # Feature scaling — fit on train rows only
+    # Feature scaling — fit on train rows only to prevent leakage
     available_features = [c for c in FEATURE_COLS if c in data.columns]
     train_rows = data[data["time_id"] <= cutoff]
     scaler     = StandardScaler()
     scaler.fit(train_rows[available_features].values)
 
-    data_scaled          = data.copy()
+    data_scaled = data.copy()
     data_scaled[available_features] = scaler.transform(
         data[available_features].values
     )
@@ -242,25 +266,27 @@ def run_lstm():
     # Model
     n_features = X_train.shape[2]
     model      = LSTMVolatilityModel(input_size=n_features).to(DEVICE)
-    optimizer  = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
+    optimizer  = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE,
+                                  weight_decay=1e-5)
     criterion  = nn.MSELoss()
     scheduler  = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, patience=2, factor=0.5, verbose=False
+        optimizer, patience=3, factor=0.5
     )
 
     print(f"\nModel: {sum(p.numel() for p in model.parameters()):,} parameters")
     print(f"Device: {DEVICE}")
     print(f"\nTraining  (max {MAX_EPOCHS} epochs, early stop patience={PATIENCE})")
 
-    best_val_loss  = float("inf")
+    best_val_loss     = float("inf")
     epochs_no_improve = 0
-    history        = []
+    history           = []
 
     for epoch in range(1, MAX_EPOCHS + 1):
-        train_loss          = train_epoch(model, train_loader, optimizer, criterion)
-        val_loss, _, _      = evaluate(model, test_loader, criterion)
+        train_loss     = train_epoch(model, train_loader, optimizer, criterion)
+        val_loss, _, _ = evaluate(model, test_loader, criterion)
         scheduler.step(val_loss)
-        history.append({"epoch": epoch, "train_loss": train_loss, "val_loss": val_loss})
+        history.append({"epoch": epoch, "train_loss": train_loss,
+                         "val_loss": val_loss})
         print(f"  Epoch {epoch:02d}/{MAX_EPOCHS}  "
               f"train_loss={train_loss:.4f}  val_loss={val_loss:.4f}")
 
@@ -274,38 +300,58 @@ def run_lstm():
                 print(f"\n  Early stopping at epoch {epoch}")
                 break
 
-    # Load best model and evaluate
+    # Load best weights and get final test metrics
     model.load_state_dict(torch.load(OUTPUT_DIR / "best_model.pt",
                                      map_location=DEVICE))
     _, preds, actuals = evaluate(model, test_loader, criterion)
 
+    # ── Metrics ────────────────────────────────────────────────────────────────
+    errors     = actuals - preds
+    abs_errors = np.abs(errors)
+    eps        = 1e-8   # avoid division by zero
+
     rmse  = float(np.sqrt(mean_squared_error(actuals, preds)))
+    rmspe = float(np.sqrt(np.mean((errors / (actuals + eps)) ** 2)))
     ql    = qlike(actuals, preds)
+    mae   = float(mean_absolute_error(actuals, preds))
+    mape  = float(np.mean(abs_errors / (np.abs(actuals) + eps)) * 100)
+
+    # Huber loss (delta = 1.0): quadratic for small errors, linear for large
+    delta      = 1.0
+    huber_elem = np.where(abs_errors <= delta,
+                          0.5 * errors ** 2,
+                          delta * (abs_errors - 0.5 * delta))
+    huber      = float(np.mean(huber_elem))
+
     elapsed = (time.time() - t0) / 60
 
     print(f"\n{'='*50}")
     print(f"LSTM Results")
     print(f"{'='*50}")
     print(f"  RMSE  : {rmse:.4f}")
+    print(f"  RMSPE : {rmspe:.4f}")
     print(f"  QLIKE : {ql:.4f}")
+    print(f"  MAE   : {mae:.4f}")
+    print(f"  MAPE  : {mape:.4f}%")
+    print(f"  Huber : {huber:.4f}")
     print(f"  Time  : {elapsed:.1f} min")
-
-    # Compare with ML baselines from cluster models
-    print(f"\n  Baseline comparison (cluster models):")
-    print(f"  LightGBM C1 RMSE = 0.2770  |  C2 RMSE = 0.2268")
-    print(f"  LSTM overall RMSE = {rmse:.4f}")
 
     # Save results
     results = {
-        "rmse":       rmse,
-        "qlike":      ql,
-        "seq_len":    SEQ_LEN,
-        "hidden_size":HIDDEN_SIZE,
-        "num_layers": NUM_LAYERS,
-        "dropout":    DROPOUT,
-        "n_stocks":   len(frames),
-        "n_train":    int(len(X_train)),
-        "n_test":     int(len(X_test)),
+        "rmse":           rmse,
+        "rmspe":          rmspe,
+        "qlike":          ql,
+        "mae":            mae,
+        "mape":           mape,
+        "huber":          huber,
+        "seq_len":        SEQ_LEN,
+        "hidden_size":    HIDDEN_SIZE,
+        "num_layers":     NUM_LAYERS,
+        "dropout":        DROPOUT,
+        "learning_rate":  LEARNING_RATE,
+        "n_stocks":       len(frames),
+        "n_train":        int(len(X_train)),
+        "n_test":         int(len(X_test)),
         "epochs_trained": len(history),
     }
     with open(OUTPUT_DIR / "lstm_results.json", "w") as f:
