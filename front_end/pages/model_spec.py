@@ -1,6 +1,12 @@
 import streamlit as st
 
-from back_end.service import available_model_catalog, available_stocks, load_pca_variance_explained, start_run_from_ui
+from back_end.service import (
+    available_cached_runs,
+    available_model_catalog,
+    available_stocks,
+    load_pca_variance_explained,
+    start_run_from_ui,
+)
 from charts import pca_cumulative_variance_chart, pca_variance_explained_chart
 
 # ---------------------------------------------------------------------------
@@ -91,6 +97,12 @@ def _model_entry(
         "pred_seconds": 30,
         "parameters": model_parameters,
     }
+
+
+def _cached_run_label(run: dict) -> str:
+    n_predictions = int(run.get("n_predictions", 0))
+    n_stocks = int(run.get("n_stocks", 0))
+    return f"{run['run_id']} · {n_predictions:,} predictions · {n_stocks} stock(s)"
 
 
 # ---------------------------------------------------------------------------
@@ -295,6 +307,26 @@ def _render_model_list() -> None:
             except Exception as exc:
                 st.session_state.run_status = None
                 st.error(f"Run failed: {exc}")
+
+        cached_runs = available_cached_runs()
+        if cached_runs:
+            run_ids = [run["run_id"] for run in cached_runs]
+            saved_run = st.session_state.get("selected_run_id")
+            selected_index = run_ids.index(saved_run) if saved_run in run_ids else 0
+            labels = {run["run_id"]: _cached_run_label(run) for run in cached_runs}
+            selected_run_id = st.selectbox(
+                "Display cached run",
+                options=run_ids,
+                index=selected_index,
+                format_func=labels.get,
+                key="selected_run_id",
+                help="Choose which cached backend run feeds the Individual Stock and Universe tabs.",
+            )
+            st.session_state.run_status = next(
+                run for run in cached_runs if run["run_id"] == selected_run_id
+            )
+        else:
+            st.caption("No cached runs available yet.")
     with col_clear:
         if st.button("Clear all", width="stretch"):
             st.session_state.model_list = []

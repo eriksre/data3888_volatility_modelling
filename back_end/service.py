@@ -8,7 +8,7 @@ import pandas as pd
 
 import numpy as np
 
-from .artifacts import latest_run_id, load_run_config, load_run_frame
+from .artifacts import latest_run_id, list_runs, load_run_config, load_run_frame
 from .config import (
     DataConfig,
     FeatureConfig,
@@ -42,6 +42,10 @@ def available_model_catalog() -> list[dict[str, Any]]:
         if model_availability_issue(model_type) is None
     ]
     return model_catalog(available_types)
+
+
+def available_cached_runs() -> list[dict[str, Any]]:
+    return list_runs()
 
 
 def start_run_from_ui(
