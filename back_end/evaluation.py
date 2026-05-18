@@ -88,3 +88,78 @@ def summarize_fold_metrics(predictions: pd.DataFrame) -> pd.DataFrame:
     for model, chunk in predictions.groupby("model", dropna=False):
         overall.append({"fold": 0, **compute_metrics(chunk, str(model))})
     return pd.DataFrame(overall + rows)
+
+
+def qlike_score(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    pred_safe = np.clip(y_pred, EPS, None)
+    realized_safe = np.clip(y_true, EPS, None)
+    ratio = realized_safe / pred_safe
+    return float(np.mean(ratio - np.log(ratio) - 1))
+
+
+def rmse_score(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    return float(np.sqrt(np.mean((y_true - y_pred) ** 2)))
+
+
+def mae_score(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    return float(np.mean(np.abs(y_true - y_pred)))
+
+
+AVAILABLE_METRICS = {
+    "QLIKE": qlike_score,
+    "RMSE": rmse_score,
+    "MAE": mae_score,
+}
+
+
+def compute_evaluation_metrics(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    metrics_to_run: list[str] | None = None,
+) -> dict[str, float]:
+    mask = np.isfinite(y_true) & np.isfinite(y_pred)
+    y_true_clean = y_true[mask]
+    y_pred_clean = y_pred[mask]
+    metrics = metrics_to_run if metrics_to_run is not None else list(AVAILABLE_METRICS.keys())
+
+    if len(y_true_clean) == 0:
+        return {metric: np.nan for metric in metrics}
+
+    results = {}
+    for metric_name in metrics:
+        metric_func = AVAILABLE_METRICS.get(metric_name.upper())
+        if metric_func is None:
+            raise ValueError(f"Performance Metric '{metric_name}' is not supported.")
+        results[metric_name.upper()] = metric_func(y_true_clean, y_pred_clean)
+    return results
+
+
+def evaluate_rv_baseline(
+    returns_lookup: dict[int, np.ndarray],
+    time_ids: list[int],
+    lookback_window: int = 570,
+    target_horizon: int = 30,
+) -> dict[str, float]:
+    rows = []
+    for tid in time_ids:
+        returns = returns_lookup.get(tid)
+        if returns is None:
+            continue
+
+        cutoff = len(returns) - target_horizon
+        if cutoff < lookback_window:
+            continue
+
+        pred_var = float(np.mean(returns[cutoff - lookback_window:cutoff] ** 2))
+        target_var = float(np.mean(returns[cutoff:] ** 2))
+        if np.isfinite(pred_var) and np.isfinite(target_var):
+            rows.append({"target_var": target_var, "pred_var": pred_var})
+
+    df_forecast = pd.DataFrame(rows)
+    if df_forecast.empty:
+        return {metric: np.nan for metric in AVAILABLE_METRICS.keys()}
+
+    return compute_evaluation_metrics(
+        y_true=df_forecast["target_var"].to_numpy(),
+        y_pred=df_forecast["pred_var"].to_numpy(),
+    )

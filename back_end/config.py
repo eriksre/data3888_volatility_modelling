@@ -10,6 +10,9 @@ INDIVIDUAL_PARQUET_DIR = ROOT_DIR / "individual_book_train_parquet"
 ARTIFACTS_DIR = ROOT_DIR / "artifacts"
 FEATURE_CACHE_DIR = ARTIFACTS_DIR / "feature_cache"
 FEATURE_CACHE_PATH = FEATURE_CACHE_DIR / "features_all_stocks.parquet"
+DATA_DIR = str(INDIVIDUAL_PARQUET_DIR)
+CLUSTER_CSV = str(ROOT_DIR / "plots" / "recluster" / "stock_cluster_assignments_FINAL.csv")
+PLOTS_DIR = str(ROOT_DIR / "plots")
 
 PIPELINE_VERSION = "2026-05-10.2"
 
@@ -56,6 +59,48 @@ FEATURE_LABEL_MAP = {
     "Lagged RV (1-step)": ["RV_30", "RV_60"],
     "Lagged RV (5-step)": ["RV_300", "RV_420"],
 }
+
+FEATURE_COLS = [
+    "rv_first",
+    "std_log_return",
+    "skew_log_return",
+    "kurt_log_return",
+    "max_log_return",
+    "min_log_return",
+    "realized_quarticity",
+    "abs_return_mean",
+    "max_abs_return",
+    "wap_range",
+    "wap_std",
+    "n_price_changes",
+    "n_rows",
+    "mean_spread",
+    "std_spread",
+    "spread_range",
+    "mean_rel_spread",
+    "std_rel_spread",
+    "mean_depth",
+    "std_depth",
+    "mean_imbalance",
+    "std_imbalance",
+    "mean_bid_size1",
+    "mean_ask_size1",
+    "arrival_rate",
+    "wap_momentum",
+    "acf1",
+    "acf5",
+    "pacf1",
+    "pacf5",
+    "rv_first_lag1",
+    "rv_first_lag2",
+    "log_rv_lag1",
+    "log_rv_lag2",
+    "log_rv_lag3",
+    "log_rv_rolling5",
+    "vol_per_depth",
+    "vol_x_spread",
+    "pressure_x_vol",
+]
 
 
 @dataclass(frozen=True)
