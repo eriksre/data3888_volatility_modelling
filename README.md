@@ -4,13 +4,9 @@ Predicting short-term realised volatility for 112 anonymous stocks using Optiver
 
 ## Before you run anything
 
-Open `config.py` and change `DATA_DIR` to wherever the parquet files are on your machine:
+By default, the app expects parquet files in `individual_book_train_parquet/`.
 
-```python
-DATA_DIR = r"path/to/individual_book_train"
-```
-
-That's the only path you need to change — everything else is relative to it.
+If your parquet files live somewhere else, update `INDIVIDUAL_PARQUET_DIR` in `back_end/config.py`.
 
 ## Run these once. They install the relevant packages you need and compute the feature cache
 
