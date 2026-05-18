@@ -13,17 +13,26 @@ MODEL_COLORS = [
     "#fee440",
     "#9b5de5",
 ]
+SCATTER_DISPLAY_QUANTILE = 0.995
+SCATTER_DISPLAY_IQR_MULTIPLIER = 50
+REALIZED_VOL_TOP_MARGIN = 125
+REALIZED_VOL_LEGEND_Y = 1.08
 
 
 def _empty_chart(stock_id: str, time_id: int) -> go.Figure:
     fig = go.Figure()
     fig.update_layout(
-        title=dict(text=f"Realised Volatility — {stock_id}  ·  Window {time_id}", font=dict(size=16)),
+        title=dict(
+            text=f"Realised Volatility — {stock_id}  ·  Window {time_id}",
+            font=dict(size=16),
+            y=0.98,
+            yanchor="top",
+        ),
         xaxis_title="Time (seconds)",
         yaxis_title="Realised Volatility",
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
-        margin=dict(t=80, b=50),
+        margin=dict(t=REALIZED_VOL_TOP_MARGIN, b=50),
     )
     return fig
 
@@ -117,7 +126,12 @@ def _demo_chart(stock_id: str, time_id: int = 1) -> go.Figure:
     )
 
     fig.update_layout(
-        title=dict(text=f"Realised Volatility — {stock_id}  ·  Window {time_id}", font=dict(size=16)),
+        title=dict(
+            text=f"Realised Volatility — {stock_id}  ·  Window {time_id}",
+            font=dict(size=16),
+            y=0.98,
+            yanchor="top",
+        ),
         xaxis=dict(
             title="Time (seconds)",
             tickvals=list(range(0, 601, 60)),
@@ -129,10 +143,10 @@ def _demo_chart(stock_id: str, time_id: int = 1) -> go.Figure:
             tickformat=".4f",
             showgrid=True, gridcolor="rgba(200,200,200,0.3)",
         ),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
+        legend=dict(orientation="h", yanchor="bottom", y=REALIZED_VOL_LEGEND_Y, xanchor="left", x=0),
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
-        margin=dict(t=80, b=50),
+        margin=dict(t=REALIZED_VOL_TOP_MARGIN, b=50),
         hovermode="x unified",
     )
     return fig
@@ -234,7 +248,7 @@ def realised_vol_chart(
             showgrid=True,
             gridcolor="rgba(200,200,200,0.22)",
         ),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
+        legend=dict(orientation="h", yanchor="bottom", y=REALIZED_VOL_LEGEND_Y, xanchor="left", x=0),
         hovermode="x unified",
     )
     return fig
@@ -305,11 +319,44 @@ def realised_vs_predicted_scatter(stock_id: str, predictions: pd.DataFrame | Non
         )
         return fig
 
-    min_vol = float(scatter_data[["actual_vol", "pred_vol"]].min().min())
-    max_vol = float(scatter_data[["actual_vol", "pred_vol"]].max().max())
+    scatter_values = scatter_data[["actual_vol", "pred_vol"]].to_numpy(dtype=float).ravel()
+    quantile_cap = float(np.quantile(scatter_values, SCATTER_DISPLAY_QUANTILE))
+    q1, q3 = np.quantile(scatter_values, [0.25, 0.75])
+    iqr = float(q3 - q1)
+    center = float(np.median(scatter_values))
+    robust_step = max(iqr, abs(center) * 0.01, 0.001)
+    robust_cap = center + SCATTER_DISPLAY_IQR_MULTIPLIER * robust_step
+    display_cap = min(quantile_cap, robust_cap)
+    display_cap = max(display_cap, float(scatter_data["actual_vol"].max()))
+    display_mask = (scatter_data["actual_vol"] <= display_cap) & (scatter_data["pred_vol"] <= display_cap)
+    display_data = scatter_data[display_mask]
+    hidden_count = len(scatter_data) - len(display_data)
+    if display_data.empty:
+        display_data = scatter_data
+        hidden_count = 0
+
+    min_vol = float(display_data[["actual_vol", "pred_vol"]].min().min())
+    max_vol = float(display_data[["actual_vol", "pred_vol"]].max().max())
     padding = (max_vol - min_vol) * 0.05 if max_vol > min_vol else max(max_vol * 0.05, 0.001)
     axis_min = max(0.0, min_vol - padding)
     axis_max = max_vol + padding
+
+    if hidden_count:
+        hidden_models = ", ".join(
+            str(model) for model in scatter_data.loc[~display_mask, "model"].drop_duplicates().head(3)
+        )
+        suffix = "" if hidden_count == 1 else "s"
+        more = "..." if scatter_data.loc[~display_mask, "model"].nunique() > 3 else ""
+        fig.add_annotation(
+            text=f"{hidden_count:,} extreme prediction{suffix} hidden from display: {hidden_models}{more}",
+            xref="paper",
+            yref="paper",
+            x=1,
+            y=1.12,
+            xanchor="right",
+            showarrow=False,
+            font=dict(size=11, color="#adb5bd"),
+        )
 
     fig.add_trace(
         go.Scattergl(
@@ -322,8 +369,8 @@ def realised_vs_predicted_scatter(stock_id: str, predictions: pd.DataFrame | Non
         )
     )
 
-    has_hover_context = {"time_id", "fold"}.issubset(scatter_data.columns)
-    for idx, (model, frame) in enumerate(scatter_data.groupby("model", sort=False)):
+    has_hover_context = {"time_id", "fold"}.issubset(display_data.columns)
+    for idx, (model, frame) in enumerate(display_data.groupby("model", sort=False)):
         fig.add_trace(
             go.Scattergl(
                 x=frame["actual_vol"],

@@ -24,10 +24,23 @@ ARCH_FAMILY_SPECS: dict[str, dict[str, Any]] = {
     "EGARCH(1,1)": {"vol": "EGARCH", "p": 1, "o": 0, "q": 1, "forecast": {"method": "simulation", "simulations": 200}},
     "GJR-GARCH(1,1)": {"vol": "GARCH", "p": 1, "o": 1, "q": 1, "forecast": {}},
 }
+MAX_REASONABLE_GARCH_VAR = 1_000_000.0
 
 
 def is_arch_family_model(model_type: str) -> bool:
     return model_type in ARCH_FAMILY_SPECS
+
+
+def _is_plausible_garch_forecast(pred_var: float, pred_path_var: np.ndarray) -> bool:
+    if not np.isfinite(pred_var) or pred_var < 0 or pred_var > MAX_REASONABLE_GARCH_VAR:
+        return False
+    if pred_path_var.size == 0:
+        return False
+    return bool(
+        np.all(np.isfinite(pred_path_var))
+        and np.all(pred_path_var >= 0)
+        and float(np.max(pred_path_var)) <= MAX_REASONABLE_GARCH_VAR
+    )
 
 
 def make_estimator(model_type: str, parameters: dict[str, Any] | None = None, pca_components: int | None = None):
@@ -214,6 +227,9 @@ def run_garch_on_processed(processed: pd.DataFrame, spec: ModelSpec, horizon: in
             inference_ms = (time.perf_counter() - start) * 1000
             pred_path_var_arr = np.asarray(forecast.variance.values[-1], dtype=float)
             pred = float(np.mean(pred_path_var_arr))
+            if not _is_plausible_garch_forecast(pred, pred_path_var_arr):
+                pred = np.nan
+                pred_path_var_arr = np.asarray([], dtype=float)
         except Exception:
             pred = np.nan
             pred_path_var_arr = np.asarray([], dtype=float)

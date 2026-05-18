@@ -29,13 +29,15 @@ class _FakeFit:
 
 class _FakeArchModel:
     train_lengths: list[int] = []
+    variance_override: float | None = None
 
     def __init__(self, returns, **kwargs):
         self._returns = np.asarray(returns, dtype=float)
         self.train_lengths.append(len(self._returns))
 
     def fit(self, **kwargs):
-        return _FakeFit(float(len(self._returns)))
+        variance = self.variance_override if self.variance_override is not None else float(len(self._returns))
+        return _FakeFit(float(variance))
 
 
 class GarchWalkForwardTest(unittest.TestCase):
@@ -45,6 +47,7 @@ class GarchWalkForwardTest(unittest.TestCase):
         fake_arch.arch_model = _FakeArchModel
         sys.modules["arch"] = fake_arch
         _FakeArchModel.train_lengths = []
+        _FakeArchModel.variance_override = None
 
     def tearDown(self):
         if self._old_arch is None:
@@ -71,6 +74,25 @@ class GarchWalkForwardTest(unittest.TestCase):
         self.assertEqual(len(json.loads(result.loc[0, "forecast_vol_path"])), 30)
         self.assertEqual(result.loc[0, "stock_id"], "stock_7")
         self.assertEqual(result.loc[0, "time_id"], 101)
+
+    def test_garch_marks_explosive_forecasts_as_missing(self):
+        _FakeArchModel.variance_override = 1e8
+        processed = pd.DataFrame(
+            {
+                "stock_id": ["stock_7"] * 600,
+                "time_id": [101] * 600,
+                "seconds_in_bucket": np.arange(600),
+                "log_price_diff": np.r_[np.nan, np.full(599, 0.0001)],
+            }
+        )
+        spec = ModelSpec(name="EGARCH(1,1)", model_type="EGARCH(1,1)")
+
+        result = run_garch_on_processed(processed, spec, horizon=30, fold=1, test_ids={101})
+
+        self.assertEqual(len(result), 1)
+        self.assertTrue(np.isnan(result.loc[0, "pred_var"]))
+        self.assertTrue(np.isnan(result.loc[0, "pred_vol"]))
+        self.assertEqual(json.loads(result.loc[0, "forecast_vol_path"]), [])
 
 
 if __name__ == "__main__":
