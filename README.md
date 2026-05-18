@@ -12,12 +12,17 @@ DATA_DIR = r"path/to/individual_book_train"
 
 That's the only path you need to change — everything else is relative to it.
 
-## Run order
+## Run these once. They install the relevant packages you need and compute the feature cache
 
 ```bash
 pip install -r requirements.txt
 python precompute_feature_cache.py
+```
+
+# Command to run the app
+```
 streamlit run front_end/app.py
+
 ```
 
 ## Clustering Results # DO NOT USE IN FINAL REPORT
