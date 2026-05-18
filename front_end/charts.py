@@ -341,23 +341,6 @@ def realised_vs_predicted_scatter(stock_id: str, predictions: pd.DataFrame | Non
     axis_min = max(0.0, min_vol - padding)
     axis_max = max_vol + padding
 
-    if hidden_count:
-        hidden_models = ", ".join(
-            str(model) for model in scatter_data.loc[~display_mask, "model"].drop_duplicates().head(3)
-        )
-        suffix = "" if hidden_count == 1 else "s"
-        more = "..." if scatter_data.loc[~display_mask, "model"].nunique() > 3 else ""
-        fig.add_annotation(
-            text=f"{hidden_count:,} extreme prediction{suffix} hidden from display: {hidden_models}{more}",
-            xref="paper",
-            yref="paper",
-            x=1,
-            y=1.12,
-            xanchor="right",
-            showarrow=False,
-            font=dict(size=11, color="#adb5bd"),
-        )
-
     fig.add_trace(
         go.Scattergl(
             x=[axis_min, axis_max],

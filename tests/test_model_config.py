@@ -3,7 +3,8 @@ from __future__ import annotations
 import unittest
 from dataclasses import asdict
 
-from back_end.config import model_spec_from_ui
+from back_end.config import SUPPORTED_MODEL_TYPES, model_spec_from_ui
+from back_end.models import model_availability_issue
 
 
 class ModelConfigTest(unittest.TestCase):
@@ -21,6 +22,13 @@ class ModelConfigTest(unittest.TestCase):
 
         self.assertNotIn("metrics", payload)
         self.assertNotIn("custom_loss", payload)
+
+    def test_egarch_is_no_longer_supported_or_alias_canonicalized(self):
+        spec = model_spec_from_ui({"type": "EGARCH"})
+
+        self.assertNotIn("EGARCH(1,1)", SUPPORTED_MODEL_TYPES)
+        self.assertEqual(spec.model_type, "EGARCH")
+        self.assertEqual(model_availability_issue(spec.model_type), "EGARCH is not a supported backend model type.")
 
 
 if __name__ == "__main__":

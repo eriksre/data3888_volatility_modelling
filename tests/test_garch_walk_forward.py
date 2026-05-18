@@ -85,7 +85,7 @@ class GarchWalkForwardTest(unittest.TestCase):
                 "log_price_diff": np.r_[np.nan, np.full(599, 0.0001)],
             }
         )
-        spec = ModelSpec(name="EGARCH(1,1)", model_type="EGARCH(1,1)")
+        spec = ModelSpec(name="GJR-GARCH(1,1)", model_type="GJR-GARCH(1,1)")
 
         result = run_garch_on_processed(processed, spec, horizon=30, fold=1, test_ids={101})
 

@@ -21,7 +21,6 @@ from .features import resolve_manual_feature_labels
 
 ARCH_FAMILY_SPECS: dict[str, dict[str, Any]] = {
     "GARCH(1,1)": {"vol": "GARCH", "p": 1, "o": 0, "q": 1, "forecast": {}},
-    "EGARCH(1,1)": {"vol": "EGARCH", "p": 1, "o": 0, "q": 1, "forecast": {"method": "simulation", "simulations": 200}},
     "GJR-GARCH(1,1)": {"vol": "GARCH", "p": 1, "o": 1, "q": 1, "forecast": {}},
 }
 MAX_REASONABLE_GARCH_VAR = 1_000_000.0

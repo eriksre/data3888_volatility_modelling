@@ -129,11 +129,6 @@ MODEL_REGISTRY: dict[str, ModelDefinition] = {
         icon="📊",
         required_module="arch",
     ),
-    "EGARCH(1,1)": ModelDefinition(
-        label="EGARCH(1,1)",
-        icon="📈",
-        required_module="arch",
-    ),
     "GJR-GARCH(1,1)": ModelDefinition(
         label="GJR-GARCH(1,1)",
         icon="📊",
@@ -161,11 +156,6 @@ SUPPORTED_MODEL_TYPES = tuple(MODEL_REGISTRY)
 
 MODEL_TYPE_ALIASES = {
     **{model_type: model_type for model_type in SUPPORTED_MODEL_TYPES},
-    "EGARCH": "EGARCH(1,1)",
-    "E-GARCH": "EGARCH(1,1)",
-    "E-GARCH(1,1)": "EGARCH(1,1)",
-    "E GARCH": "EGARCH(1,1)",
-    "E GARCH(1,1)": "EGARCH(1,1)",
     "GJR-GARCH": "GJR-GARCH(1,1)",
     "GJR GARCH": "GJR-GARCH(1,1)",
     "GJR GARCH(1,1)": "GJR-GARCH(1,1)",

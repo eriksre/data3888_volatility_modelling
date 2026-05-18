@@ -22,7 +22,7 @@ class RealisedVsPredictedScatterTest(unittest.TestCase):
 
         self.assertLess(fig.layout.xaxis.range[1], 10.0)
         self.assertLess(fig.layout.yaxis.range[1], 10.0)
-        self.assertTrue(any("extreme prediction" in annotation.text for annotation in fig.layout.annotations))
+        self.assertFalse(any("extreme prediction" in annotation.text for annotation in fig.layout.annotations))
         marker_points = sum(len(trace.x) for trace in fig.data if trace.mode == "markers")
         self.assertEqual(marker_points, 3)
 
