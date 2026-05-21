@@ -1,0 +1,341 @@
+---
+title: "DATA3888 Volatility Modelling Report"
+author: "Finance 6"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    code-fold: true
+    code-tools: true
+execute:
+  echo: true
+  warning: false
+  message: false
+jupyter: python3
+---
+
+> Version: aligned with the latest backend and Streamlit workflow ,reads backend artifacts and report-ready figures
+> Need to complete:1."To be continue". 2.change the plot bar color
+
+```{python}
+#| label: setup
+
+from pathlib import Path
+import pandas as pd
+from IPython.display import display, Markdown, Image
+
+ROOT = Path(".")
+ARTIFACT_RUNS = ROOT / "artifacts" / "runs"
+REPORT_FIGURES = ROOT / "plots" / "report_figures"
+DASHBOARD_FIGURES = ROOT / "figures"
+
+
+def md(text: str):
+    display(Markdown(text))
+
+
+def placeholder(msg: str):
+    md(f"> **Placeholder:** {msg}")
+
+
+def latest_run_dir():
+    if not ARTIFACT_RUNS.exists():
+        return None
+    runs = sorted([p for p in ARTIFACT_RUNS.iterdir() if p.is_dir()], reverse=True)
+    return runs[0] if runs else None
+
+
+RUN_DIR = latest_run_dir()
+
+
+def load_artifact(name: str) -> pd.DataFrame:
+    """Load a parquet artifact from the latest backend run."""
+    if RUN_DIR is None:
+        placeholder("No backend run artifacts were found. Run the backend pipeline from Streamlit first.")
+        return pd.DataFrame()
+    path = RUN_DIR / name
+    if not path.exists():
+        placeholder(f"Missing artifact `{name}` in `{RUN_DIR.as_posix()}`.")
+        return pd.DataFrame()
+    try:
+        return pd.read_parquet(path)
+    except Exception as exc:
+        placeholder(f"Could not read `{path.as_posix()}`: {exc}")
+        return pd.DataFrame()
+
+
+def show_png(path: str, width: int = 900):
+    """Display one static PNG if it exists; otherwise show a clear placeholder."""
+    img = ROOT / path
+    if not img.exists():
+        placeholder(f"Missing figure `{path}`. Need a dashboard screenshot.")
+        return
+    display(Image(filename=str(img), width=width))
+
+
+def show_table(df: pd.DataFrame, n: int | None = None):
+    if df.empty:
+        placeholder("Table unavailable because the relevant backend output is missing or empty.")
+        return
+    display(df if n is None else df.head(n))
+
+
+def artifact_status_table():
+    expected = [
+        "config.json",
+        "status.json",
+        "predictions.parquet",
+        "metrics.parquet",
+        "feature_importance.parquet",
+        "universe_summary.parquet",
+        "stock_similarity.parquet",
+    ]
+    rows = []
+    for name in expected:
+        path = RUN_DIR / name if RUN_DIR else None
+        rows.append({
+            "name": name,
+            "path": path.as_posix() if path else "No run directory found",
+            "exists": bool(path and path.exists()),
+            "size_bytes": path.stat().st_size if path and path.exists() else None,
+        })
+    return pd.DataFrame(rows)
+
+
+metrics = load_artifact("metrics.parquet")
+predictions = load_artifact("predictions.parquet")
+feature_importance = load_artifact("feature_importance.parquet")
+universe_summary = load_artifact("universe_summary.parquet")
+similarity = load_artifact("stock_similarity.parquet")
+
+if RUN_DIR is not None:
+    md(f"Using backend run artifacts from `{RUN_DIR.as_posix()}`.")
+```
+
+```{python}
+#| label: generate-report-figures
+
+import subprocess
+import sys
+from pathlib import Path
+from IPython.display import display, Markdown
+
+PROJECT_ROOT = Path.cwd()
+script_path = PROJECT_ROOT / "back_end" / "generate_report_figures.py"
+
+if not script_path.exists():
+    display(Markdown("> **Placeholder:** `back_end/generate_report_figures.py` was not found. Static report figures were not regenerated."))
+else:
+    result = subprocess.run(
+        [sys.executable, str(script_path)],
+        cwd=str(PROJECT_ROOT),
+        capture_output=True,
+        text=True,
+    )
+    if result.stdout:
+        print(result.stdout)
+    if result.returncode != 0:
+        if result.stderr:
+            print(result.stderr)
+        display(Markdown("> **Placeholder:** Report figure generation did not complete successfully. Existing figures, if present, will still be used below."))
+```
+
+
+## Introduction
+
+The financial market changes rapidly. Short-term stock market fluctuations play an important role in trading, risk management, and other financial decisions. Volatility forecasting estimates the likely size of future price movements. More accurate forecasts can help market participants manage risk and make more informed trading decisions.
+
+This project focuses on short-term realised volatility prediction using Optiver limit order book data. The task is to use information from the first part of a trading window to predict realised volatility over a future horizon. The current project question is:
+
+> **What is the best model given latency constraints, for a single stock or multiple stocks?**
+
+This means that the project does not only compare models by accuracy....
+> To be continue---
+
+## Problem Context and Research Question
+
+> To be continue---research question: framed around model selection under latency constraints
+
+## Data and Feature Engineering
+
+> To be continue---
+
+## Modelling Workflow
+
+Raw parquet order book data
+        ↓
+Feature engineering and feature cache
+        ↓
+Model configuration in Streamlit
+        ↓
+Backend model run
+        ↓
+Saved artifacts in artifacts/runs/<run_id>/
+        ↓
+Dashboard visualisation ＆ Quarto report figures
+
+> To be continue---
+
+## Forecasting Models
+
+> To be continue---summarise model families used:linear models.........
+
+## Evaluation Framework
+
+> To be continue---the evaluation metrics used for comparison(rmse,qlike)
+
+```{python}
+#| label: metrics-overview
+
+if metrics.empty:
+    placeholder("Metrics artifact unavailable. Run the backend pipeline first.")
+else:
+    cols = [c for c in ["model", "fold", "rmse", "mae", "qlike", "mean_inference_ms", "inference_ms"] if c in metrics.columns]
+    if cols:
+        show_table(metrics[cols].head(15))
+    else:
+        show_table(metrics.head(15))
+```
+
+## Results
+
+### Accuracy--Latency Trade-off
+
+This section answers the question, **What is the best model given latency constraints, for a single stock or multiple stocks?**
+
+Compare model inference time and accuracy; therefore, models closer to the bottom right corner are faster and more accurate.
+
+```{python}
+#| label: fig-accuracy-latency
+
+show_png("plots/report_figures/accuracy_latency_tradeoff.png")
+```
+
+### Model Metric Comparison
+
+The model comparison chart includes accuracy metrics such as root mean square error(RMSE) and QLIKE.
+
+These metrics allow for comparison of model performance from both general regression and volatility perspectives.
+
+```{python}
+#| label: fig-model-metrics
+
+show_png("plots/report_figures/model_metric_comparison.png")
+```
+
+> To be continue---Figure.........
+
+```{python}
+#| label: model-metrics-table
+
+if metrics.empty:
+    placeholder("Model metric table unavailable.")
+else:
+    overall = metrics[metrics["fold"] == 0] if "fold" in metrics.columns else metrics
+    keep = [c for c in ["model", "rmse", "mae", "qlike", "mape", "rmspe", "pearson_r"] if c in overall.columns]
+    if keep:
+        show_table(overall[keep].sort_values(keep[1]) if len(keep) > 1 else overall[keep])
+    else:
+        show_table(overall.head(20))
+```
+
+### Single-Stock Model Selection
+
+The individual-stock analysis allows users to inspect how models behave for a selected stock and time window. This is important because the best model for one stock may not be the best model for all stocks.
+
+```{python}
+#| label: fig-single-stock
+
+show_png("plots/report_figures/single_stock_actual_vs_predicted.png")
+```
+
+> To be continue---Figure.........
+
+### Universe-Level Model Selection
+
+The universe-level analysis compares model behaviour across multiple stocks. This helps answer whether one model performs well generally, or whether different stocks require different models.
+
+```{python}
+#| label: fig-universe-wins
+
+show_png("plots/report_figures/universe_best_model_counts.png")
+```
+
+```{python}
+#| label: universe-summary-table
+
+if universe_summary.empty:
+    placeholder("Universe summary artifact unavailable.")
+else:
+    keep = [c for c in ["stock_id", "mean_volatility", "rmse", "mae", "qlike", "best_model"] if c in universe_summary.columns]
+    if keep:
+        show_table(universe_summary[keep].head(20))
+    else:
+        show_table(universe_summary.head(20))
+```
+
+### Feature Importance (perhap this section should be moved forward?)
+
+Feature importance helps explain which variables contribute most to model predictions. This supports interpretability and helps connect model behaviour back to the order book features.
+
+```{python}
+#| label: fig-feature-importance
+
+show_png("plots/report_figures/feature_importance_top10.png")
+```
+
+## Dashboard and Visualisation Interface
+
+> To be continue---
+
+### Model Specification Page
+
+```{python}
+#| label: dashboard-model-spec-screenshot
+
+show_png("figures/dashboard_model_specification.png")
+```
+
+> To be continue---
+
+### Individual Stock Page
+
+```{python}
+#| label: dashboard-individual-screenshot
+
+show_png("figures/dashboard_individual_stock.png")
+```
+
+> To be continue---
+
+### Universe Page
+
+```{python}
+#| label: dashboard-universe-screenshot
+
+show_png("figures/dashboard_universe.png")
+```
+
+> To be continue---
+
+## Limitations(?)
+
+> To be continue---
+
+## Future Work(?)
+
+> To be continue---
+
+## Conclusion
+
+> To be continue---
+
+## Appendix
+
+```{python}
+#| label: appendix-artifact-audit
+
+md("### Backend artifact availability")
+show_table(artifact_status_table())
+```
