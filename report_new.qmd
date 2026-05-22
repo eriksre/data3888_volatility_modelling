@@ -159,31 +159,85 @@ This means that the project does not only compare models by accuracy....
 
 ## Data and Feature Engineering
 
-> To be continue---
+The raw order book data contains a wealth of market information but cannot be used for direct prediction. Therefore, we apply feature engineering to transform the raw data into variables that can represent stock behavior and market conditions for prediction.
+
+We use different rolling windows to summarize changes between time and price. These features can represent recent volatility levels, return sizes, average returns, and whether the market is experiencing significant volatility. Since the market does not react in a predictable manner, we add separate indicators to capture upward or downward trends. The second set of features focuses on time-related behavior. We designed features to measure whether recent price changes show a continuing trend or a reversal over time, which helps capture short-term behavioral patterns in financial markets.
+
+To better reflect the current market situation, we added features that focus on recent observations. Additionally, we created features that capture action through trends, which can be used to describe the upward or downward trend of volatility over different time spans.
+
+Besides price information, this project also extracts several order book features to describe market structure and trading activity. These features include spreads, order imbalances, market depth, and buying and selling pressure. Together, they provide liquidity and market behavior information that cannot be observed from prices alone.
+
+Once all features were created, the project applied a filtering step to remove variables containing missing values ​​or providing very little information. This helps improve model stability and reduce unnecessary complexity.
+
+In summary, the feature engineering process combines information from price movements, volatility patterns, and order book structure to provide a more comprehensive description of market behavior and support more reliable volatility predictions.
 
 ## Modelling Workflow
 
-Raw parquet order book data
-        ↓
-Feature engineering and feature cache
-        ↓
-Model configuration in Streamlit
-        ↓
-Backend model run
-        ↓
-Saved artifacts in artifacts/runs/<run_id>/
-        ↓
+Raw parquet order book data<br>
+        ↓<br>
+Feature engineering and feature cache<br>
+        ↓<br>
+Model configuration in Streamlit<br>
+        ↓<br>
+Backend model run<br>
+        ↓<br>
+Saved artifacts in artifacts/runs/&lt;run_id&gt;/<br>
+        ↓<br>
 Dashboard visualisation ＆ Quarto report figures
 
-> To be continue---
+The modelling workflow was designed as a complete pipeline that transforms raw order book data into forecasting results and report outputs.
+
+The process begins with the raw order book data stored in parquet format. These files contain historical market information for each stock and serve as the input for the forecasting system.
+
+The next stage is feature engineering. Raw observations are converted into a structured set of predictive variables that describe volatility behaviour, price movement, and order book dynamics. To improve efficiency, generated features may also be stored in a feature cache so that repeated experiments do not require recalculating the same information.
+
+Once features are prepared, model settings are configured through the Streamlit interface. Users can select different forecasting models, choose feature selection strategies, and define training settings before launching an experiment.
+
+After configuration, the backend pipeline executes model training and prediction. During this stage, data preparation, feature loading, cross-validation, model fitting, and prediction generation are performed automatically.
+
+The outputs from each experiment are then saved as run artefacts inside the artifacts/runs/ directory. These stored results include predictions, evaluation summaries, and intermediate outputs that allow experiments to be reproduced and compared later.
+
+Finally, the saved outputs are displayed through the dashboard and integrated into the Quarto reporting workflow. Visualisations and summary figures generated from the experiments are used to support interpretation and final reporting.
 
 ## Forecasting Models
 
-> To be continue---summarise model families used:linear models.........
+Several forecasting approaches were implemented to compare different assumptions about volatility behaviour.
+
+### HAR-RV
+
+The HAR-RV (Heterogeneous Autoregressive Realised Volatility) model was included as a traditional benchmark for volatility forecasting. It assumes that volatility evolves across different time horizons and uses historical realised volatility information to predict future movements. This model provides an interpretable baseline for comparison against machine learning approaches.
+
+### Linear Regression
+
+Linear Regression was used as a simple baseline model to evaluate whether linear relationships between engineered features and future volatility are sufficient for prediction. Its simplicity makes interpretation straightforward but limits its ability to capture more complex interactions.
+
+### Ridge Regression
+
+Ridge Regression extends linear regression by introducing regularisation to reduce overfitting and improve stability when a large number of correlated features are present. This is particularly useful because volatility-related features often contain overlapping information.
+
+### LASSO
+
+LASSO introduces regularisation together with automatic feature selection. Less informative variables can be shrunk toward zero, producing a more compact model. This approach helps identify which engineered features contribute most to volatility prediction.
+
+### Random Forest
+
+Random Forest was used as the primary non-linear benchmark. By combining multiple decision trees, it can model complex relationships and interactions between volatility indicators and order book features while reducing variance through ensemble averaging.
+
+### XGBoost
+
+XGBoost represents a gradient boosting approach that sequentially improves prediction performance by correcting previous errors. It is designed to capture non-linear structures efficiently and often performs strongly in structured tabular datasets.
 
 ## Evaluation Framework
 
-> To be continue---the evaluation metrics used for comparison(rmse,qlike)
+Model performance was assessed using repeated cross-validation with five folds and an 80/20 train–validation split.
+
+Several loss functions were recorded:
+
+- RMSE to measure overall prediction error magnitude.
+- MAE to provide an interpretable average prediction deviation.
+- QLIKE as a volatility-specific loss function that penalises poor variance estimation.
+- Additional metrics including RMSPE, MAPE and Huber loss were also available for robustness comparison.
+- Evaluation results were collected across folds and stored as experiment artefacts for later visualisation and comparison.
 
 ```{python}
 #| label: metrics-overview
@@ -320,10 +374,6 @@ show_png("figures/dashboard_universe.png")
 > To be continue---
 
 ## Limitations(?)
-
-> To be continue---
-
-## Future Work(?)
 
 > To be continue---
 
