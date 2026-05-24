@@ -164,7 +164,16 @@ MODEL_TYPE_ALIASES = {
 }
 
 FRONTEND_MODEL_METRICS = tuple(
-    {"model": model, "inference_us": None, "rmse": None, "qlike": None}
+    {
+        "model": model,
+        "inference_us": None,
+        "mse": None,
+        "rmse": None,
+        "mae": None,
+        "mape": None,
+        "rmspe": None,
+        "qlike": None,
+    }
     for model in SUPPORTED_MODEL_TYPES
 )
 

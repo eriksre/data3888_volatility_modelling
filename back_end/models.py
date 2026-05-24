@@ -24,6 +24,8 @@ ARCH_FAMILY_SPECS: dict[str, dict[str, Any]] = {
     "GJR-GARCH(1,1)": {"vol": "GARCH", "p": 1, "o": 1, "q": 1, "forecast": {}},
 }
 MAX_REASONABLE_GARCH_VAR = 1_000_000.0
+GARCH_STABILITY_LIMIT = 0.99
+MIN_PRED_VOL = 1e-3
 
 
 def is_arch_family_model(model_type: str) -> bool:
@@ -40,6 +42,32 @@ def _is_plausible_garch_forecast(pred_var: float, pred_path_var: np.ndarray) -> 
         and np.all(pred_path_var >= 0)
         and float(np.max(pred_path_var)) <= MAX_REASONABLE_GARCH_VAR
     )
+
+
+def _param_values(params: Any, prefix: str) -> np.ndarray:
+    values = [float(value) for name, value in params.items() if str(name).startswith(prefix)]
+    return np.asarray(values, dtype=float)
+
+
+def _is_stable_garch_fit(params: Any) -> bool:
+    omega = float(params.get("omega", np.nan))
+    alphas = _param_values(params, "alpha[")
+    betas = _param_values(params, "beta[")
+    gammas = _param_values(params, "gamma[")
+    all_params = np.concatenate([np.asarray([omega]), alphas, betas, gammas])
+    if not np.all(np.isfinite(all_params)):
+        return False
+    if omega < 0 or np.any(alphas < 0) or np.any(betas < 0):
+        return False
+    if np.any(alphas >= GARCH_STABILITY_LIMIT) or np.any(betas >= GARCH_STABILITY_LIMIT):
+        return False
+    if gammas.size and np.any(np.abs(gammas) >= GARCH_STABILITY_LIMIT):
+        return False
+    if gammas.size and np.any(alphas[: gammas.size] + gammas < 0):
+        return False
+
+    persistence = float(alphas.sum() + betas.sum() + 0.5 * gammas.sum())
+    return bool(0 <= persistence < GARCH_STABILITY_LIMIT)
 
 
 def make_estimator(model_type: str, parameters: dict[str, Any] | None = None, pca_components: int | None = None):
@@ -138,7 +166,7 @@ def run_ml_model(
     estimator.fit(train[feature_cols], y_train_vol)
 
     start = time.perf_counter()
-    pred_vol = np.maximum(estimator.predict(test[feature_cols]), 0.0)
+    pred_vol = np.maximum(estimator.predict(test[feature_cols]), MIN_PRED_VOL)
     inference_ms = (time.perf_counter() - start) * 1000 / max(len(test), 1)
     pred_var = pred_vol**2
     output_feature_cols = [f"PC{i}" for i in range(1, pca_components + 1)] if pca_components is not None else feature_cols
@@ -222,6 +250,8 @@ def run_garch_on_processed(processed: pd.DataFrame, spec: ModelSpec, horizon: in
             start = time.perf_counter()
             model = arch_model(train_ret, mean="Zero", rescale=False, **model_kwargs)
             fit = model.fit(**fit_kwargs)
+            if not _is_stable_garch_fit(fit.params):
+                raise ValueError("unstable GARCH fit")
             forecast = fit.forecast(horizon=horizon, reindex=False, **forecast_kwargs)
             inference_ms = (time.perf_counter() - start) * 1000
             pred_path_var_arr = np.asarray(forecast.variance.values[-1], dtype=float)

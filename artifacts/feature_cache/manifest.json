@@ -1,5 +1,5 @@
 {
-  "created_at_utc": "2026-05-11T00:47:08.293394+00:00",
+  "created_at_utc": "2026-05-18T04:49:24.850617+00:00",
   "pipeline_version": "2026-05-10.2",
   "source_dir": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet",
   "combined_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/features_all_stocks.parquet",
@@ -8,7 +8,7 @@
   "total_rows": 428932,
   "total_time_ids": 428932,
   "workers": 11,
-  "total_elapsed_seconds": 108.26552045799963,
+  "total_elapsed_seconds": 178.79616841700044,
   "feature_config": {
     "forecast_horizon": 30,
     "return_windows": [
@@ -49,8 +49,8 @@
       0.94,
       0.97
     ],
-    "feature_mode": "Auto",
-    "n_auto_features": 12,
+    "feature_mode": "PCA",
+    "n_pca_components": 12,
     "manual_features": []
   },
   "stocks": [
@@ -60,7 +60,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 17.055664333000095,
+      "elapsed_seconds": 15.52678675000061,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_0.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_0.parquet"
     },
@@ -70,7 +70,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 17.693981999999778,
+      "elapsed_seconds": 16.42225395800051,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_1.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_1.parquet"
     },
@@ -80,7 +80,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 15.437931625000601,
+      "elapsed_seconds": 16.378040208999664,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_10.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_10.parquet"
     },
@@ -90,7 +90,7 @@
       "time_ids": 3829,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 18.046678084000632,
+      "elapsed_seconds": 15.686640832998819,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_100.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_100.parquet"
     },
@@ -100,7 +100,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 18.201048040999922,
+      "elapsed_seconds": 16.924385415999495,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_101.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_101.parquet"
     },
@@ -110,7 +110,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 17.650564999999915,
+      "elapsed_seconds": 16.573577958999522,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_102.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_102.parquet"
     },
@@ -120,7 +120,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 251,
-      "elapsed_seconds": 17.768914665999546,
+      "elapsed_seconds": 15.539307667000685,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_103.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_103.parquet"
     },
@@ -130,7 +130,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 16.136524749999808,
+      "elapsed_seconds": 16.63844700000118,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_104.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_104.parquet"
     },
@@ -140,7 +140,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 18.18663508300051,
+      "elapsed_seconds": 16.85788500000126,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_105.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_105.parquet"
     },
@@ -150,7 +150,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 17.50799883400032,
+      "elapsed_seconds": 16.528130417000284,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_107.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_107.parquet"
     },
@@ -160,7 +160,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 16.4869427499998,
+      "elapsed_seconds": 15.636054540998884,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_108.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_108.parquet"
     },
@@ -170,7 +170,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 16.323733666999942,
+      "elapsed_seconds": 15.792203999999401,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_109.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_109.parquet"
     },
@@ -180,7 +180,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 16.355609374999403,
+      "elapsed_seconds": 15.468480749999799,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_11.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_11.parquet"
     },
@@ -190,7 +190,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 16.33789258300021,
+      "elapsed_seconds": 15.697142791999795,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_110.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_110.parquet"
     },
@@ -200,7 +200,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 16.551733457999944,
+      "elapsed_seconds": 15.526769084000989,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_111.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_111.parquet"
     },
@@ -210,7 +210,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 16.395565875000102,
+      "elapsed_seconds": 15.66312333300084,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_112.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_112.parquet"
     },
@@ -220,7 +220,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 16.767455584000345,
+      "elapsed_seconds": 15.991534415999922,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_113.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_113.parquet"
     },
@@ -230,7 +230,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 16.80362116699962,
+      "elapsed_seconds": 16.075690542000302,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_114.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_114.parquet"
     },
@@ -240,7 +240,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 16.520070416000635,
+      "elapsed_seconds": 15.773754374999044,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_115.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_115.parquet"
     },
@@ -250,7 +250,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 16.851396125000065,
+      "elapsed_seconds": 15.978997958000036,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_116.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_116.parquet"
     },
@@ -260,7 +260,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 16.737415542000235,
+      "elapsed_seconds": 15.846027666999362,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_118.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_118.parquet"
     },
@@ -270,7 +270,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 16.712337500000103,
+      "elapsed_seconds": 16.00544195799921,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_119.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_119.parquet"
     },
@@ -278,518 +278,471 @@
       "stock_id": "stock_120",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 15.772883042000103,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_120.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_120.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_120.parquet"
     },
     {
       "stock_id": "stock_122",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 15.807818707999104,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_122.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_122.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_122.parquet"
     },
     {
       "stock_id": "stock_123",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 16.08164025000042,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_123.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_123.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_123.parquet"
     },
     {
       "stock_id": "stock_124",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 16.004426542000147,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_124.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_124.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_124.parquet"
     },
     {
       "stock_id": "stock_125",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 15.9687601250007,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_125.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_125.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_125.parquet"
     },
     {
       "stock_id": "stock_126",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 16.91324858400003,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_126.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_126.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_126.parquet"
     },
     {
       "stock_id": "stock_13",
       "rows": 3829,
       "time_ids": 3829,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 16.563025457999174,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_13.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_13.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_13.parquet"
     },
     {
       "stock_id": "stock_14",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 16.317241374999867,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_14.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_14.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_14.parquet"
     },
     {
       "stock_id": "stock_15",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 16.18482833300004,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_15.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_15.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_15.parquet"
     },
     {
       "stock_id": "stock_16",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 15.912335708000683,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_16.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_16.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_16.parquet"
     },
     {
       "stock_id": "stock_17",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 16.23457899999994,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_17.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_17.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_17.parquet"
     },
     {
       "stock_id": "stock_18",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 15.84846270900016,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_18.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_18.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_18.parquet"
     },
     {
       "stock_id": "stock_19",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 15.92371408300096,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_19.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_19.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_19.parquet"
     },
     {
       "stock_id": "stock_2",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 16.116677832998903,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_2.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_2.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_2.parquet"
     },
     {
       "stock_id": "stock_20",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 15.75439495899991,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_20.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_20.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_20.parquet"
     },
     {
       "stock_id": "stock_21",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 16.215023000000656,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_21.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_21.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_21.parquet"
     },
     {
       "stock_id": "stock_22",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 15.894143916999383,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_22.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_22.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_22.parquet"
     },
     {
       "stock_id": "stock_23",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 16.364854499999637,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_23.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_23.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_23.parquet"
     },
     {
       "stock_id": "stock_26",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 16.768988667001395,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_26.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_26.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_26.parquet"
     },
     {
       "stock_id": "stock_27",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 15.957550208000612,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_27.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_27.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_27.parquet"
     },
     {
       "stock_id": "stock_28",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 16.510913041000094,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_28.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_28.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_28.parquet"
     },
     {
       "stock_id": "stock_29",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 16.08012266700098,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_29.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_29.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_29.parquet"
     },
     {
       "stock_id": "stock_3",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 15.961790749999636,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_3.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_3.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_3.parquet"
     },
     {
       "stock_id": "stock_30",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 15.704443790998994,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_30.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_30.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_30.parquet"
     },
     {
       "stock_id": "stock_31",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 16.355474250000043,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_31.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_31.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_31.parquet"
     },
     {
       "stock_id": "stock_32",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 16.307542833999833,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_32.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_32.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_32.parquet"
     },
     {
       "stock_id": "stock_33",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 15.97100883299936,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_33.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_33.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_33.parquet"
     },
     {
       "stock_id": "stock_34",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 16.376068833998943,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_34.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_34.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_34.parquet"
     },
     {
       "stock_id": "stock_35",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 16.251765291999618,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_35.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_35.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_35.parquet"
     },
     {
       "stock_id": "stock_36",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 16.328095207998558,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_36.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_36.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_36.parquet"
     },
     {
       "stock_id": "stock_37",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 16.396190666999246,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_37.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_37.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_37.parquet"
     },
     {
       "stock_id": "stock_38",
       "rows": 3815,
       "time_ids": 3815,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 16.295606458999828,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_38.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_38.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_38.parquet"
     },
     {
       "stock_id": "stock_39",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 16.447737291999147,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_39.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_39.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_39.parquet"
     },
     {
       "stock_id": "stock_4",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 17.435593999998673,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_4.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_4.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_4.parquet"
     },
     {
       "stock_id": "stock_40",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 16.980709082999965,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_40.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_40.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_40.parquet"
     },
     {
       "stock_id": "stock_41",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 17.325221374998364,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_41.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_41.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_41.parquet"
     },
     {
       "stock_id": "stock_42",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 17.52779887500037,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_42.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_42.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_42.parquet"
     },
     {
       "stock_id": "stock_43",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 17.1323617500002,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_43.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_43.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_43.parquet"
     },
     {
       "stock_id": "stock_44",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 17.634002333999888,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_44.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_44.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_44.parquet"
     },
     {
       "stock_id": "stock_46",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 18.03086862499913,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_46.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_46.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_46.parquet"
     },
     {
       "stock_id": "stock_47",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 18.004417584001203,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_47.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_47.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_47.parquet"
     },
     {
       "stock_id": "stock_48",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 17.995356208000885,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_48.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_48.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_48.parquet"
     },
     {
       "stock_id": "stock_5",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 251,
+      "elapsed_seconds": 17.656816250000702,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_5.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_5.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_5.parquet"
     },
     {
       "stock_id": "stock_50",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 17.74001325000063,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_50.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_50.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_50.parquet"
     },
     {
       "stock_id": "stock_51",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 16.727057874999446,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_51.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_51.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_51.parquet"
     },
     {
       "stock_id": "stock_52",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 17.020945583000866,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_52.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_52.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_52.parquet"
     },
     {
       "stock_id": "stock_53",
       "rows": 3830,
       "time_ids": 3830,
-      "columns": null,
-      "usable_features": null,
-      "elapsed_seconds": 0.0,
+      "columns": 259,
+      "usable_features": 252,
+      "elapsed_seconds": 17.186735290999422,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_53.parquet",
-      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_53.parquet",
-      "cached": true
+      "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_53.parquet"
     },
     {
       "stock_id": "stock_55",
@@ -797,7 +750,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 16.989531457999874,
+      "elapsed_seconds": 16.9120609169986,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_55.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_55.parquet"
     },
@@ -807,7 +760,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 16.738245083999573,
+      "elapsed_seconds": 17.16444062500159,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_56.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_56.parquet"
     },
@@ -817,7 +770,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 17.188185417000568,
+      "elapsed_seconds": 17.11589774999993,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_58.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_58.parquet"
     },
@@ -827,7 +780,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 17.740089082999475,
+      "elapsed_seconds": 17.20677966599942,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_59.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_59.parquet"
     },
@@ -837,7 +790,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 17.34169424999982,
+      "elapsed_seconds": 16.86966329200004,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_6.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_6.parquet"
     },
@@ -847,7 +800,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 17.520475833999626,
+      "elapsed_seconds": 16.328911999999036,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_60.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_60.parquet"
     },
@@ -857,7 +810,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 18.069229333000294,
+      "elapsed_seconds": 16.64207329099918,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_61.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_61.parquet"
     },
@@ -867,7 +820,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 17.618261542000255,
+      "elapsed_seconds": 16.89203308300057,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_62.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_62.parquet"
     },
@@ -877,7 +830,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 17.758265749999737,
+      "elapsed_seconds": 16.473190041000635,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_63.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_63.parquet"
     },
@@ -887,7 +840,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 17.92258929200034,
+      "elapsed_seconds": 16.382606458000737,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_64.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_64.parquet"
     },
@@ -897,7 +850,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 17.288534166999852,
+      "elapsed_seconds": 16.43278612499853,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_66.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_66.parquet"
     },
@@ -907,7 +860,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 17.742109582999547,
+      "elapsed_seconds": 16.61343087500063,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_67.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_67.parquet"
     },
@@ -917,7 +870,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 17.797252583000045,
+      "elapsed_seconds": 16.460877292000077,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_68.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_68.parquet"
     },
@@ -927,7 +880,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 17.965929166000024,
+      "elapsed_seconds": 16.327314166999713,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_69.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_69.parquet"
     },
@@ -937,7 +890,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 17.895277917000385,
+      "elapsed_seconds": 16.361860082999556,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_7.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_7.parquet"
     },
@@ -947,7 +900,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 18.45801420800035,
+      "elapsed_seconds": 16.552150249999613,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_70.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_70.parquet"
     },
@@ -957,7 +910,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 18.368281708999348,
+      "elapsed_seconds": 16.08415070800038,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_72.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_72.parquet"
     },
@@ -967,7 +920,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 18.419435958000577,
+      "elapsed_seconds": 16.43441108299885,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_73.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_73.parquet"
     },
@@ -977,7 +930,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 18.358767875000012,
+      "elapsed_seconds": 16.495917750000444,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_74.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_74.parquet"
     },
@@ -987,7 +940,7 @@
       "time_ids": 3829,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 18.648719291000816,
+      "elapsed_seconds": 16.32943258299929,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_75.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_75.parquet"
     },
@@ -997,7 +950,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 18.583655958000236,
+      "elapsed_seconds": 16.60156491700036,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_76.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_76.parquet"
     },
@@ -1007,7 +960,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 18.778554083000017,
+      "elapsed_seconds": 16.543103750000228,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_77.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_77.parquet"
     },
@@ -1017,7 +970,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 17.118587333000505,
+      "elapsed_seconds": 16.487771500000235,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_78.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_78.parquet"
     },
@@ -1027,7 +980,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 17.243393125000694,
+      "elapsed_seconds": 16.544637832999797,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_8.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_8.parquet"
     },
@@ -1037,7 +990,7 @@
       "time_ids": 3820,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 17.43616424999982,
+      "elapsed_seconds": 16.42473820900159,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_80.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_80.parquet"
     },
@@ -1047,7 +1000,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 16.837135750000016,
+      "elapsed_seconds": 16.696595207999053,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_81.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_81.parquet"
     },
@@ -1057,7 +1010,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 16.885469459000888,
+      "elapsed_seconds": 15.980541541999628,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_82.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_82.parquet"
     },
@@ -1067,7 +1020,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 17.270061041999725,
+      "elapsed_seconds": 16.35167383299995,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_83.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_83.parquet"
     },
@@ -1077,7 +1030,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 17.53329387500071,
+      "elapsed_seconds": 16.813741291998667,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_84.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_84.parquet"
     },
@@ -1087,7 +1040,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 17.234533333999934,
+      "elapsed_seconds": 16.327809250000428,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_85.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_85.parquet"
     },
@@ -1097,7 +1050,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 17.165326374999495,
+      "elapsed_seconds": 16.70571854099944,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_86.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_86.parquet"
     },
@@ -1107,7 +1060,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 17.35258587499993,
+      "elapsed_seconds": 16.718922375001057,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_87.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_87.parquet"
     },
@@ -1117,7 +1070,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 16.947456957999748,
+      "elapsed_seconds": 17.237121915999523,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_88.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_88.parquet"
     },
@@ -1127,7 +1080,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 16.6074036659993,
+      "elapsed_seconds": 17.22538029200041,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_89.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_89.parquet"
     },
@@ -1137,7 +1090,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 251,
-      "elapsed_seconds": 16.484201000000212,
+      "elapsed_seconds": 16.939163291999648,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_9.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_9.parquet"
     },
@@ -1147,7 +1100,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 16.595971916999588,
+      "elapsed_seconds": 16.961487249998754,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_90.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_90.parquet"
     },
@@ -1157,7 +1110,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 16.452959083999303,
+      "elapsed_seconds": 16.811526249999588,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_93.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_93.parquet"
     },
@@ -1167,7 +1120,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 16.37707916599993,
+      "elapsed_seconds": 16.639280290999523,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_94.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_94.parquet"
     },
@@ -1177,7 +1130,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 15.98082358299962,
+      "elapsed_seconds": 16.475273207999635,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_95.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_95.parquet"
     },
@@ -1187,7 +1140,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 15.758397792000324,
+      "elapsed_seconds": 16.391062207998402,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_96.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_96.parquet"
     },
@@ -1197,7 +1150,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 251,
-      "elapsed_seconds": 15.705108332999771,
+      "elapsed_seconds": 16.16429241699916,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_97.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_97.parquet"
     },
@@ -1207,7 +1160,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 15.499817166999492,
+      "elapsed_seconds": 12.180294959000094,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_98.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_98.parquet"
     },
@@ -1217,7 +1170,7 @@
       "time_ids": 3830,
       "columns": 259,
       "usable_features": 252,
-      "elapsed_seconds": 15.628656291999505,
+      "elapsed_seconds": 12.14718133399947,
       "shard_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/artifacts/feature_cache/by_stock/stock_99.parquet",
       "source_path": "/Users/eriksreinfelds/Documents/GitHub/data3888_volatility_modelling/individual_book_train_parquet/stock_99.parquet"
     }

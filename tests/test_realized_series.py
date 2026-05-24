@@ -6,7 +6,7 @@ from unittest.mock import patch
 import numpy as np
 import pandas as pd
 
-from back_end.service import load_window_realized_series
+from back_end.service import build_prediction_curves, load_window_realized_series
 
 
 class RealizedSeriesTest(unittest.TestCase):
@@ -31,6 +31,31 @@ class RealizedSeriesTest(unittest.TestCase):
         self.assertAlmostEqual(first_observed["realized_vol"], np.sqrt(np.mean(returns[:5] ** 2)))
         self.assertAlmostEqual(first_heldout["realized_vol"], np.sqrt(np.mean(returns[:7] ** 2)))
         self.assertEqual(first_heldout["segment"], "heldout_actual")
+
+    def test_garch_prediction_curve_anchors_to_last_observed_realized_volatility(self):
+        realized = pd.DataFrame(
+            {
+                "seconds_in_bucket": [0, 1, 2, 3],
+                "realized_vol": [1.0, 1.2, 1.5, 1.7],
+                "segment": ["observed", "observed", "heldout_actual", "heldout_actual"],
+            }
+        )
+        predictions = pd.DataFrame(
+            {
+                "model": ["GARCH(1,1)"],
+                "model_type": ["GARCH(1,1)"],
+                "pred_vol": [1.65],
+                "prediction_kind": ["garch_path"],
+                "forecast_seconds": ["[2, 3]"],
+                "forecast_vol_path": ["[1.6, 1.55]"],
+            }
+        )
+
+        curves = build_prediction_curves(realized, predictions)
+
+        self.assertEqual(curves["seconds_in_bucket"].tolist(), [1, 2, 3])
+        self.assertEqual(curves["pred_vol"].tolist(), [1.2, 1.6, 1.55])
+        self.assertEqual(curves["prediction_kind"].tolist(), ["garch_path", "garch_path", "garch_path"])
 
 
 if __name__ == "__main__":

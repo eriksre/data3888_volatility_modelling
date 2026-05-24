@@ -4,11 +4,28 @@ import pandas as pd
 import streamlit as st
 
 from back_end.service import available_stocks, get_latest_or_selected_run, load_individual_page_data
+from back_end.universe import LOSS_METRICS
 from charts import realised_vol_chart, realised_vs_predicted_scatter
 from stock_registry import ALL_BOOK_STEMS
 
 
 _STOCK_ID_RE = re.compile(r"^stock_(\d+)$")
+LOSS_COLUMN_LABELS = {
+    "mse": "MSE",
+    "rmse": "RMSE",
+    "mae": "MAE",
+    "mape": "MAPE",
+    "rmspe": "RMSPE",
+    "qlike": "QLIKE",
+}
+METRIC_FORMATS = {
+    "MSE": "%.6f",
+    "RMSE": "%.6f",
+    "MAE": "%.6f",
+    "MAPE": "%.3f",
+    "RMSPE": "%.6f",
+    "QLIKE": "%.5f",
+}
 
 
 def _stock_sort_key(stock_id: str) -> tuple[int, int, str]:
@@ -93,10 +110,10 @@ def render() -> None:
     df = pd.DataFrame(payload["model_metrics"]).rename(columns={
         "model":        "Model",
         "inference_us": "Inference time (μs)",
-        "rmse":         "RMSE",
-        "qlike":        "QLIKE",
+        **LOSS_COLUMN_LABELS,
     })
-    for col in ["Inference time (μs)", "RMSE", "QLIKE"]:
+    metric_columns = [LOSS_COLUMN_LABELS[metric] for metric in LOSS_METRICS]
+    for col in ["Inference time (μs)", *metric_columns]:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")
     st.dataframe(
@@ -105,7 +122,9 @@ def render() -> None:
         width="stretch",
         column_config={
             "Inference time (μs)": st.column_config.NumberColumn(format="%.3f μs"),
-            "RMSE":           st.column_config.NumberColumn(format="%.6f"),
-            "QLIKE":          st.column_config.NumberColumn(format="%.5f"),
+            **{
+                metric: st.column_config.NumberColumn(format=METRIC_FORMATS[metric])
+                for metric in metric_columns
+            },
         },
     )

@@ -223,6 +223,8 @@ def build_prediction_curves(realized_series: pd.DataFrame, predictions: pd.DataF
         return pd.DataFrame(columns=["model", "model_type", "seconds_in_bucket", "pred_vol", "prediction_kind"])
 
     seconds = heldout["seconds_in_bucket"].astype(int).tolist()
+    observed = realized_series[realized_series["segment"] == "observed"].dropna(subset=["realized_vol"])
+    forecast_anchor = observed.sort_values("seconds_in_bucket").tail(1)
     rows = []
     for _, row in predictions.iterrows():
         model = str(row.get("model", "Model"))
@@ -232,6 +234,17 @@ def build_prediction_curves(realized_series: pd.DataFrame, predictions: pd.DataF
             path_seconds = [int(x) for x in _json_list(row.get("forecast_seconds"))]
             path_vol = [float(x) for x in _json_list(row.get("forecast_vol_path"))]
             if path_seconds and path_vol:
+                if not forecast_anchor.empty:
+                    anchor = forecast_anchor.iloc[0]
+                    rows.append(
+                        {
+                            "model": model,
+                            "model_type": model_type,
+                            "seconds_in_bucket": int(anchor["seconds_in_bucket"]),
+                            "pred_vol": float(anchor["realized_vol"]),
+                            "prediction_kind": "garch_path",
+                        }
+                    )
                 for second, pred_vol in zip(path_seconds, path_vol):
                     if np.isfinite(pred_vol):
                         rows.append(
@@ -275,7 +288,7 @@ def load_individual_model_metrics(run_id: str | None, stock_id: str, include_sca
     predictions = prediction_series(run_id, stock_id)
     use_scaffold = include_scaffold and metrics.empty and predictions.empty
     scaffold = pd.DataFrame(FRONTEND_MODEL_METRICS) if use_scaffold else pd.DataFrame(
-        columns=["model", "inference_us", "rmse", "qlike"]
+        columns=["model", "inference_us", *LOSS_METRICS]
     )
 
     if not metrics.empty:
@@ -289,15 +302,14 @@ def load_individual_model_metrics(run_id: str | None, stock_id: str, include_sca
                         pd.DataFrame([{
                             "model": model,
                             "inference_us": np.nan,
-                            "rmse": np.nan,
-                            "qlike": np.nan,
+                            **{metric: np.nan for metric in LOSS_METRICS},
                         }]),
                     ],
                     ignore_index=True,
                 )
                 idx = scaffold.index[scaffold["model"] == model]
-            scaffold.loc[idx, "rmse"] = row.get("rmse", np.nan)
-            scaffold.loc[idx, "qlike"] = row.get("qlike", np.nan)
+            for metric in LOSS_METRICS:
+                scaffold.loc[idx, metric] = row.get(metric, np.nan)
 
     if not predictions.empty:
         inference_us = predictions.groupby("model")["inference_ms"].mean() * 1000
@@ -308,7 +320,7 @@ def load_individual_model_metrics(run_id: str | None, stock_id: str, include_sca
 
     order = {row["model"]: idx for idx, row in enumerate(FRONTEND_MODEL_METRICS)}
     scaffold["_order"] = scaffold["model"].map(order).fillna(len(order))
-    for col in ["inference_us", "rmse", "qlike"]:
+    for col in ["inference_us", *LOSS_METRICS]:
         scaffold[col] = pd.to_numeric(scaffold[col], errors="coerce")
     return scaffold.sort_values(["_order", "model"]).drop(columns=["_order"]).reset_index(drop=True)
 

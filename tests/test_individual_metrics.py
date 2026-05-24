@@ -6,6 +6,7 @@ from unittest.mock import patch
 import pandas as pd
 
 from back_end.service import load_individual_model_metrics
+from back_end.universe import LOSS_METRICS
 
 
 class IndividualMetricsTest(unittest.TestCase):
@@ -14,7 +15,11 @@ class IndividualMetricsTest(unittest.TestCase):
             [
                 {
                     "model": "Linear Regression",
+                    "mse": 0.04,
                     "rmse": 0.2,
+                    "mae": 0.1,
+                    "mape": 2.0,
+                    "rmspe": 0.5,
                     "qlike": 0.3,
                 }
             ]
@@ -34,7 +39,13 @@ class IndividualMetricsTest(unittest.TestCase):
             view = load_individual_model_metrics("run-1", "stock_1", include_scaffold=False)
 
         self.assertNotIn("pred_target", view.columns)
+        for metric in LOSS_METRICS:
+            self.assertIn(metric, view.columns)
         self.assertAlmostEqual(view.loc[0, "inference_us"], 123.0)
+        self.assertAlmostEqual(view.loc[0, "mse"], 0.04)
+        self.assertAlmostEqual(view.loc[0, "mae"], 0.1)
+        self.assertAlmostEqual(view.loc[0, "mape"], 2.0)
+        self.assertAlmostEqual(view.loc[0, "rmspe"], 0.5)
 
 
 if __name__ == "__main__":

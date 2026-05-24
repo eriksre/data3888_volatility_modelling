@@ -82,6 +82,7 @@ class UniverseViewTest(unittest.TestCase):
         view = _model_comparison_view(model_df, "rmse")
 
         self.assertIn("Mean inference (μs)", view.columns)
+        self.assertNotIn("Model type", view.columns)
         self.assertNotIn("RMSE fold std", view.columns)
         self.assertAlmostEqual(view.loc[0, "Mean inference (μs)"], 123.456)
 

@@ -13,7 +13,7 @@
 
 ## Front-end contracts
 
-* Individual Stock model table: `service.load_individual_model_metrics(...)` returns `model`, `inference_us`, `rmse`, `qlike`.
+* Individual Stock model table: `service.load_individual_model_metrics(...)` returns `model`, `inference_us`, `mse`, `rmse`, `mae`, `mape`, `rmspe`, `qlike`.
 * Individual Stock page payload: `service.load_individual_page_data(...)` returns model metrics, predictions, realised series, and available `time_id` values.
 * Universe page payload: `service.load_universe_page_data(...)` returns summary, similarity, PCA, and model-comparison data for the current Universe scaffold.
 
