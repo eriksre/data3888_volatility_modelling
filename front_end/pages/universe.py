@@ -227,7 +227,6 @@ def _model_comparison_view(model_df: pd.DataFrame, winner_metric: str) -> pd.Dat
     metric_cols = [winner_metric, *[metric for metric in ["rmse", "qlike", "mae", "mse", "mape", "rmspe"] if metric != winner_metric]]
     display_cols = [
         "model",
-        "model_type",
         "mean_inference_ms",
         best_col,
         *metric_cols,
@@ -241,7 +240,6 @@ def _model_comparison_view(model_df: pd.DataFrame, winner_metric: str) -> pd.Dat
     return table.rename(
         columns={
             "model": "Model",
-            "model_type": "Model type",
             "mean_inference_ms": "Mean inference (μs)",
             best_col: "# model wins",
             winner_metric: winner_metric.upper(),

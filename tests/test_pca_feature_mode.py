@@ -7,7 +7,7 @@ import pandas as pd
 
 from back_end.config import FeatureConfig, ModelSpec
 from back_end.evaluation import summarize_fold_metrics
-from back_end.models import run_model_for_fold
+from back_end.models import MIN_PRED_VOL, run_ml_model, run_model_for_fold
 from back_end.universe import LOSS_METRICS, build_model_comparison, build_pca_variance_explained, build_stock_pca, build_universe_summary
 
 
@@ -52,6 +52,38 @@ class PcaFeatureModeTest(unittest.TestCase):
         self.assertEqual(set(predictions["feature_cols"]), {"PC1,PC2"})
         self.assertEqual(set(importance["feature"]), {"PC1", "PC2"})
         self.assertTrue(np.isfinite(predictions["pred_vol"]).all())
+
+    def test_ml_predictions_use_positive_volatility_floor(self):
+        feature_cols = ["feature"]
+        train = pd.DataFrame(
+            {
+                "stock_id": ["stock_0", "stock_0", "stock_0"],
+                "time_id": [1, 2, 3],
+                "target_var": [1.0, 0.25, 0.0],
+                "target_vol": [1.0, 0.5, 0.0],
+                "feature": [0.0, 0.5, 1.0],
+            }
+        )
+        test = pd.DataFrame(
+            {
+                "stock_id": ["stock_0"],
+                "time_id": [4],
+                "target_var": [0.25],
+                "target_vol": [0.5],
+                "feature": [2.0],
+            }
+        )
+
+        predictions, _ = run_ml_model(
+            ModelSpec(name="Linear Regression", model_type="Linear Regression"),
+            train,
+            test,
+            feature_cols,
+            fold=1,
+        )
+
+        self.assertAlmostEqual(predictions.loc[0, "pred_vol"], MIN_PRED_VOL)
+        self.assertAlmostEqual(predictions.loc[0, "pred_var"], MIN_PRED_VOL**2)
 
     def test_stock_pca_returns_one_coordinate_row_per_stock(self):
         rows = []

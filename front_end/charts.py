@@ -257,6 +257,7 @@ def realised_vol_chart(
 def realised_vs_predicted_scatter(stock_id: str, predictions: pd.DataFrame | None = None) -> go.Figure:
     fig = go.Figure()
     fig.update_layout(
+        height=520,
         title=dict(text=f"Realised vs Predicted Volatility — {stock_id}", font=dict(size=16)),
         xaxis=dict(
             title="Realised Volatility",
@@ -335,10 +336,9 @@ def realised_vs_predicted_scatter(stock_id: str, predictions: pd.DataFrame | Non
         display_data = scatter_data
         hidden_count = 0
 
-    min_vol = float(display_data[["actual_vol", "pred_vol"]].min().min())
     max_vol = float(display_data[["actual_vol", "pred_vol"]].max().max())
-    padding = (max_vol - min_vol) * 0.05 if max_vol > min_vol else max(max_vol * 0.05, 0.001)
-    axis_min = max(0.0, min_vol - padding)
+    padding = max(max_vol * 0.05, 0.001)
+    axis_min = 0.0
     axis_max = max_vol + padding
 
     fig.add_trace(
@@ -379,7 +379,7 @@ def realised_vs_predicted_scatter(stock_id: str, predictions: pd.DataFrame | Non
         )
 
     fig.update_xaxes(range=[axis_min, axis_max])
-    fig.update_yaxes(range=[axis_min, axis_max], scaleanchor="x", scaleratio=1)
+    fig.update_yaxes(range=[axis_min, axis_max])
     return fig
 
 

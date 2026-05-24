@@ -20,6 +20,9 @@ class RealisedVsPredictedScatterTest(unittest.TestCase):
 
         fig = realised_vs_predicted_scatter("stock_0", predictions)
 
+        self.assertEqual(fig.layout.height, 520)
+        self.assertEqual(fig.layout.xaxis.range[0], 0.0)
+        self.assertIsNone(fig.layout.yaxis.scaleanchor)
         self.assertLess(fig.layout.xaxis.range[1], 10.0)
         self.assertLess(fig.layout.yaxis.range[1], 10.0)
         self.assertFalse(any("extreme prediction" in annotation.text for annotation in fig.layout.annotations))
