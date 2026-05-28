@@ -269,16 +269,16 @@ def model_metrics_frame(metrics: pd.DataFrame | None, predictions: pd.DataFrame 
 
     if metrics is not None and not metrics.empty and "model" in metrics.columns:
         frame = metrics.copy()
-        if "fold" in frame.columns and (frame["fold"] == 0).any():
-            frame = frame[frame["fold"] == 0].copy()
-        else:
-            aggregations: dict[str, str] = {}
-            if "rmse" in frame.columns:
-                aggregations["rmse"] = "mean"
-            if "qlike" in frame.columns:
-                aggregations["qlike"] = "mean"
-            if aggregations:
-                frame = frame.groupby("model", as_index=False).agg(aggregations)
+        frame["model"] = frame["model"].astype(str)
+        aggregations: dict[str, str] = {}
+        if "rmse" in frame.columns:
+            frame["rmse"] = pd.to_numeric(frame["rmse"], errors="coerce")
+            aggregations["rmse"] = "mean"
+        if "qlike" in frame.columns:
+            frame["qlike"] = pd.to_numeric(frame["qlike"], errors="coerce")
+            aggregations["qlike"] = "mean"
+        if aggregations:
+            frame = frame.groupby("model", as_index=False).agg(aggregations)
 
         if "rmse" in frame.columns:
             rmse_rows = frame[["model", "rmse"]].copy()
@@ -355,16 +355,15 @@ def model_summary_frame(metrics: pd.DataFrame | None, predictions: pd.DataFrame 
     if metrics is not None and not metrics.empty and "model" in metrics.columns:
         frame = metrics.copy()
         frame["model"] = frame["model"].astype(str)
-        if "fold" in frame.columns and (frame["fold"] == 0).any():
-            frame = frame[frame["fold"] == 0].copy()
-        else:
-            aggregations: dict[str, str] = {}
-            if "qlike" in frame.columns:
-                aggregations["qlike"] = "mean"
-            if "rmse" in frame.columns:
-                aggregations["rmse"] = "mean"
-            if aggregations:
-                frame = frame.groupby("model", as_index=False).agg(aggregations)
+        aggregations: dict[str, str] = {}
+        if "qlike" in frame.columns:
+            frame["qlike"] = pd.to_numeric(frame["qlike"], errors="coerce")
+            aggregations["qlike"] = "mean"
+        if "rmse" in frame.columns:
+            frame["rmse"] = pd.to_numeric(frame["rmse"], errors="coerce")
+            aggregations["rmse"] = "mean"
+        if aggregations:
+            frame = frame.groupby("model", as_index=False).agg(aggregations)
 
         keep_cols = ["model"]
         if "qlike" in frame.columns:
@@ -467,49 +466,59 @@ def _safe_quantile(values: np.ndarray, q: float, method: str = "linear") -> floa
         return float(np.quantile(values, q, interpolation=method))
 
 
-def _best_pareto_balance_model(pareto: pd.DataFrame) -> pd.Series | None:
+def _best_pareto_balance_model(
+    pareto: pd.DataFrame,
+    *,
+    metric_col: str = "rmse",
+) -> pd.Series | None:
     if pareto.empty:
         return None
     work = pareto.copy()
     work["log_latency"] = np.log10(np.maximum(work["mean_inference_us"].to_numpy(dtype=float), 1e-12))
-    work["balance_score"] = _normalized_distance_to_ideal(work, "log_latency", "rmse")
+    work["balance_score"] = _normalized_distance_to_ideal(work, "log_latency", metric_col)
     best = work.sort_values(
-        ["balance_score", "rmse", "mean_inference_us"],
+        ["balance_score", metric_col, "mean_inference_us"],
         ascending=[True, True, True],
     ).iloc[0]
     return best
 
 
-def _pareto_summary_lines(frame: pd.DataFrame, pareto: pd.DataFrame) -> list[str]:
+def _pareto_summary_lines(
+    frame: pd.DataFrame,
+    pareto: pd.DataFrame,
+    *,
+    metric_col: str = "rmse",
+    metric_label: str = "RMSE",
+) -> list[str]:
     lines: list[str] = []
     if frame.empty:
         return lines
 
     fastest = frame.loc[frame["mean_inference_us"].idxmin()]
-    lowest_rmse = frame.loc[frame["rmse"].idxmin()]
-    best_balance = _best_pareto_balance_model(pareto)
+    best_metric = frame.loc[frame[metric_col].idxmin()]
+    best_balance = _best_pareto_balance_model(pareto, metric_col=metric_col)
 
     lines.append(
         f"Fastest model: {fastest['model']} "
-        f"({float(fastest['mean_inference_us']):.3f} us, RMSE {float(fastest['rmse']):.4f})."
+        f"({float(fastest['mean_inference_us']):.3f} us, {metric_label} {float(fastest[metric_col]):.4f})."
     )
     lines.append(
-        f"Lowest-RMSE model: {lowest_rmse['model']} "
-        f"(RMSE {float(lowest_rmse['rmse']):.4f}, {float(lowest_rmse['mean_inference_us']):.3f} us)."
+        f"Lowest-{metric_label} model: {best_metric['model']} "
+        f"({metric_label} {float(best_metric[metric_col]):.4f}, {float(best_metric['mean_inference_us']):.3f} us)."
     )
 
     if best_balance is not None:
         lines.append(
             f"Best Pareto-balance model: {best_balance['model']} "
-            f"(RMSE {float(best_balance['rmse']):.4f}, {float(best_balance['mean_inference_us']):.3f} us)."
+            f"({metric_label} {float(best_balance[metric_col]):.4f}, {float(best_balance['mean_inference_us']):.3f} us)."
         )
 
     lines.append(f"Pareto-optimal models: {len(pareto)} of {len(frame)}.")
     return lines[:4]
 
 
-def _adaptive_rmse_limits(frame: pd.DataFrame) -> tuple[float, float, float, pd.Series]:
-    raw_values = frame["rmse"].to_numpy(dtype=float)
+def _adaptive_metric_limits(frame: pd.DataFrame, value_col: str) -> tuple[float, float, float, pd.Series]:
+    raw_values = frame[value_col].to_numpy(dtype=float)
     finite_mask = np.isfinite(raw_values)
     finite_values = raw_values[finite_mask]
     if finite_values.size == 0:
@@ -614,130 +623,144 @@ def figure_pareto_frontier(
         warn("Skipping pareto_frontier.png: no model summary is available.")
         return False
 
-    frame = summary.dropna(subset=["model", "mean_inference_us", "rmse"]).copy()
+    frame = summary.dropna(subset=["model", "mean_inference_us", "qlike"]).copy()
     frame = frame[frame["mean_inference_us"] > 0].copy()
     if frame.empty:
-        warn("Skipping pareto_frontier.png: no model has positive latency and RMSE values.")
+        warn("Skipping pareto_frontier.png: no model has positive latency and QLIKE values.")
         return False
 
-    optimal_mask = pareto_optimal_mask(frame, x_col="mean_inference_us", y_col="rmse")
+    optimal_mask = pareto_optimal_mask(frame, x_col="mean_inference_us", y_col="qlike")
     pareto = frame[optimal_mask].sort_values("mean_inference_us")
     dominated = frame[~optimal_mask].sort_values("mean_inference_us")
-    y_lower, y_upper, clip_cap, outlier_mask = _adaptive_rmse_limits(frame)
+    y_lower, y_upper, clip_cap, outlier_mask = _adaptive_metric_limits(frame, "qlike")
     frame = frame.copy()
-    frame["rmse_plot"] = np.minimum(frame["rmse"], clip_cap)
+    frame["qlike_plot"] = np.minimum(frame["qlike"], clip_cap)
     pareto = frame[optimal_mask].sort_values("mean_inference_us")
     dominated = frame[~optimal_mask].sort_values("mean_inference_us")
 
-    fig, ax = styled_subplots(figsize=(11.2, 7.0), constrained_layout=False)
-    fig.subplots_adjust(left=0.08, right=0.98, bottom=0.12, top=0.80)
-    style_axis(ax, which="both", alpha=0.30)
+    fig, ax = styled_subplots(figsize=(10.0, 6.0), constrained_layout=False)
+    fig.subplots_adjust(left=0.10, right=0.98, bottom=0.13, top=0.90)
+    style_axis(ax, which="both", alpha=0.40)
 
+    dominated_scatter = None
     if not dominated.empty:
-        ax.scatter(
+        dominated_scatter = ax.scatter(
             dominated["mean_inference_us"],
-            dominated["rmse_plot"],
-            color=COLOR_THEME["dominated"],
-            s=125,
-            alpha=0.82,
-            edgecolors="white",
-            linewidths=0.8,
+            dominated["qlike_plot"],
+            color="gray",
+            s=50,
+            alpha=0.7,
             label="Dominated models",
             zorder=2,
         )
 
+    frontier_line = None
+    pareto_scatter = None
     if not pareto.empty:
-        ax.plot(
+        (frontier_line,) = ax.plot(
             pareto["mean_inference_us"],
-            pareto["rmse_plot"],
-            color=COLOR_THEME["pareto_line"],
-            linewidth=1.6,
-            alpha=0.9,
+            pareto["qlike_plot"],
+            color="red",
+            linewidth=1.5,
             label="Pareto frontier",
             zorder=3,
         )
-        ax.scatter(
+        pareto_scatter = ax.scatter(
             pareto["mean_inference_us"],
-            pareto["rmse_plot"],
-            color=COLOR_THEME["pareto_line"],
-            s=250,
-            edgecolors="#102a43",
-            linewidths=1.1,
-            label="Pareto-optimal models",
+            pareto["qlike_plot"],
+            color="red",
+            s=60,
+            label="Pareto optimal models",
             zorder=4,
         )
 
-    label_df = frame.sort_values(["mean_inference_us", "rmse"], ascending=[True, True]).reset_index(drop=False)
+    label_df = frame.sort_values(["mean_inference_us", "qlike"], ascending=[True, True]).reset_index(drop=False)
     offsets = _label_offsets(len(label_df))
     for idx, row in label_df.iterrows():
         original_idx = int(row["index"])
-        color = COLOR_THEME["pareto_line"] if bool(optimal_mask.loc[original_idx]) else COLOR_THEME["ink"]
-        outlier_suffix = f" ({float(row['rmse']):.3f})" if bool(outlier_mask.loc[original_idx]) else ""
+        color = "red" if bool(optimal_mask.loc[original_idx]) else "gray"
+        outlier_suffix = f" ({float(row['qlike']):.3f})" if bool(outlier_mask.loc[original_idx]) else ""
         ax.annotate(
             f"{row['model']}{outlier_suffix}",
-            (float(row["mean_inference_us"]), float(row["rmse_plot"])),
+            (float(row["mean_inference_us"]), float(row["qlike_plot"])),
             xytext=offsets[idx],
             textcoords="offset points",
-            fontsize=9,
+            fontsize=8,
             color=color,
-            bbox={"boxstyle": "round,pad=0.18", "fc": "white", "ec": "none", "alpha": 0.78},
-            arrowprops={"arrowstyle": "-", "lw": 0.45, "color": COLOR_THEME["muted"], "alpha": 0.68},
         )
 
     for x, color, text in [
-        (1.0, COLOR_THEME["latency_1us"], "1 us"),
-        (10.0, COLOR_THEME["latency_10us"], "10 us"),
-        (1000.0, COLOR_THEME["latency_1000us"], "1000 us"),
+        (1.0, COLOR_THEME["latency_1us"], "1 μs (HFT)"),
+        (10.0, COLOR_THEME["latency_10us"], "10 μs (desk trading)"),
+        (1000.0, COLOR_THEME["latency_1000us"], "1000 μs"),
     ]:
-        ax.axvline(x=x, color=color, linestyle=(0, (4, 2)), linewidth=1.3, alpha=0.88, label=text)
+        ax.axvline(x=x, color=color, linestyle="--", linewidth=1.2, label="_nolegend_")
+    for x, color in [(1.0, "green"), (10.0, "gold"), (1000.0, "purple")]:
+        ax.axvline(x=x, color=color, linestyle="--", linewidth=1.2, label="_nolegend_")
 
     ax.set_xscale("log")
-    ax.set_xlabel("Inference Time (microseconds, log scale)")
-    ax.set_ylabel("RMSE (lower is better)")
-    ax.set_title("Pareto Frontier: Latency-Constrained Volatility Model Selection", pad=12)
-    ax.grid(True, which="both", linestyle=":", alpha=0.32)
+    ax.set_xlabel("Inference Time (μs)")
+    ax.set_xlabel("Inference Time (\u03bcs)")
+    ax.set_ylabel("QLIKE (lower is better)")
+    ax.set_title("Pareto Frontier: Volatility Model Selection", pad=12)
+    ax.grid(True, which="both", linestyle=":", alpha=0.4)
 
-    x_min = min(frame["mean_inference_us"].min(), 1.0)
-    x_max = max(frame["mean_inference_us"].max(), 1000.0)
-    ax.set_xlim(max(x_min * 0.7, 1e-6), x_max * 1.3)
+    x_min = float(frame["mean_inference_us"].min())
+    x_max = float(frame["mean_inference_us"].max())
+    x_lower = max(min(x_min * 0.6, 1.0), 1e-6)
+    x_upper = max(x_max * 2.0, 1000.0)
+    ax.set_xlim(x_lower, x_upper)
     ax.set_ylim(y_lower, y_upper)
     ax.ticklabel_format(axis="y", style="plain", useOffset=False)
 
+    clipped_handle = None
     if outlier_mask.any():
         outliers = frame[outlier_mask]
         if not outliers.empty:
             outlier_colors = [
-                COLOR_THEME["pareto"] if bool(optimal_mask.loc[idx]) else COLOR_THEME["dominated"]
+                "red" if bool(optimal_mask.loc[idx]) else "gray"
                 for idx in outliers.index
             ]
-            ax.scatter(
+            clipped_handle = ax.scatter(
                 outliers["mean_inference_us"],
                 np.full(len(outliers), clip_cap),
                 marker="^",
-                s=180,
+                s=90,
                 c=outlier_colors,
-                edgecolors="#102a43",
-                linewidths=0.9,
+                edgecolors="black",
+                linewidths=0.6,
                 zorder=5,
                 label="Clipped for display",
             )
 
-    summary_lines = _pareto_summary_lines(frame, pareto)
-    if summary_lines:
-        summary_text = "Interpretation\n" + "\n".join([f"- {line}" for line in summary_lines])
-        fig.text(
-            0.085,
-            0.965,
-            summary_text,
-            ha="left",
-            va="top",
-            fontsize=8.4,
-            linespacing=1.28,
-            color=COLOR_THEME["ink"],
-            bbox={"boxstyle": "round,pad=0.34", "fc": "#fbfdff", "ec": "#d5deea", "alpha": 0.55},
-        )
+    from matplotlib.lines import Line2D
 
-    ax.legend(loc="upper right", fontsize=8, framealpha=0.95)
+    latency_handles = [
+        Line2D([0], [0], color="green", linestyle="--", linewidth=1.2, label="1 μs (HFT)"),
+        Line2D([0], [0], color="gold", linestyle="--", linewidth=1.2, label="10 μs (desk trading)"),
+        Line2D([0], [0], color="purple", linestyle="--", linewidth=1.2, label="1000 μs"),
+    ]
+    latency_handles = [
+        Line2D([0], [0], color="green", linestyle="--", linewidth=1.2, label="1 \u03bcs (HFT)"),
+        Line2D([0], [0], color="gold", linestyle="--", linewidth=1.2, label="10 \u03bcs (desk trading)"),
+        Line2D([0], [0], color="purple", linestyle="--", linewidth=1.2, label="1000 \u03bcs"),
+    ]
+    legend_handles = [h for h in [frontier_line, pareto_scatter, dominated_scatter] if h is not None]
+    legend_handles.extend(latency_handles)
+    if clipped_handle is not None:
+        legend_handles.append(
+            Line2D(
+                [0],
+                [0],
+                marker="^",
+                linestyle="None",
+                markerfacecolor="gray",
+                markeredgecolor="black",
+                markersize=8,
+                label="Clipped for display",
+            )
+        )
+    ax.legend(handles=legend_handles, loc="upper right", fontsize=8)
 
     save_figure(fig, output_dir / "pareto_frontier.png", dpi)
     return True
@@ -1162,7 +1185,7 @@ def figure_single_stock_actual_vs_predicted(
         )
 
     ax.set_ylabel("Volatility", fontsize=12)
-    ax.set_xlabel("time_id", fontsize=12)
+    ax.set_xlabel("Trading Window Index", fontsize=12)
     ax.tick_params(axis="both", labelsize=11)
     ax.set_title(f"Single-Stock Volatility Forecast Comparison (stock_id={selected_stock_id})", pad=10)
     ax.xaxis.set_major_locator(MaxNLocator(nbins=9, integer=True))

@@ -15,12 +15,10 @@ execute:
   message: false
 jupyter: python3
 ---
-
-> Version: aligned with the latest backend and Streamlit workflow ,reads backend artifacts and report-ready figures
-> Need to complete:1."To be continue".
-
 ```{python}
 #| label: setup
+#| echo: false
+#| results: hide
 
 from pathlib import Path
 import pandas as pd
@@ -79,7 +77,40 @@ def show_table(df: pd.DataFrame, n: int | None = None):
     if df.empty:
         placeholder("Table unavailable because the relevant backend output is missing or empty.")
         return
-    display(df if n is None else df.head(n))
+    out = df if n is None else df.head(n)
+    display(out.round(2))
+
+
+def model_level_metrics_table(metrics_df: pd.DataFrame, predictions_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    """
+    _ = predictions_df  # not used; keep function signature stable for existing calls
+    if metrics_df is None or metrics_df.empty or "model" not in metrics_df.columns:
+        return pd.DataFrame(columns=["model", "mean_rmse", "mean_mae", "mean_qlike"])
+
+    m = metrics_df.copy()
+    m["model"] = m["model"].astype(str)
+    metric_cols = [c for c in ["rmse", "mae", "qlike"] if c in m.columns]
+    if not metric_cols:
+        return pd.DataFrame(columns=["model", "mean_rmse", "mean_mae", "mean_qlike"])
+
+    for col in metric_cols:
+        m[col] = pd.to_numeric(m[col], errors="coerce")
+
+    summary = m.groupby("model", as_index=False)[metric_cols].mean()
+    summary = summary.rename(
+        columns={
+            "rmse": "mean_rmse",
+            "mae": "mean_mae",
+            "qlike": "mean_qlike",
+        }
+    )
+    for col in ["mean_rmse", "mean_mae", "mean_qlike"]:
+        if col not in summary.columns:
+            summary[col] = pd.NA
+    summary = summary[["model", "mean_rmse", "mean_mae", "mean_qlike"]]
+    summary = summary.sort_values(["mean_rmse", "mean_qlike"], na_position="last")
+    return summary.reset_index(drop=True)
 
 
 def artifact_status_table():
@@ -109,13 +140,14 @@ predictions = load_artifact("predictions.parquet")
 feature_importance = load_artifact("feature_importance.parquet")
 universe_summary = load_artifact("universe_summary.parquet")
 similarity = load_artifact("stock_similarity.parquet")
+model_metrics_summary = model_level_metrics_table(metrics, predictions)
 
-if RUN_DIR is not None:
-    md(f"Using backend run artifacts from `{RUN_DIR.as_posix()}`.")
 ```
 
 ```{python}
 #| label: generate-report-figures
+#| echo: false
+#| results: hide
 
 import subprocess
 import sys
@@ -134,16 +166,11 @@ else:
         capture_output=True,
         text=True,
     )
-    if result.stdout:
-        print(result.stdout)
     if result.returncode != 0:
-        if result.stderr:
-            print(result.stderr)
         display(Markdown("> **Placeholder:** Report figure generation did not complete successfully. Existing figures, if present, will still be used below."))
 ```
 
-
-## Introduction
+## Executive Summary
 
 Traders use volatility forecasting models for many reasons, including but not limited to modelling inventory risk, portfolio optimisation and value at risk VaR analysis. Depending on the application, traders, market makers and portfolio managers require tools which have different accuracy vs latency tradeoffs. For instance, a portfolio manager calculating their 1 day VaR may want the most accurate model, while a researcher creating an options pricing algorithm for a highly liquid stock may prioritise speed at the cost of some accuracy. Hence, it is highly important for market participants to choose the model that is the best fit for their given problem.
 
@@ -155,11 +182,9 @@ Our project aims to help traders answer the question:
 
 We find these core findings to be highly relevant for market makers and quantitative researchers who must regularly make the choice between minimising latency and having the models that fit the data best. As shown above, we see clear tradeoffs between model inference latency and model loss. Our tool exposes this to traders, and lets them make informed decisions that most fit their specific strategy and the universe of assets they wish to trade.
 
-## Problem Context and Research Question
+## Background and Data
 
 > To be continue---research question: framed around model selection under latency constraints
-
-## Data and Feature Engineering
 
 Within the original dataset of 112 stocks, we cannot directly use the raw stock data for prediction. Before prediction, we must perform feature engineering to transform the raw data into variables that can be used to predict stock trends and data changes.
 
@@ -169,7 +194,7 @@ These features can uncover additional market structure information in subsequent
 
 After feature generation, we performed basic data cleaning, removing missing values and factors with low information content. This avoids the impact of excessively small data on model predictions, reduces prediction complexity, and improves model stability.
 
-## Modelling Workflow
+## Methods
 
 Raw parquet order book data<br>
         ↓<br>
@@ -178,8 +203,6 @@ Feature engineering and feature cache<br>
 Model configuration in Streamlit<br>
         ↓<br>
 Backend model run<br>
-        ↓<br>
-Saved artifacts in artifacts/runs/&lt;run_id&gt;/<br>
         ↓<br>
 Dashboard visualisation ＆ Quarto report figures
 
@@ -190,8 +213,6 @@ First, read the original stock order information in PRQUET format. The original 
 After completing the data preparation, users select the model, set the training parameters and decide whether to perform feature screening through the Streamlit interface. After the configuration is completed, the background will automatically complete the subsequent processes, including data processing, feature reading, cross-validation, model training, and final prediction. After each model configuration run is completed, users can obtain the predicted results of the model through the interface, including the model accuracy rate and the evaluation of model metrics. Additional charts can present data details and specific model content to users. The prediction results can be clearly presented by comparing the effects among different models. 
 
 Finally, these experimental results will be further integrated into the visualization interface and the Quarto reporting system, presenting the model performance through charts and results to help explain the final report output.
-
-## Forecasting Models
 
 In the model section, we selected multiple prediction models for comparison to observe the performance differences in volatility prediction under different assumptions.
 
@@ -221,8 +242,6 @@ XGBoost continuously improves its prediction effect by gradually correcting erro
 
 By simultaneously comparing traditional models, linear models, and machine learning models, the applicability of different methods in the volatility prediction task can be evaluated more comprehensively.
 
-## Evaluation Framework
-
 ### metrics & validation
 
 To analyze the model performance more objectively from the data perspective, in this project, we adopt the method of repeated cross-validation to conduct experiments on the data. We use a 50% cross-validation approach and a ratio of 20% to 80% for model testing and training.
@@ -240,15 +259,44 @@ Through the experimental results of different metrics, it helps us observe the m
 ```{python}
 #| label: metrics-overview
 
-if metrics.empty:
-    placeholder("Metrics artifact unavailable. Run the backend pipeline first.")
+if model_metrics_summary.empty:
+    placeholder("Model-level metrics table unavailable.")
 else:
-    cols = [c for c in ["model", "fold", "rmse", "mae", "qlike", "mean_inference_ms", "inference_ms"] if c in metrics.columns]
-    if cols:
-        show_table(metrics[cols].head(15))
-    else:
-        show_table(metrics.head(15))
+    keep = [c for c in ["model", "mean_rmse", "mean_mae", "mean_qlike"] if c in model_metrics_summary.columns]
+    show_table(model_metrics_summary[keep])
 ```
+
+> To be continue---
+
+### Model Specification Page
+
+```{python}
+#| label: dashboard-model-spec-screenshot
+
+show_png("figures/dashboard_model_specification.png")
+```
+
+> To be continue---
+
+### Individual Stock Page
+
+```{python}
+#| label: dashboard-individual-screenshot
+
+show_png("figures/dashboard_individual_stock.png")
+```
+
+> To be continue---
+
+### Universe Page
+
+```{python}
+#| label: dashboard-universe-screenshot
+
+show_png("figures/dashboard_universe.png")
+```
+
+> To be continue---
 
 ## Results
 
@@ -294,15 +342,11 @@ show_png("plots/report_figures/model_metric_comparison.png")
 ```{python}
 #| label: model-metrics-table
 
-if metrics.empty:
+if model_metrics_summary.empty:
     placeholder("Model metric table unavailable.")
 else:
-    overall = metrics[metrics["fold"] == 0] if "fold" in metrics.columns else metrics
-    keep = [c for c in ["model", "rmse", "mae", "qlike", "mape", "rmspe", "pearson_r"] if c in overall.columns]
-    if keep:
-        show_table(overall[keep].sort_values(keep[1]) if len(keep) > 1 else overall[keep])
-    else:
-        show_table(overall.head(20))
+    keep = [c for c in ["model", "mean_rmse", "mean_mae", "mean_qlike"] if c in model_metrics_summary.columns]
+    show_table(model_metrics_summary[keep])
 ```
 
 ### Single-Stock Model Selection
@@ -315,7 +359,7 @@ The individual-stock analysis allows users to inspect how models behave for a se
 show_png("plots/report_figures/single_stock_actual_vs_predicted.png")
 ```
 
-> To be continue---Figure.........
+This figure compares realised volatility against volatility forecasts from several models for a representative stock across trading windows. That llustrates how closely each model tracks changes in realised volatility over time.
 
 ### Universe-Level Model Selection
 
@@ -350,41 +394,7 @@ Feature importance helps explain which variables contribute most to model predic
 show_png("plots/report_figures/feature_importance_top10.png")
 ```
 
-## Dashboard and Visualisation Interface
-
-> To be continue---
-
-### Model Specification Page
-
-```{python}
-#| label: dashboard-model-spec-screenshot
-
-show_png("figures/dashboard_model_specification.png")
-```
-
-> To be continue---
-
-### Individual Stock Page
-
-```{python}
-#| label: dashboard-individual-screenshot
-
-show_png("figures/dashboard_individual_stock.png")
-```
-
-> To be continue---
-
-### Universe Page
-
-```{python}
-#| label: dashboard-universe-screenshot
-
-show_png("figures/dashboard_universe.png")
-```
-
-> To be continue---
-
-## Limitations(?)
+## Discussion
 
 > To be continue---
 
@@ -394,9 +404,4 @@ show_png("figures/dashboard_universe.png")
 
 ## Appendix
 
-```{python}
-#| label: appendix-artifact-audit
-
-md("### Backend artifact availability")
-show_table(artifact_status_table())
-```
+## Contribution
