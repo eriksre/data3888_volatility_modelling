@@ -6,15 +6,16 @@ from typing import Any, Literal
 
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
-INDIVIDUAL_PARQUET_DIR = ROOT_DIR / "individual_book_train_parquet"
+INDIVIDUAL_BOOK_DIR = ROOT_DIR / "individual_book_train"
 ARTIFACTS_DIR = ROOT_DIR / "artifacts"
 FEATURE_CACHE_DIR = ARTIFACTS_DIR / "feature_cache"
 FEATURE_CACHE_PATH = FEATURE_CACHE_DIR / "features_all_stocks.parquet"
-DATA_DIR = str(INDIVIDUAL_PARQUET_DIR)
+DATA_DIR = str(INDIVIDUAL_BOOK_DIR)
+INDIVIDUAL_PARQUET_DIR = INDIVIDUAL_BOOK_DIR
 CLUSTER_CSV = str(ROOT_DIR / "plots" / "recluster" / "stock_cluster_assignments_FINAL.csv")
 PLOTS_DIR = str(ROOT_DIR / "plots")
 
-PIPELINE_VERSION = "2026-05-10.2"
+PIPELINE_VERSION = "2026-05-28.1"
 
 RETURN_WINDOWS = [
     5,
@@ -194,10 +195,11 @@ def model_catalog(model_types: tuple[str, ...] | list[str] | None = None) -> lis
 @dataclass(frozen=True)
 class DataConfig:
     stocks: tuple[str, ...] = ("stock_0",)
-    source_dir: str = str(INDIVIDUAL_PARQUET_DIR)
+    source_dir: str = str(INDIVIDUAL_BOOK_DIR)
     max_time_ids_per_stock: int | None = None
     feature_cache_path: str | None = str(FEATURE_CACHE_PATH)
     use_feature_cache: bool = True
+    feature_workers: int | None = None
 
 
 @dataclass(frozen=True)

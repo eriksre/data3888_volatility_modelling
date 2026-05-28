@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>DATA3888 Group 6 - Volatility Modelling</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="final_report_files/libs/clipboard/clipboard.min.js"></script>
+<script src="final_report_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="final_report_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="final_report_files/libs/quarto-html/popper.min.js"></script>
+<script src="final_report_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="final_report_files/libs/quarto-html/anchor.min.js"></script>
+<link href="final_report_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="final_report_files/libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="final_report_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="final_report_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="final_report_files/libs/bootstrap/bootstrap-138a6193a3bd40baf1e627da441a4734.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="final_report_files/libs/quarto-diagram/mermaid.min.js"></script>
+<script src="final_report_files/libs/quarto-diagram/mermaid-init.js"></script>
+<link href="final_report_files/libs/quarto-diagram/mermaid.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+<style>
+.quarto-figure,
+.quarto-float,
+.cell-output-display {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.quarto-figure img,
+img.figure-img {
+  max-width: 100%;
+  height: auto;
+}
+</style>
+
+
+</head>
+
+<body class="fullcontent quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">DATA3888 Group 6 - Volatility Modelling</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="executive-summary-12-page" class="level1">
+<h1>Executive summary (~1/2 page)</h1>
+<p>Our project aims to help traders answer the question: “What is the best volatility prediction model for my goal, given latency constraints and given my desired model accuracy?”. To answer this question, we built a front end tool from the ground up, designed to help market participants who need to predict volatility across one or multiple stocks, and need to be able to choose and optimise the best volatility model for the subset of stocks they’re planning to trade. Importantly, we chose to solely focus on the dataset of 112 un-named stocks due to the higher abundance of data compared to the named stocks. Importantly, the differing lengths of data within a single time id for each dataset prompted us to have to choose a single dataset to work with, to make our analysis uniform and consistent among the two datasets. We note that by default, our tool predicts the mean volatility for the final 30s of data in each time id window, for each stock. Our results show clear separation among different loss functions, and among different stocks. We define a model as winning on a particular stock if that model produces the lowest overall loss for the most time id’s. When choosing the RMSE loss function and evaluating across all stocks in the dataset, we found the XGBoost model to perform the best among all models, with a simple decision tree and multivariate linear regression performing second and third best respectively. When choosing the QLIKE loss function, we found GJR-Garch(1,1) to significantly out-perform every other model, winning on 62 out of 112 stocks. XGBoost and regular Garch(1,1) had the second and third most wins respectively. Importantly however, we note that the both Garch models have markedly higher inference latency time, with GJR-Garch(1,1) having inference time latency of 5912 microseconds compared to XGBoost’s 0.713 microseconds. The difference in inference latency time between GJR-Garch(1,1) and XGBoost carries significant execution implications in modern electronic markets. Evidence from Aquilina et al.&nbsp;(2021) establishes that the competitive latency arbitrage races on exchanges possess a modal duration of just 5 to 10 microseconds. While GJR-Garch(1,1) offers superior predictive accuracy under the industry standard QLIKE loss function, its excessive latency renders it incapable of competing with other models in these microsecond windows, as the order book will clear long before a prediction can be generated, forcing traders to accept much faster models at a marginal accuracy tradeoff such as XGBoost to stay competitive. Crucially however, the superior precision of GJR-Garch(1,1) is still valuable in areas where latency is not a major consideration, such as portfolio optimisation, where accuracy takes precedence over speed. We find these core findings to be highly relevant for market makers and quantitative researchers who must regularly make the choice between minimising latency and having the models that fit the data best. As shown above, we see clear tradeoffs between model inference latency and model loss. Our tool exposes this to traders, and lets them make informed decisions that most fit their specific strategy and the universe of assets they wish to trade.</p>
+</section>
+<section id="background" class="level1">
+<h1>Background</h1>
+<p>Our research question is: what is the most accurate volatility prediction model for a given universe of stocks, given latency constraints?</p>
+<p>Traders use volatility forecasting models for many reasons, including but not limited to modelling inventory risk, portfolio optimisation and value at risk VaR analysis. Depending on the application, traders, market makers and portfolio managers require tools which have different accuracy vs latency tradeoffs. For instance, a portfolio manager calculating their 1 day VaR may want the most accurate model (particularly in the tails of a given returns distribution), while a researcher creating an options pricing algorithm for a highly liquid stock may prioritise speed at the cost of some accuracy. Hence, it is highly important for market participants to choose the model that is the best fit for their given problem.</p>
+<p>Tools like Tradingview let traders view the price over time, and introduce scripting tools which help traders visualise different functions of price, eg. rolling volatility over time (TradingView, n.d.). However, they do not introduce any way for traders to predict future volatility. In order to do this, traders currently must spend significant time to program a volatility prediction model of their choosing, create visuals for that model etc. Many traders simply want to know the accuracy of a given volatility prediction model, compared to the inference time that that model takes. Our tool innovates on the current tooling landscape by providing a no code interface, which lets traders and market participants view model latency vs model accuracy tradeoffs in a simple, intuitive manner.</p>
+<p>We were given two datasets to work with: a dataset of 112 anonymous, no name stocks, and a dataset of 10 named stocks. Each dataset contained the top two levels of orderbook data, where prices series were split up into differing time ids. As the length of the price series within each time id were not constant between the two datasets, we ultimately chose to model the dataset of 112 anonymous stocks, due to it’s higher abundance of data, and to ensure that modelling and data constraints were consistent between stocks. This gave us a wider cross section of assets while keeping the modelling target and preprocessing assumptions consistent across the full experiment. Notably, each time id contains 600 seconds of data and the temporal ordering of each time id has not been preserved.</p>
+<p>We introduce two different classes of models: time series models, and parametric models. The parametric models we analysed include XGBoost, multivariate linear regression, lasso, ridge regression, random forest and decision trees. The time series models we analysed include regular GARCH(1,1) and GJR-Garch(1,1).</p>
+</section>
+<section id="methods" class="level1">
+<h1>Methods</h1>
+<p><a href="#fig-workflow" class="quarto-xref">Figure&nbsp;1</a> summarises how data moves through preprocessing, model configuration, prediction, evaluation, and to the dashboard.</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-workflow" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-workflow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<pre class="mermaid mermaid-js" data-label="fig-workflow">flowchart TD
+    A["Raw order-book data"] --&gt; B["Preprocess prices and returns"]
+    B --&gt; C["Load or compute feature cache"]
+    C --&gt; D["Select models and feature mode"]
+
+    D --&gt; E{"Model class"}
+    E -- "Parametric / ML" --&gt; F["Cross validated training"]
+    E -- "GARCH family" --&gt; G["Windo level volatility forecasts"]
+
+    F --&gt; H["Predict final 30 second volatility"]
+    G --&gt; H
+    H --&gt; I["Evaluate accuracy and inference latency"]
+    I --&gt; J["Save run artifacts"]
+    J --&gt; K["Dashboard views"]
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-workflow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: End to end volatility modelling workflow. Order-book data is transformed into modelling features, passed through user selected model specifications, evaluated against the final 30 second realised volatility target, and displayed in the dashboard.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>We used two separate approaches for each model class. For parametric models, we randomly assign each stock to one of five folds of data, calculate features based on the first 9 minutes and 30 seconds of data, and train each model using the 4 training folds. We then use those trained models to predict the mean variance of the final 30 seconds of data for each time id, for each stock in the single remaining out of sample fold. We then repeat this process for every stock in the dataset, such that each individual stock has one volatility prediction per model per time id, where the model was not trained on any data from that particular stock. This process effectively means we are training a single model across multiple different time ids. For our time series models, as we do not know the temporal ordering of the time ids, we trained a new model on the first 9.5 minutes of data for each time id for each stock. In inference, we then unconditionally walk each Garch model forward, predicting the point variance for each second of the final 30 seconds of data, then use those point estimates to calculate the mean variance for the final 30 seconds of each time id.</p>
+<p>traders can select either a subset of features to use, or the top n principal components of those features.</p>
+<div id="cell-fig-pca-cumulative-variance" class="cell" data-execution_count="2">
+<div class="cell-output cell-output-display">
+<div id="fig-pca-cumulative-variance" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-pca-cumulative-variance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="final_report_files/figure-html/fig-pca-cumulative-variance-output-1.png" width="1142" height="451" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-pca-cumulative-variance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Cumulative variance explained by the first 20 principal components calculated from the cached modelling features.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>When a time series in a particular time id was missing data, we forward filled past values such that we have a continuous series of values without any future leakage. If the time id was missing too much data, having &lt; 20 price updates across the first 570 seconds, or having &lt; 5 price updates in the final 30 seconds of data, we dropped that particular time id from our calculations, as to not attempt to get models to predict volatility with an inadequate amount of information.</p>
+<p>Moreover, we faced some challenges with exploding volatility predictions from unstable Garch fits. To mitigate this, we treated Garch forecasts as missing when the fitted parameters failed the stationarity checks, when boundary parameters were at or above 0.99, or when the forecast variance path was non-finite, negative, or unreasonably large. In a similar fashion, the linear regression models would occasionally predict negative volatility, which was causing significant distortions when measuring QLIKE loss. To prevent negative volatility predictions, we clipped all predictions of negative volatility to the first percentile of training volatility for that fold. Note, this only influenced 3 out of 428,960 time ids across the data, and made the results between models directly comparable. Prior to this change, the volatility predictions for these 3 time ids accounted for approximately ~86% of total QLIKE loss, creating meaningful distortion separate from genuine model accuracy. Our changes helped prevent this distortion.</p>
+<p>Hence, the workflow of our product is: If a results cache exists, traders can view the results from that cache without having to recompute results. Otherwise, if they wish to re-calculate their results or specify different models or model parameters, they can move onto the next step Features are pulled from the feature, or computed as soon as the front end is opened if no cache exists Principal components are calculated from those features Traders specify model(s) they want to use Traders then press run, where the platform will predict the the mean volatility for the final 30s of data for each time id for each stock Traders can then observe their data in the individual stock, and stock universe pages</p>
+<p>Notably, we chose to include MSE, RMSE, MAE, and QLIKE loss functions in our model evaluation. QLIKE loss is both the industry standard loss metric for volatility prediction, and the main metric we used in our results, as it asymmetrically punishes under predicting volatility. This is especially important in financial applications, because underestimating market risk can lead to more serious consequences than overestimating it.</p>
+</section>
+<section id="results" class="level1">
+<h1>Results</h1>
+<p>‘Best’ model is subjective. Depends highly on the given loss function you want to optimise and your goal</p>
+<p>The cached model comparison table summarises each model’s average inference latency, stock level wins under RMSE and QLIKE, and aggregate error metrics.</p>
+<div class="cell" data-execution_count="3">
+<div id="tbl-model-comparison" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="3">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-model-comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Cached model comparison across all stocks. Lower error metrics are better; model wins count the number of stocks where the model had the lowest loss for that metric.
+</figcaption>
+<div aria-describedby="tbl-model-comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe cell caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Model</th>
+<th data-quarto-table-cell-role="th">Mean inference (μs)</th>
+<th data-quarto-table-cell-role="th">RMSE model wins</th>
+<th data-quarto-table-cell-role="th">↓ QLIKE model wins</th>
+<th data-quarto-table-cell-role="th">RMSE</th>
+<th data-quarto-table-cell-role="th">QLIKE</th>
+<th data-quarto-table-cell-role="th">MAE</th>
+<th data-quarto-table-cell-role="th">MSE</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>XGBoost</td>
+<td>0.719</td>
+<td>31</td>
+<td>55</td>
+<td>9.590</td>
+<td>0.496</td>
+<td>2.321</td>
+<td>91.974</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>LASSO</td>
+<td>0.227</td>
+<td>15</td>
+<td>30</td>
+<td>9.397</td>
+<td>0.518</td>
+<td>2.329</td>
+<td>88.308</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>GJR-GARCH(1,1)</td>
+<td>535.147</td>
+<td>9</td>
+<td>22</td>
+<td>11.438</td>
+<td>0.596</td>
+<td>2.928</td>
+<td>130.825</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>Random Forest</td>
+<td>4.775</td>
+<td>17</td>
+<td>2</td>
+<td>9.606</td>
+<td>0.524</td>
+<td>2.373</td>
+<td>92.284</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>GARCH(1,1)</td>
+<td>509.158</td>
+<td>12</td>
+<td>2</td>
+<td>11.752</td>
+<td>0.632</td>
+<td>2.859</td>
+<td>138.121</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">5</th>
+<td>HAR-RV</td>
+<td>0.044</td>
+<td>4</td>
+<td>1</td>
+<td>22.978</td>
+<td>0.719</td>
+<td>2.950</td>
+<td>527.999</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">6</th>
+<td>Linear Regression</td>
+<td>7.708</td>
+<td>9</td>
+<td>0</td>
+<td>9.391</td>
+<td>0.531</td>
+<td>2.330</td>
+<td>88.199</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">7</th>
+<td>Ridge Regression</td>
+<td>0.231</td>
+<td>4</td>
+<td>0</td>
+<td>9.392</td>
+<td>0.531</td>
+<td>2.330</td>
+<td>88.208</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">8</th>
+<td>Decision Tree</td>
+<td>0.295</td>
+<td>11</td>
+<td>0</td>
+<td>9.596</td>
+<td>0.527</td>
+<td>2.347</td>
+<td>92.087</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>Never the less, we can see the parity frontier on the graph here (insert Vania’s pareto graph here)</p>
+<div id="cell-fig-pareto-frontier" class="cell" data-execution_count="4">
+<div class="cell-output cell-output-display">
+<div id="fig-pareto-frontier" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-pareto-frontier-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="final_report_files/figure-html/fig-pareto-frontier-output-1.png" width="946" height="564" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-pareto-frontier-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Pareto frontier of model QLIKE against cached mean inference latency. Lower values are better on both axes.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>We see the model which</p>
+<p>Describe what each graph / chart shows.</p>
+<p>We see the GJR</p>
+</section>
+<section id="discussion" class="level1">
+<h1>Discussion</h1>
+<p>Paragraph 1: Main interpretation of the results. Keep this short. The point is not to repeat the full Results section or Executive Summary, but to interpret the overall finding: there is no single best volatility model across all objectives. Include that model choice depends on the user’s metric and latency constraint. Explicitly link this back to the research question by saying the tool supports conditional model choice, rather than producing one universal ranking.</p>
+<p>Paragraph 2: Why the loss function changes the conclusion. This is necessary because the Results section shows different winners under RMSE and QLIKE, but does not yet fully explain why that matters. Include a brief explanation that RMSE rewards average closeness, while QLIKE is more relevant for volatility and risk forecasting because under-predicting volatility can be especially costly. Avoid turning this into a formula explanation, because metric definitions belong in Methods. Avoid claiming QLIKE is always superior; instead, say it is better aligned with risk-focused volatility forecasting.</p>
+<p>Paragraph 3: Accuracy versus latency tradeoff. This should be one of the strongest discussion paragraphs. Interpret the Pareto frontier and explain that statistical accuracy alone is not enough for model selection. Include that GJR-GARCH may be suitable for slower settings such as portfolio optimisation, VaR, or risk monitoring, while XGBoost may be more useful where inference latency is binding. Avoid overclaiming that GJR-GARCH is unusable in all trading contexts, and avoid repeating the full Aquilina et al.&nbsp;latency argument from the Executive Summary.</p>
+<p>Paragraph 4: What the tool currently contributes. Include this, but keep it concise so it does not become a README-style feature list or repeat the Background section. The main claim should be that the tool operationalises the research question by making model comparison interactive across metrics, stocks, and latency. Mention only the most relevant functions: configuring models, choosing PCA or manual features, comparing universe-level and individual-stock results, and viewing latency/error tradeoffs. Avoid describing every UI element.</p>
+<p>Paragraph 5: Limitations of the current work. This is necessary for credibility and should be specific rather than apologetic. Include only limitations that affect interpretation or external validity: static historical data rather than live order-book data, anonymous stocks so sector/liquidity context cannot be interpreted, time ids are not temporally ordered, the forecast target is limited to the final 30 seconds of each window, and latency is measured in our local/backend environment rather than production trading infrastructure. Avoid vague statements like “there are some limitations”.</p>
+<p>Paragraph 6: Future work. This should follow directly from the limitations, not become a wishlist. Include custom model imports, live or streaming data, user-selected loss optimisation such as directly optimising QLIKE, richer model classes only if they address the modelling objective, richer named-stock data if available, and more realistic latency benchmarking. Avoid speculative features that do not connect back to the report’s findings.</p>
+</section>
+<section id="conclusion" class="level1">
+<h1>Conclusion</h1>
+<p>Paragraph 1: Restate the project aim and answer the research question directly. Say that the project investigated which volatility prediction models are most appropriate for traders under different accuracy and latency requirements. The key conclusion should be that the best model is conditional on the trader’s objective, rather than universal. Avoid introducing new evidence or repeating every model result.</p>
+<p>Paragraph 2: Summarise the main empirical finding in one tight paragraph. Include the key contrast: XGBoost performed strongly under RMSE and offered very low inference latency, while GJR-GARCH performed strongly under QLIKE but was much slower. The point is to reinforce the accuracy-latency tradeoff, not to reproduce the full Results table. Avoid adding caveats that belong in the Discussion.</p>
+<p>Paragraph 3: Close with the contribution of the tool. Explain that the tool is useful because it makes model selection transparent across stocks, metrics, and latency constraints. It should end on the practical implication: traders and researchers can use the tool to choose models that better match their use case. Avoid overstating it as a production-ready trading system; frame it as a decision-support and model-comparison tool.</p>
+</section>
+<section id="student-contributions" class="level1">
+<h1>Student contributions</h1>
+<p>Eriks wrote most of the front end, back end, and first draft of the report….. Continue this.</p>
+</section>
+<section id="references-use-apa-7" class="level1">
+<h1>References (use apa 7)</h1>
+<p>Aquilina, M.,Budish, E., &amp; O’Neill, P. (2021). Quantifying the high frequency trading “arms race” (BIS Working Paper No.&nbsp;955). Bank for International Settlements. https://www.bis.org/publ/work955.pdf</p>
+<p>TradingView. (n.d.). Visuals overview. Pine Script documentation. https://www.tradingview.com/pine-script-docs/visuals/overview/</p>
+<!-- -->
+
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "DATA3888 Group 6 - Volatility Modelling"</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co">    toc: false</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">    number-sections: false</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">    code-fold: true</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co">    code-tools: true</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co">    include-in-header:</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co">      text: |</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co">        &lt;style&gt;</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co">        .quarto-figure,</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co">        .quarto-float,</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co">        .cell-output-display {</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co">          max-width: 100%;</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co">          overflow-x: hidden;</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co">        }</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="co">        .quarto-figure img,</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="co">        img.figure-img {</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co">          max-width: 100%;</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="co">          height: auto;</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="co">        }</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co">        &lt;/style&gt;</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="an">jupyter:</span><span class="co"> python3</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="an">execute:</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="co">  echo: false</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="co">  warning: false</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="co">  message: false</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: setup</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a><span class="co">#| results: hide</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> json</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> display</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> back_end.config <span class="im">import</span> FeatureConfig</span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> back_end.universe <span class="im">import</span> build_model_comparison</span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> back_end.universe <span class="im">import</span> build_pca_variance_explained</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a><span class="co"># Change only this path if the raw data directory is somewhere else.</span></span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>INDIVIDUAL_BOOK_TRAIN_DIR <span class="op">=</span> Path(<span class="st">"individual_book_train"</span>)</span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> project_root_from_data_dir(data_dir: Path) <span class="op">-&gt;</span> Path:</span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> data_dir.expanduser().resolve().parent</span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>PROJECT_ROOT <span class="op">=</span> project_root_from_data_dir(INDIVIDUAL_BOOK_TRAIN_DIR)</span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> artifact_path(<span class="op">*</span>parts: <span class="bu">str</span>) <span class="op">-&gt;</span> Path:</span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> PROJECT_ROOT.joinpath(<span class="st">"artifacts"</span>, <span class="op">*</span>parts)</span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>RUNS_DIR <span class="op">=</span> artifact_path(<span class="st">"runs"</span>)</span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>FEATURE_CACHE_PATH <span class="op">=</span> artifact_path(<span class="st">"feature_cache"</span>, <span class="st">"features_all_stocks.parquet"</span>)</span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>FEATURE_CACHE_MANIFEST_PATH <span class="op">=</span> artifact_path(<span class="st">"feature_cache"</span>, <span class="st">"manifest.json"</span>)</span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> latest_run_dir() <span class="op">-&gt;</span> Path <span class="op">|</span> <span class="va">None</span>:</span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> RUNS_DIR.exists():</span>
+<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">None</span></span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a>    run_dirs <span class="op">=</span> <span class="bu">sorted</span>([path <span class="cf">for</span> path <span class="kw">in</span> RUNS_DIR.iterdir() <span class="cf">if</span> path.is_dir()], reverse<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> run_dirs[<span class="dv">0</span>] <span class="cf">if</span> run_dirs <span class="cf">else</span> <span class="va">None</span></span>
+<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a>RUN_DIR <span class="op">=</span> latest_run_dir()</span>
+<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> load_artifact(name: <span class="bu">str</span>) <span class="op">-&gt;</span> pd.DataFrame:</span>
+<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> RUN_DIR <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> pd.DataFrame()</span>
+<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a>    path <span class="op">=</span> RUN_DIR <span class="op">/</span> name</span>
+<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> path.exists():</span>
+<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> pd.DataFrame()</span>
+<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.read_parquet(path)</span>
+<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> load_feature_targets() <span class="op">-&gt;</span> pd.DataFrame:</span>
+<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> FEATURE_CACHE_PATH.exists():</span>
+<span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> pd.DataFrame()</span>
+<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.read_parquet(</span>
+<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a>        FEATURE_CACHE_PATH,</span>
+<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a>        columns<span class="op">=</span>[<span class="st">"stock_id"</span>, <span class="st">"time_id"</span>, <span class="st">"target_var"</span>, <span class="st">"target_vol"</span>],</span>
+<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> load_feature_cache() <span class="op">-&gt;</span> pd.DataFrame:</span>
+<span id="cb1-99"><a href="#cb1-99" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> FEATURE_CACHE_PATH.exists():</span>
+<span id="cb1-100"><a href="#cb1-100" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> pd.DataFrame()</span>
+<span id="cb1-101"><a href="#cb1-101" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.read_parquet(FEATURE_CACHE_PATH)</span>
+<span id="cb1-102"><a href="#cb1-102" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-103"><a href="#cb1-103" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-104"><a href="#cb1-104" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> load_json(path: Path) <span class="op">-&gt;</span> <span class="bu">dict</span>:</span>
+<span id="cb1-105"><a href="#cb1-105" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> path.exists():</span>
+<span id="cb1-106"><a href="#cb1-106" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> {}</span>
+<span id="cb1-107"><a href="#cb1-107" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> json.loads(path.read_text())</span>
+<span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-109"><a href="#cb1-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a>metrics <span class="op">=</span> load_artifact(<span class="st">"metrics.parquet"</span>)</span>
+<span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> load_artifact(<span class="st">"predictions.parquet"</span>)</span>
+<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a>feature_importance <span class="op">=</span> load_artifact(<span class="st">"feature_importance.parquet"</span>)</span>
+<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a>universe_summary <span class="op">=</span> load_artifact(<span class="st">"universe_summary.parquet"</span>)</span>
+<span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a>stock_similarity <span class="op">=</span> load_artifact(<span class="st">"stock_similarity.parquet"</span>)</span>
+<span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a>feature_targets <span class="op">=</span> load_feature_targets()</span>
+<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a>feature_cache_manifest <span class="op">=</span> load_json(FEATURE_CACHE_MANIFEST_PATH)</span>
+<span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-118"><a href="#cb1-118" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-119"><a href="#cb1-119" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model_summary_frame(metrics_df: pd.DataFrame, predictions_df: pd.DataFrame) <span class="op">-&gt;</span> pd.DataFrame:</span>
+<span id="cb1-120"><a href="#cb1-120" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> metrics_df.empty <span class="kw">or</span> predictions_df.empty:</span>
+<span id="cb1-121"><a href="#cb1-121" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> pd.DataFrame()</span>
+<span id="cb1-122"><a href="#cb1-122" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-123"><a href="#cb1-123" aria-hidden="true" tabindex="-1"></a>    metric_cols <span class="op">=</span> [<span class="st">"mse"</span>, <span class="st">"rmse"</span>, <span class="st">"mae"</span>, <span class="st">"mape"</span>, <span class="st">"rmspe"</span>, <span class="st">"qlike"</span>, <span class="st">"pearson_r"</span>]</span>
+<span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a>    available_metrics <span class="op">=</span> [col <span class="cf">for</span> col <span class="kw">in</span> metric_cols <span class="cf">if</span> col <span class="kw">in</span> metrics_df.columns]</span>
+<span id="cb1-125"><a href="#cb1-125" aria-hidden="true" tabindex="-1"></a>    overall <span class="op">=</span> metrics_df.copy()</span>
+<span id="cb1-126"><a href="#cb1-126" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="st">"fold"</span> <span class="kw">in</span> overall.columns:</span>
+<span id="cb1-127"><a href="#cb1-127" aria-hidden="true" tabindex="-1"></a>        overall <span class="op">=</span> overall[overall[<span class="st">"fold"</span>] <span class="op">==</span> <span class="dv">0</span>].copy()</span>
+<span id="cb1-128"><a href="#cb1-128" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-129"><a href="#cb1-129" aria-hidden="true" tabindex="-1"></a>    summary <span class="op">=</span> overall[[<span class="st">"model"</span>, <span class="op">*</span>available_metrics]].copy()</span>
+<span id="cb1-130"><a href="#cb1-130" aria-hidden="true" tabindex="-1"></a>    latency <span class="op">=</span> (</span>
+<span id="cb1-131"><a href="#cb1-131" aria-hidden="true" tabindex="-1"></a>        predictions_df.groupby(<span class="st">"model"</span>, as_index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb1-132"><a href="#cb1-132" aria-hidden="true" tabindex="-1"></a>        .agg(</span>
+<span id="cb1-133"><a href="#cb1-133" aria-hidden="true" tabindex="-1"></a>            mean_inference_us<span class="op">=</span>(<span class="st">"inference_ms"</span>, <span class="kw">lambda</span> values: values.mean() <span class="op">*</span> <span class="dv">1000</span>),</span>
+<span id="cb1-134"><a href="#cb1-134" aria-hidden="true" tabindex="-1"></a>            n_predictions<span class="op">=</span>(<span class="st">"model"</span>, <span class="st">"size"</span>),</span>
+<span id="cb1-135"><a href="#cb1-135" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb1-136"><a href="#cb1-136" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb1-137"><a href="#cb1-137" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> summary.merge(latency, on<span class="op">=</span><span class="st">"model"</span>, how<span class="op">=</span><span class="st">"left"</span>)</span>
+<span id="cb1-138"><a href="#cb1-138" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-139"><a href="#cb1-139" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-140"><a href="#cb1-140" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cached_model_comparison_table(metrics_df: pd.DataFrame, predictions_df: pd.DataFrame) <span class="op">-&gt;</span> pd.DataFrame:</span>
+<span id="cb1-141"><a href="#cb1-141" aria-hidden="true" tabindex="-1"></a>    columns <span class="op">=</span> [</span>
+<span id="cb1-142"><a href="#cb1-142" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Model"</span>,</span>
+<span id="cb1-143"><a href="#cb1-143" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Mean inference (μs)"</span>,</span>
+<span id="cb1-144"><a href="#cb1-144" aria-hidden="true" tabindex="-1"></a>        <span class="st">"RMSE model wins"</span>,</span>
+<span id="cb1-145"><a href="#cb1-145" aria-hidden="true" tabindex="-1"></a>        <span class="st">"↓ QLIKE model wins"</span>,</span>
+<span id="cb1-146"><a href="#cb1-146" aria-hidden="true" tabindex="-1"></a>        <span class="st">"RMSE"</span>,</span>
+<span id="cb1-147"><a href="#cb1-147" aria-hidden="true" tabindex="-1"></a>        <span class="st">"QLIKE"</span>,</span>
+<span id="cb1-148"><a href="#cb1-148" aria-hidden="true" tabindex="-1"></a>        <span class="st">"MAE"</span>,</span>
+<span id="cb1-149"><a href="#cb1-149" aria-hidden="true" tabindex="-1"></a>        <span class="st">"MSE"</span>,</span>
+<span id="cb1-150"><a href="#cb1-150" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb1-151"><a href="#cb1-151" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> metrics_df.empty <span class="kw">and</span> predictions_df.empty:</span>
+<span id="cb1-152"><a href="#cb1-152" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> pd.DataFrame(columns<span class="op">=</span>columns)</span>
+<span id="cb1-153"><a href="#cb1-153" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-154"><a href="#cb1-154" aria-hidden="true" tabindex="-1"></a>    comparison <span class="op">=</span> build_model_comparison(predictions_df, metrics_df)</span>
+<span id="cb1-155"><a href="#cb1-155" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> comparison.empty:</span>
+<span id="cb1-156"><a href="#cb1-156" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> pd.DataFrame(columns<span class="op">=</span>columns)</span>
+<span id="cb1-157"><a href="#cb1-157" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-158"><a href="#cb1-158" aria-hidden="true" tabindex="-1"></a>    table <span class="op">=</span> comparison[</span>
+<span id="cb1-159"><a href="#cb1-159" aria-hidden="true" tabindex="-1"></a>        [</span>
+<span id="cb1-160"><a href="#cb1-160" aria-hidden="true" tabindex="-1"></a>            <span class="st">"model"</span>,</span>
+<span id="cb1-161"><a href="#cb1-161" aria-hidden="true" tabindex="-1"></a>            <span class="st">"mean_inference_ms"</span>,</span>
+<span id="cb1-162"><a href="#cb1-162" aria-hidden="true" tabindex="-1"></a>            <span class="st">"best_stocks_rmse"</span>,</span>
+<span id="cb1-163"><a href="#cb1-163" aria-hidden="true" tabindex="-1"></a>            <span class="st">"best_stocks_qlike"</span>,</span>
+<span id="cb1-164"><a href="#cb1-164" aria-hidden="true" tabindex="-1"></a>            <span class="st">"rmse"</span>,</span>
+<span id="cb1-165"><a href="#cb1-165" aria-hidden="true" tabindex="-1"></a>            <span class="st">"qlike"</span>,</span>
+<span id="cb1-166"><a href="#cb1-166" aria-hidden="true" tabindex="-1"></a>            <span class="st">"mae"</span>,</span>
+<span id="cb1-167"><a href="#cb1-167" aria-hidden="true" tabindex="-1"></a>            <span class="st">"mse"</span>,</span>
+<span id="cb1-168"><a href="#cb1-168" aria-hidden="true" tabindex="-1"></a>        ]</span>
+<span id="cb1-169"><a href="#cb1-169" aria-hidden="true" tabindex="-1"></a>    ].copy()</span>
+<span id="cb1-170"><a href="#cb1-170" aria-hidden="true" tabindex="-1"></a>    table[<span class="st">"mean_inference_ms"</span>] <span class="op">=</span> table[<span class="st">"mean_inference_ms"</span>] <span class="op">*</span> <span class="dv">1000</span></span>
+<span id="cb1-171"><a href="#cb1-171" aria-hidden="true" tabindex="-1"></a>    table <span class="op">=</span> table.rename(</span>
+<span id="cb1-172"><a href="#cb1-172" aria-hidden="true" tabindex="-1"></a>        columns<span class="op">=</span>{</span>
+<span id="cb1-173"><a href="#cb1-173" aria-hidden="true" tabindex="-1"></a>            <span class="st">"model"</span>: <span class="st">"Model"</span>,</span>
+<span id="cb1-174"><a href="#cb1-174" aria-hidden="true" tabindex="-1"></a>            <span class="st">"mean_inference_ms"</span>: <span class="st">"Mean inference (μs)"</span>,</span>
+<span id="cb1-175"><a href="#cb1-175" aria-hidden="true" tabindex="-1"></a>            <span class="st">"best_stocks_rmse"</span>: <span class="st">"RMSE model wins"</span>,</span>
+<span id="cb1-176"><a href="#cb1-176" aria-hidden="true" tabindex="-1"></a>            <span class="st">"best_stocks_qlike"</span>: <span class="st">"↓ QLIKE model wins"</span>,</span>
+<span id="cb1-177"><a href="#cb1-177" aria-hidden="true" tabindex="-1"></a>            <span class="st">"rmse"</span>: <span class="st">"RMSE"</span>,</span>
+<span id="cb1-178"><a href="#cb1-178" aria-hidden="true" tabindex="-1"></a>            <span class="st">"qlike"</span>: <span class="st">"QLIKE"</span>,</span>
+<span id="cb1-179"><a href="#cb1-179" aria-hidden="true" tabindex="-1"></a>            <span class="st">"mae"</span>: <span class="st">"MAE"</span>,</span>
+<span id="cb1-180"><a href="#cb1-180" aria-hidden="true" tabindex="-1"></a>            <span class="st">"mse"</span>: <span class="st">"MSE"</span>,</span>
+<span id="cb1-181"><a href="#cb1-181" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb1-182"><a href="#cb1-182" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb1-183"><a href="#cb1-183" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> table.sort_values(</span>
+<span id="cb1-184"><a href="#cb1-184" aria-hidden="true" tabindex="-1"></a>        [<span class="st">"↓ QLIKE model wins"</span>, <span class="st">"RMSE"</span>, <span class="st">"Model"</span>],</span>
+<span id="cb1-185"><a href="#cb1-185" aria-hidden="true" tabindex="-1"></a>        ascending<span class="op">=</span>[<span class="va">False</span>, <span class="va">True</span>, <span class="va">True</span>],</span>
+<span id="cb1-186"><a href="#cb1-186" aria-hidden="true" tabindex="-1"></a>        na_position<span class="op">=</span><span class="st">"last"</span>,</span>
+<span id="cb1-187"><a href="#cb1-187" aria-hidden="true" tabindex="-1"></a>    ).reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-188"><a href="#cb1-188" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-189"><a href="#cb1-189" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-190"><a href="#cb1-190" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> format_report_table(frame: pd.DataFrame) <span class="op">-&gt;</span> pd.DataFrame:</span>
+<span id="cb1-191"><a href="#cb1-191" aria-hidden="true" tabindex="-1"></a>    formatted <span class="op">=</span> frame.copy()</span>
+<span id="cb1-192"><a href="#cb1-192" aria-hidden="true" tabindex="-1"></a>    integer_cols <span class="op">=</span> [<span class="st">"RMSE model wins"</span>, <span class="st">"↓ QLIKE model wins"</span>]</span>
+<span id="cb1-193"><a href="#cb1-193" aria-hidden="true" tabindex="-1"></a>    numeric_cols <span class="op">=</span> [col <span class="cf">for</span> col <span class="kw">in</span> formatted.columns <span class="cf">if</span> col <span class="kw">not</span> <span class="kw">in</span> [<span class="st">"Model"</span>, <span class="op">*</span>integer_cols]]</span>
+<span id="cb1-194"><a href="#cb1-194" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> col <span class="kw">in</span> integer_cols:</span>
+<span id="cb1-195"><a href="#cb1-195" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> col <span class="kw">in</span> formatted.columns:</span>
+<span id="cb1-196"><a href="#cb1-196" aria-hidden="true" tabindex="-1"></a>            formatted[col] <span class="op">=</span> formatted[col].<span class="bu">map</span>(<span class="kw">lambda</span> value: <span class="st">""</span> <span class="cf">if</span> pd.isna(value) <span class="cf">else</span> <span class="ss">f"</span><span class="sc">{</span><span class="bu">int</span>(value)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb1-197"><a href="#cb1-197" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> col <span class="kw">in</span> numeric_cols:</span>
+<span id="cb1-198"><a href="#cb1-198" aria-hidden="true" tabindex="-1"></a>        formatted[col] <span class="op">=</span> formatted[col].<span class="bu">map</span>(<span class="kw">lambda</span> value: <span class="st">""</span> <span class="cf">if</span> pd.isna(value) <span class="cf">else</span> <span class="ss">f"</span><span class="sc">{</span><span class="bu">float</span>(value)<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb1-199"><a href="#cb1-199" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> formatted</span>
+<span id="cb1-200"><a href="#cb1-200" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-201"><a href="#cb1-201" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-202"><a href="#cb1-202" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> pareto_optimal_mask(frame: pd.DataFrame, x_col: <span class="bu">str</span>, y_col: <span class="bu">str</span>) <span class="op">-&gt;</span> pd.Series:</span>
+<span id="cb1-203"><a href="#cb1-203" aria-hidden="true" tabindex="-1"></a>    mask <span class="op">=</span> []</span>
+<span id="cb1-204"><a href="#cb1-204" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _, row <span class="kw">in</span> frame.iterrows():</span>
+<span id="cb1-205"><a href="#cb1-205" aria-hidden="true" tabindex="-1"></a>        dominated <span class="op">=</span> (</span>
+<span id="cb1-206"><a href="#cb1-206" aria-hidden="true" tabindex="-1"></a>            (frame[x_col] <span class="op">&lt;=</span> row[x_col])</span>
+<span id="cb1-207"><a href="#cb1-207" aria-hidden="true" tabindex="-1"></a>            <span class="op">&amp;</span> (frame[y_col] <span class="op">&lt;=</span> row[y_col])</span>
+<span id="cb1-208"><a href="#cb1-208" aria-hidden="true" tabindex="-1"></a>            <span class="op">&amp;</span> ((frame[x_col] <span class="op">&lt;</span> row[x_col]) <span class="op">|</span> (frame[y_col] <span class="op">&lt;</span> row[y_col]))</span>
+<span id="cb1-209"><a href="#cb1-209" aria-hidden="true" tabindex="-1"></a>        ).<span class="bu">any</span>()</span>
+<span id="cb1-210"><a href="#cb1-210" aria-hidden="true" tabindex="-1"></a>        mask.append(<span class="kw">not</span> dominated)</span>
+<span id="cb1-211"><a href="#cb1-211" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.Series(mask, index<span class="op">=</span>frame.index)</span>
+<span id="cb1-212"><a href="#cb1-212" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-213"><a href="#cb1-213" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-214"><a href="#cb1-214" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-215"><a href="#cb1-215" aria-hidden="true" tabindex="-1"></a><span class="fu"># Executive summary (\~1/2 page)</span></span>
+<span id="cb1-216"><a href="#cb1-216" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-217"><a href="#cb1-217" aria-hidden="true" tabindex="-1"></a>Our project aims to help traders answer the question: "What is the best volatility prediction model for my goal, given latency constraints and given my desired model accuracy?”. To answer this question, we built a front end tool from the ground up, designed to help market participants who need to predict volatility across one or multiple stocks, and need to be able to choose and optimise the best volatility model for the subset of stocks they’re planning to trade. Importantly, we chose to solely focus on the dataset of 112 un-named stocks due to the higher abundance of data compared to the named stocks. Importantly, the differing lengths of data within a single time id for each dataset prompted us to have to choose a single dataset to work with, to make our analysis uniform and consistent among the two datasets. We note that by default, our tool predicts the mean volatility for the final 30s of data in each time id window, for each stock. Our results show clear separation among different loss functions, and among different stocks. We define a model as winning on a particular stock if that model produces the lowest overall loss for the most time id’s. When choosing the RMSE loss function and evaluating across all stocks in the dataset, we found the XGBoost model to perform the best among all models, with a simple decision tree and multivariate linear regression performing second and third best respectively. When choosing the QLIKE loss function, we found GJR-Garch(1,1) to significantly out-perform every other model, winning on 62 out of 112 stocks. XGBoost and regular Garch(1,1) had the second and third most wins respectively. Importantly however, we note that the both Garch models have markedly higher inference latency time, with GJR-Garch(1,1) having inference time latency of 5912 microseconds compared to XGBoost’s 0.713 microseconds. The difference in inference latency time between GJR-Garch(1,1) and XGBoost carries significant execution implications in modern electronic markets. Evidence from Aquilina et al. (2021) establishes that the competitive latency arbitrage races on exchanges possess a modal duration of just 5 to 10 microseconds. While GJR-Garch(1,1) offers superior predictive accuracy under the industry standard QLIKE loss function, its excessive latency renders it incapable of competing with other models in these microsecond windows, as the order book will clear long before a prediction can be generated, forcing traders to accept much faster models at a marginal accuracy tradeoff such as XGBoost to stay competitive. Crucially however, the superior precision of GJR-Garch(1,1) is still valuable in areas where latency is not a major consideration, such as portfolio optimisation, where accuracy takes precedence over speed. We find these core findings to be highly relevant for market makers and quantitative researchers who must regularly make the choice between minimising latency and having the models that fit the data best. As shown above, we see clear tradeoffs between model inference latency and model loss. Our tool exposes this to traders, and lets them make informed decisions that most fit their specific strategy and the universe of assets they wish to trade.</span>
+<span id="cb1-218"><a href="#cb1-218" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-219"><a href="#cb1-219" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-220"><a href="#cb1-220" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-223"><a href="#cb1-223" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb1-224"><a href="#cb1-224" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-225"><a href="#cb1-225" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-226"><a href="#cb1-226" aria-hidden="true" tabindex="-1"></a><span class="fu"># Background</span></span>
+<span id="cb1-227"><a href="#cb1-227" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-228"><a href="#cb1-228" aria-hidden="true" tabindex="-1"></a>Our research question is: what is the most accurate volatility prediction model for a given universe of stocks, given latency constraints?</span>
+<span id="cb1-229"><a href="#cb1-229" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-230"><a href="#cb1-230" aria-hidden="true" tabindex="-1"></a>Traders use volatility forecasting models for many reasons, including but not limited to modelling inventory risk, portfolio optimisation and value at risk VaR analysis. Depending on the application, traders, market makers and portfolio managers require tools which have different accuracy vs latency tradeoffs. For instance, a portfolio manager calculating their 1 day VaR may want the most accurate model (particularly in the tails of a given returns distribution), while a researcher creating an options pricing algorithm for a highly liquid stock may prioritise speed at the cost of some accuracy. Hence, it is highly important for market participants to choose the model that is the best fit for their given problem.</span>
+<span id="cb1-231"><a href="#cb1-231" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-232"><a href="#cb1-232" aria-hidden="true" tabindex="-1"></a>Tools like Tradingview let traders view the price over time, and introduce scripting tools which help traders visualise different functions of price, eg. rolling volatility over time (TradingView, n.d.). However, they do not introduce any way for traders to predict future volatility. In order to do this, traders currently must spend significant time to program a volatility prediction model of their choosing, create visuals for that model etc. Many traders simply want to know the accuracy of a given volatility prediction model, compared to the inference time that that model takes. Our tool innovates on the current tooling landscape by providing a no code interface, which lets traders and market participants view model latency vs model accuracy tradeoffs in a simple, intuitive manner.</span>
+<span id="cb1-233"><a href="#cb1-233" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-234"><a href="#cb1-234" aria-hidden="true" tabindex="-1"></a>We were given two datasets to work with: a dataset of 112 anonymous, no name stocks, and a dataset of 10 named stocks. Each dataset contained the top two levels of orderbook data, where prices series were split up into differing time ids. As the length of the price series within each time id were not constant between the two datasets, we ultimately chose to model the dataset of 112 anonymous stocks, due to it’s higher abundance of data, and to ensure that modelling and data constraints were consistent between stocks. This gave us a wider cross section of assets while keeping the modelling target and preprocessing assumptions consistent across the full experiment. Notably, each time id contains 600 seconds of data and the temporal ordering of each time id has not been preserved.</span>
+<span id="cb1-235"><a href="#cb1-235" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-236"><a href="#cb1-236" aria-hidden="true" tabindex="-1"></a>We introduce two different classes of models: time series models, and parametric models. The parametric models we analysed include XGBoost, multivariate linear regression, lasso, ridge regression, random forest and decision trees. The time series models we analysed include regular GARCH(1,1) and GJR-Garch(1,1).</span>
+<span id="cb1-237"><a href="#cb1-237" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-238"><a href="#cb1-238" aria-hidden="true" tabindex="-1"></a><span class="fu"># Methods</span></span>
+<span id="cb1-239"><a href="#cb1-239" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-240"><a href="#cb1-240" aria-hidden="true" tabindex="-1"></a>@fig-workflow summarises how data moves through preprocessing, model configuration, prediction, evaluation, and to the dashboard.</span>
+<span id="cb1-241"><a href="#cb1-241" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-244"><a href="#cb1-244" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
+<span id="cb1-245"><a href="#cb1-245" aria-hidden="true" tabindex="-1"></a>%%| label: fig-workflow</span>
+<span id="cb1-246"><a href="#cb1-246" aria-hidden="true" tabindex="-1"></a>%%| fig-cap: <span class="ot">"</span><span class="st">End to end volatility modelling workflow. Order-book data is transformed into modelling features, passed through user selected model specifications, evaluated against the final 30 second realised volatility target, and displayed in the dashboard.</span><span class="ot">"</span></span>
+<span id="cb1-247"><a href="#cb1-247" aria-hidden="true" tabindex="-1"></a>flowchart TD</span>
+<span id="cb1-248"><a href="#cb1-248" aria-hidden="true" tabindex="-1"></a>    A[<span class="ot">"</span><span class="st">Raw order-book data</span><span class="ot">"</span>] --&gt; B[<span class="ot">"</span><span class="st">Preprocess prices and returns</span><span class="ot">"</span>]</span>
+<span id="cb1-249"><a href="#cb1-249" aria-hidden="true" tabindex="-1"></a>    B --&gt; C[<span class="ot">"</span><span class="st">Load or compute feature cache</span><span class="ot">"</span>]</span>
+<span id="cb1-250"><a href="#cb1-250" aria-hidden="true" tabindex="-1"></a>    C --&gt; D[<span class="ot">"</span><span class="st">Select models and feature mode</span><span class="ot">"</span>]</span>
+<span id="cb1-251"><a href="#cb1-251" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-252"><a href="#cb1-252" aria-hidden="true" tabindex="-1"></a>    D --&gt; E{<span class="ot">"</span><span class="st">Model class</span><span class="ot">"</span>}</span>
+<span id="cb1-253"><a href="#cb1-253" aria-hidden="true" tabindex="-1"></a>    E -- <span class="ot">"</span><span class="st">Parametric / ML</span><span class="ot">"</span> --&gt; F[<span class="ot">"</span><span class="st">Cross validated training</span><span class="ot">"</span>]</span>
+<span id="cb1-254"><a href="#cb1-254" aria-hidden="true" tabindex="-1"></a>    E -- <span class="ot">"</span><span class="st">GARCH family</span><span class="ot">"</span> --&gt; G[<span class="ot">"</span><span class="st">Windo level volatility forecasts</span><span class="ot">"</span>]</span>
+<span id="cb1-255"><a href="#cb1-255" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-256"><a href="#cb1-256" aria-hidden="true" tabindex="-1"></a>    F --&gt; H[<span class="ot">"</span><span class="st">Predict final 30 second volatility</span><span class="ot">"</span>]</span>
+<span id="cb1-257"><a href="#cb1-257" aria-hidden="true" tabindex="-1"></a>    G --&gt; H</span>
+<span id="cb1-258"><a href="#cb1-258" aria-hidden="true" tabindex="-1"></a>    H --&gt; I[<span class="ot">"</span><span class="st">Evaluate accuracy and inference latency</span><span class="ot">"</span>]</span>
+<span id="cb1-259"><a href="#cb1-259" aria-hidden="true" tabindex="-1"></a>    I --&gt; J[<span class="ot">"</span><span class="st">Save run artifacts</span><span class="ot">"</span>]</span>
+<span id="cb1-260"><a href="#cb1-260" aria-hidden="true" tabindex="-1"></a>    J --&gt; K[<span class="ot">"</span><span class="st">Dashboard views</span><span class="ot">"</span>]</span>
+<span id="cb1-261"><a href="#cb1-261" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-262"><a href="#cb1-262" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-265"><a href="#cb1-265" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb1-266"><a href="#cb1-266" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-267"><a href="#cb1-267" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-268"><a href="#cb1-268" aria-hidden="true" tabindex="-1"></a>We used two separate approaches for each model class. For parametric models, we randomly assign each stock to one of five folds of data, calculate features based on the first 9 minutes and 30 seconds of data, and train each model using the 4 training folds. We then use those trained models to predict the mean variance of the final 30 seconds of data for each time id, for each stock in the single remaining out of sample fold. We then repeat this process for every stock in the dataset, such that each individual stock has one volatility prediction per model per time id, where the model was not trained on any data from that particular stock. This process effectively means we are training a single model across multiple different time ids. For our time series models, as we do not know the temporal ordering of the time ids, we trained a new model on the first 9.5 minutes of data for each time id for each stock. In inference, we then unconditionally walk each Garch model forward, predicting the point variance for each second of the final 30 seconds of data, then use those point estimates to calculate the mean variance for the final 30 seconds of each time id.</span>
+<span id="cb1-269"><a href="#cb1-269" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-270"><a href="#cb1-270" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-271"><a href="#cb1-271" aria-hidden="true" tabindex="-1"></a>traders can select either a subset of features to use, or the top n principal components of those features. </span>
+<span id="cb1-272"><a href="#cb1-272" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-275"><a href="#cb1-275" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb1-276"><a href="#cb1-276" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-pca-cumulative-variance</span></span>
+<span id="cb1-277"><a href="#cb1-277" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Cumulative variance explained by the first 20 principal components calculated from the cached modelling features."</span></span>
+<span id="cb1-278"><a href="#cb1-278" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-279"><a href="#cb1-279" aria-hidden="true" tabindex="-1"></a>pca_variance <span class="op">=</span> build_pca_variance_explained(load_feature_cache(), FeatureConfig(), <span class="dv">20</span>)</span>
+<span id="cb1-280"><a href="#cb1-280" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-281"><a href="#cb1-281" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> pca_variance.empty:</span>
+<span id="cb1-282"><a href="#cb1-282" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"No cached feature data was available for the PCA cumulative variance figure."</span>)</span>
+<span id="cb1-283"><a href="#cb1-283" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb1-284"><a href="#cb1-284" aria-hidden="true" tabindex="-1"></a>    plot_df <span class="op">=</span> pca_variance.copy()</span>
+<span id="cb1-285"><a href="#cb1-285" aria-hidden="true" tabindex="-1"></a>    plot_df[<span class="st">"cumulative_variance_ratio"</span>] <span class="op">=</span> plot_df[<span class="st">"explained_variance_ratio"</span>].cumsum()</span>
+<span id="cb1-286"><a href="#cb1-286" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-287"><a href="#cb1-287" aria-hidden="true" tabindex="-1"></a>    fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="fl">4.8</span>))</span>
+<span id="cb1-288"><a href="#cb1-288" aria-hidden="true" tabindex="-1"></a>    ax.plot(</span>
+<span id="cb1-289"><a href="#cb1-289" aria-hidden="true" tabindex="-1"></a>        plot_df[<span class="st">"component"</span>],</span>
+<span id="cb1-290"><a href="#cb1-290" aria-hidden="true" tabindex="-1"></a>        plot_df[<span class="st">"cumulative_variance_ratio"</span>],</span>
+<span id="cb1-291"><a href="#cb1-291" aria-hidden="true" tabindex="-1"></a>        color<span class="op">=</span><span class="st">"#f59f00"</span>,</span>
+<span id="cb1-292"><a href="#cb1-292" aria-hidden="true" tabindex="-1"></a>        linewidth<span class="op">=</span><span class="fl">2.5</span>,</span>
+<span id="cb1-293"><a href="#cb1-293" aria-hidden="true" tabindex="-1"></a>        marker<span class="op">=</span><span class="st">"o"</span>,</span>
+<span id="cb1-294"><a href="#cb1-294" aria-hidden="true" tabindex="-1"></a>        markersize<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb1-295"><a href="#cb1-295" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb1-296"><a href="#cb1-296" aria-hidden="true" tabindex="-1"></a>    ax.set_title(<span class="st">"Cumulative Variance Explained"</span>, fontweight<span class="op">=</span><span class="st">"bold"</span>, loc<span class="op">=</span><span class="st">"left"</span>)</span>
+<span id="cb1-297"><a href="#cb1-297" aria-hidden="true" tabindex="-1"></a>    ax.set_xlabel(<span class="st">"Principal component"</span>)</span>
+<span id="cb1-298"><a href="#cb1-298" aria-hidden="true" tabindex="-1"></a>    ax.set_ylabel(<span class="st">"Cumulative variance"</span>)</span>
+<span id="cb1-299"><a href="#cb1-299" aria-hidden="true" tabindex="-1"></a>    ax.set_ylim(<span class="dv">0</span>, <span class="dv">1</span>)</span>
+<span id="cb1-300"><a href="#cb1-300" aria-hidden="true" tabindex="-1"></a>    ax.yaxis.set_major_formatter(<span class="kw">lambda</span> value, _: <span class="ss">f"</span><span class="sc">{</span>value<span class="sc">:.0%}</span><span class="ss">"</span>)</span>
+<span id="cb1-301"><a href="#cb1-301" aria-hidden="true" tabindex="-1"></a>    ax.grid(axis<span class="op">=</span><span class="st">"y"</span>, alpha<span class="op">=</span><span class="fl">0.25</span>)</span>
+<span id="cb1-302"><a href="#cb1-302" aria-hidden="true" tabindex="-1"></a>    ax.spines[<span class="st">"top"</span>].set_visible(<span class="va">False</span>)</span>
+<span id="cb1-303"><a href="#cb1-303" aria-hidden="true" tabindex="-1"></a>    ax.spines[<span class="st">"right"</span>].set_visible(<span class="va">False</span>)</span>
+<span id="cb1-304"><a href="#cb1-304" aria-hidden="true" tabindex="-1"></a>    plt.xticks(rotation<span class="op">=</span><span class="dv">45</span>, ha<span class="op">=</span><span class="st">"right"</span>)</span>
+<span id="cb1-305"><a href="#cb1-305" aria-hidden="true" tabindex="-1"></a>    plt.tight_layout()</span>
+<span id="cb1-306"><a href="#cb1-306" aria-hidden="true" tabindex="-1"></a>    plt.show()</span>
+<span id="cb1-307"><a href="#cb1-307" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-308"><a href="#cb1-308" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-309"><a href="#cb1-309" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-310"><a href="#cb1-310" aria-hidden="true" tabindex="-1"></a>When a time series in a particular time id was missing data, we forward filled past values such that we have a continuous series of values without any future leakage. If the time id was missing too much data, having <span class="sc">\&lt;</span> 20 price updates across the first 570 seconds, or having <span class="sc">\&lt;</span> 5 price updates in the final 30 seconds of data, we dropped that particular time id from our calculations, as to not attempt to get models to predict volatility with an inadequate amount of information.</span>
+<span id="cb1-311"><a href="#cb1-311" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-312"><a href="#cb1-312" aria-hidden="true" tabindex="-1"></a>Moreover, we faced some challenges with exploding volatility predictions from unstable Garch fits. To mitigate this, we treated Garch forecasts as missing when the fitted parameters failed the stationarity checks, when boundary parameters were at or above 0.99, or when the forecast variance path was non-finite, negative, or unreasonably large. In a similar fashion, the linear regression models would occasionally predict negative volatility, which was causing significant distortions when measuring QLIKE loss. To prevent negative volatility predictions, we clipped all predictions of negative volatility to the first percentile of training volatility for that fold. Note, this only influenced 3 out of 428,960 time ids across the data, and made the results between models directly comparable. Prior to this change, the volatility predictions for these 3 time ids accounted for approximately \~86% of total QLIKE loss, creating meaningful distortion separate from genuine model accuracy. Our changes helped prevent this distortion.</span>
+<span id="cb1-313"><a href="#cb1-313" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-314"><a href="#cb1-314" aria-hidden="true" tabindex="-1"></a>Hence, the workflow of our product is: If a results cache exists, traders can view the results from that cache without having to recompute results. Otherwise, if they wish to re-calculate their results or specify different models or model parameters, they can move onto the next step Features are pulled from the feature, or computed as soon as the front end is opened if no cache exists Principal components are calculated from those features Traders specify model(s) they want to use Traders then press run, where the platform will predict the the mean volatility for the final 30s of data for each time id for each stock Traders can then observe their data in the individual stock, and stock universe pages</span>
+<span id="cb1-315"><a href="#cb1-315" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-316"><a href="#cb1-316" aria-hidden="true" tabindex="-1"></a>Notably, we chose to include MSE, RMSE, MAE, and QLIKE loss functions in our model evaluation. QLIKE loss is both the industry standard loss metric for volatility prediction, and the main metric we used in our results, as it asymmetrically punishes under predicting volatility. This is especially important in financial applications, because underestimating market risk can lead to more serious consequences than overestimating it.</span>
+<span id="cb1-317"><a href="#cb1-317" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-320"><a href="#cb1-320" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb1-321"><a href="#cb1-321" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-322"><a href="#cb1-322" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-323"><a href="#cb1-323" aria-hidden="true" tabindex="-1"></a><span class="fu"># Results</span></span>
+<span id="cb1-324"><a href="#cb1-324" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-325"><a href="#cb1-325" aria-hidden="true" tabindex="-1"></a>‘Best’ model is subjective. Depends highly on the given loss function you want to optimise and your goal</span>
+<span id="cb1-326"><a href="#cb1-326" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-327"><a href="#cb1-327" aria-hidden="true" tabindex="-1"></a>The cached model comparison table summarises each model's average inference latency, stock level wins under RMSE and QLIKE, and aggregate error metrics.</span>
+<span id="cb1-328"><a href="#cb1-328" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-331"><a href="#cb1-331" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb1-332"><a href="#cb1-332" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: tbl-model-comparison</span></span>
+<span id="cb1-333"><a href="#cb1-333" aria-hidden="true" tabindex="-1"></a><span class="co">#| tbl-cap: "Cached model comparison across all stocks. Lower error metrics are better; model wins count the number of stocks where the model had the lowest loss for that metric."</span></span>
+<span id="cb1-334"><a href="#cb1-334" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-335"><a href="#cb1-335" aria-hidden="true" tabindex="-1"></a>model_comparison <span class="op">=</span> cached_model_comparison_table(metrics, predictions)</span>
+<span id="cb1-336"><a href="#cb1-336" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> model_comparison.empty:</span>
+<span id="cb1-337"><a href="#cb1-337" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"No cached model comparison results were available."</span>)</span>
+<span id="cb1-338"><a href="#cb1-338" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb1-339"><a href="#cb1-339" aria-hidden="true" tabindex="-1"></a>    display(format_report_table(model_comparison))</span>
+<span id="cb1-340"><a href="#cb1-340" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-341"><a href="#cb1-341" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-342"><a href="#cb1-342" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-343"><a href="#cb1-343" aria-hidden="true" tabindex="-1"></a>Never the less, we can see the parity frontier on the graph here (insert Vania’s pareto graph here)</span>
+<span id="cb1-344"><a href="#cb1-344" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-347"><a href="#cb1-347" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb1-348"><a href="#cb1-348" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-pareto-frontier</span></span>
+<span id="cb1-349"><a href="#cb1-349" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-cap: "Pareto frontier of model QLIKE against cached mean inference latency. Lower values are better on both axes."</span></span>
+<span id="cb1-350"><a href="#cb1-350" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-351"><a href="#cb1-351" aria-hidden="true" tabindex="-1"></a>model_summary <span class="op">=</span> model_summary_frame(metrics, predictions)</span>
+<span id="cb1-352"><a href="#cb1-352" aria-hidden="true" tabindex="-1"></a>pareto_frame <span class="op">=</span> model_summary.dropna(subset<span class="op">=</span>[<span class="st">"model"</span>, <span class="st">"mean_inference_us"</span>, <span class="st">"qlike"</span>]).copy()</span>
+<span id="cb1-353"><a href="#cb1-353" aria-hidden="true" tabindex="-1"></a>pareto_frame <span class="op">=</span> pareto_frame[pareto_frame[<span class="st">"mean_inference_us"</span>] <span class="op">&gt;</span> <span class="dv">0</span>].copy()</span>
+<span id="cb1-354"><a href="#cb1-354" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-355"><a href="#cb1-355" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> pareto_frame.empty:</span>
+<span id="cb1-356"><a href="#cb1-356" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"No cached model metrics were available for the Pareto frontier."</span>)</span>
+<span id="cb1-357"><a href="#cb1-357" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb1-358"><a href="#cb1-358" aria-hidden="true" tabindex="-1"></a>    optimal <span class="op">=</span> pareto_optimal_mask(pareto_frame, <span class="st">"mean_inference_us"</span>, <span class="st">"qlike"</span>)</span>
+<span id="cb1-359"><a href="#cb1-359" aria-hidden="true" tabindex="-1"></a>    q1, q3 <span class="op">=</span> pareto_frame[<span class="st">"qlike"</span>].quantile([<span class="fl">0.25</span>, <span class="fl">0.75</span>])</span>
+<span id="cb1-360"><a href="#cb1-360" aria-hidden="true" tabindex="-1"></a>    iqr <span class="op">=</span> q3 <span class="op">-</span> q1</span>
+<span id="cb1-361"><a href="#cb1-361" aria-hidden="true" tabindex="-1"></a>    qlike_cap <span class="op">=</span> <span class="bu">max</span>(q3 <span class="op">+</span> <span class="fl">1.5</span> <span class="op">*</span> iqr, pareto_frame[<span class="st">"qlike"</span>].median())</span>
+<span id="cb1-362"><a href="#cb1-362" aria-hidden="true" tabindex="-1"></a>    qlike_cap <span class="op">=</span> <span class="bu">min</span>(qlike_cap, pareto_frame[<span class="st">"qlike"</span>].<span class="bu">max</span>())</span>
+<span id="cb1-363"><a href="#cb1-363" aria-hidden="true" tabindex="-1"></a>    pareto_frame[<span class="st">"qlike_plot"</span>] <span class="op">=</span> pareto_frame[<span class="st">"qlike"</span>].clip(upper<span class="op">=</span>qlike_cap)</span>
+<span id="cb1-364"><a href="#cb1-364" aria-hidden="true" tabindex="-1"></a>    pareto_frame[<span class="st">"qlike_clipped"</span>] <span class="op">=</span> pareto_frame[<span class="st">"qlike"</span>] <span class="op">&gt;</span> qlike_cap</span>
+<span id="cb1-365"><a href="#cb1-365" aria-hidden="true" tabindex="-1"></a>    pareto_models <span class="op">=</span> pareto_frame[optimal].sort_values(<span class="st">"mean_inference_us"</span>)</span>
+<span id="cb1-366"><a href="#cb1-366" aria-hidden="true" tabindex="-1"></a>    dominated_models <span class="op">=</span> pareto_frame[<span class="op">~</span>optimal].sort_values(<span class="st">"mean_inference_us"</span>)</span>
+<span id="cb1-367"><a href="#cb1-367" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-368"><a href="#cb1-368" aria-hidden="true" tabindex="-1"></a>    fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">6</span>))</span>
+<span id="cb1-369"><a href="#cb1-369" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-370"><a href="#cb1-370" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> dominated_models.empty:</span>
+<span id="cb1-371"><a href="#cb1-371" aria-hidden="true" tabindex="-1"></a>        ax.scatter(</span>
+<span id="cb1-372"><a href="#cb1-372" aria-hidden="true" tabindex="-1"></a>            dominated_models[<span class="st">"mean_inference_us"</span>],</span>
+<span id="cb1-373"><a href="#cb1-373" aria-hidden="true" tabindex="-1"></a>            dominated_models[<span class="st">"qlike_plot"</span>],</span>
+<span id="cb1-374"><a href="#cb1-374" aria-hidden="true" tabindex="-1"></a>            color<span class="op">=</span><span class="st">"gray"</span>,</span>
+<span id="cb1-375"><a href="#cb1-375" aria-hidden="true" tabindex="-1"></a>            s<span class="op">=</span><span class="dv">50</span>,</span>
+<span id="cb1-376"><a href="#cb1-376" aria-hidden="true" tabindex="-1"></a>            alpha<span class="op">=</span><span class="fl">0.7</span>,</span>
+<span id="cb1-377"><a href="#cb1-377" aria-hidden="true" tabindex="-1"></a>            label<span class="op">=</span><span class="st">"Dominated models"</span>,</span>
+<span id="cb1-378"><a href="#cb1-378" aria-hidden="true" tabindex="-1"></a>            zorder<span class="op">=</span><span class="dv">3</span>,</span>
+<span id="cb1-379"><a href="#cb1-379" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb1-380"><a href="#cb1-380" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-381"><a href="#cb1-381" aria-hidden="true" tabindex="-1"></a>    ax.plot(</span>
+<span id="cb1-382"><a href="#cb1-382" aria-hidden="true" tabindex="-1"></a>        pareto_models[<span class="st">"mean_inference_us"</span>],</span>
+<span id="cb1-383"><a href="#cb1-383" aria-hidden="true" tabindex="-1"></a>        pareto_models[<span class="st">"qlike_plot"</span>],</span>
+<span id="cb1-384"><a href="#cb1-384" aria-hidden="true" tabindex="-1"></a>        color<span class="op">=</span><span class="st">"red"</span>,</span>
+<span id="cb1-385"><a href="#cb1-385" aria-hidden="true" tabindex="-1"></a>        linewidth<span class="op">=</span><span class="fl">1.5</span>,</span>
+<span id="cb1-386"><a href="#cb1-386" aria-hidden="true" tabindex="-1"></a>        label<span class="op">=</span><span class="st">"Pareto frontier"</span>,</span>
+<span id="cb1-387"><a href="#cb1-387" aria-hidden="true" tabindex="-1"></a>        zorder<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb1-388"><a href="#cb1-388" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb1-389"><a href="#cb1-389" aria-hidden="true" tabindex="-1"></a>    ax.scatter(</span>
+<span id="cb1-390"><a href="#cb1-390" aria-hidden="true" tabindex="-1"></a>        pareto_models[<span class="st">"mean_inference_us"</span>],</span>
+<span id="cb1-391"><a href="#cb1-391" aria-hidden="true" tabindex="-1"></a>        pareto_models[<span class="st">"qlike_plot"</span>],</span>
+<span id="cb1-392"><a href="#cb1-392" aria-hidden="true" tabindex="-1"></a>        color<span class="op">=</span><span class="st">"red"</span>,</span>
+<span id="cb1-393"><a href="#cb1-393" aria-hidden="true" tabindex="-1"></a>        s<span class="op">=</span><span class="dv">60</span>,</span>
+<span id="cb1-394"><a href="#cb1-394" aria-hidden="true" tabindex="-1"></a>        zorder<span class="op">=</span><span class="dv">4</span>,</span>
+<span id="cb1-395"><a href="#cb1-395" aria-hidden="true" tabindex="-1"></a>        label<span class="op">=</span><span class="st">"Pareto optimal models"</span>,</span>
+<span id="cb1-396"><a href="#cb1-396" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb1-397"><a href="#cb1-397" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-398"><a href="#cb1-398" aria-hidden="true" tabindex="-1"></a>    label_offsets <span class="op">=</span> {</span>
+<span id="cb1-399"><a href="#cb1-399" aria-hidden="true" tabindex="-1"></a>        <span class="st">"LASSO"</span>: (<span class="op">-</span><span class="dv">5</span>, <span class="dv">9</span>),</span>
+<span id="cb1-400"><a href="#cb1-400" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Ridge Regression"</span>: (<span class="dv">5</span>, <span class="dv">9</span>),</span>
+<span id="cb1-401"><a href="#cb1-401" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Decision Tree"</span>: (<span class="dv">5</span>, <span class="op">-</span><span class="dv">3</span>),</span>
+<span id="cb1-402"><a href="#cb1-402" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Linear Regression"</span>: (<span class="dv">7</span>, <span class="dv">6</span>),</span>
+<span id="cb1-403"><a href="#cb1-403" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Random Forest"</span>: (<span class="dv">7</span>, <span class="op">-</span><span class="dv">11</span>),</span>
+<span id="cb1-404"><a href="#cb1-404" aria-hidden="true" tabindex="-1"></a>        <span class="st">"GARCH(1,1)"</span>: (<span class="dv">6</span>, <span class="op">-</span><span class="dv">10</span>),</span>
+<span id="cb1-405"><a href="#cb1-405" aria-hidden="true" tabindex="-1"></a>        <span class="st">"GJR-GARCH(1,1)"</span>: (<span class="dv">6</span>, <span class="op">-</span><span class="dv">10</span>),</span>
+<span id="cb1-406"><a href="#cb1-406" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb1-407"><a href="#cb1-407" aria-hidden="true" tabindex="-1"></a>    label_alignments <span class="op">=</span> {<span class="st">"LASSO"</span>: <span class="st">"right"</span>}</span>
+<span id="cb1-408"><a href="#cb1-408" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-409"><a href="#cb1-409" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _, row <span class="kw">in</span> pareto_frame.sort_values(<span class="st">"mean_inference_us"</span>).iterrows():</span>
+<span id="cb1-410"><a href="#cb1-410" aria-hidden="true" tabindex="-1"></a>        is_optimal <span class="op">=</span> row[<span class="st">"model"</span>] <span class="kw">in</span> <span class="bu">set</span>(pareto_models[<span class="st">"model"</span>])</span>
+<span id="cb1-411"><a href="#cb1-411" aria-hidden="true" tabindex="-1"></a>        label <span class="op">=</span> row[<span class="st">"model"</span>]</span>
+<span id="cb1-412"><a href="#cb1-412" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> row[<span class="st">"qlike_clipped"</span>]:</span>
+<span id="cb1-413"><a href="#cb1-413" aria-hidden="true" tabindex="-1"></a>            label <span class="op">=</span> <span class="ss">f"</span><span class="sc">{</span>label<span class="sc">}</span><span class="ss"> (</span><span class="sc">{</span>row[<span class="st">'qlike'</span>]<span class="sc">:.2f}</span><span class="ss">)"</span></span>
+<span id="cb1-414"><a href="#cb1-414" aria-hidden="true" tabindex="-1"></a>        xytext <span class="op">=</span> label_offsets.get(row[<span class="st">"model"</span>], (<span class="dv">5</span>, <span class="dv">5</span> <span class="cf">if</span> is_optimal <span class="cf">else</span> <span class="op">-</span><span class="dv">10</span>))</span>
+<span id="cb1-415"><a href="#cb1-415" aria-hidden="true" tabindex="-1"></a>        ax.annotate(</span>
+<span id="cb1-416"><a href="#cb1-416" aria-hidden="true" tabindex="-1"></a>            label,</span>
+<span id="cb1-417"><a href="#cb1-417" aria-hidden="true" tabindex="-1"></a>            xy<span class="op">=</span>(row[<span class="st">"mean_inference_us"</span>], row[<span class="st">"qlike_plot"</span>]),</span>
+<span id="cb1-418"><a href="#cb1-418" aria-hidden="true" tabindex="-1"></a>            xytext<span class="op">=</span>xytext,</span>
+<span id="cb1-419"><a href="#cb1-419" aria-hidden="true" tabindex="-1"></a>            textcoords<span class="op">=</span><span class="st">"offset points"</span>,</span>
+<span id="cb1-420"><a href="#cb1-420" aria-hidden="true" tabindex="-1"></a>            fontsize<span class="op">=</span><span class="dv">8</span>,</span>
+<span id="cb1-421"><a href="#cb1-421" aria-hidden="true" tabindex="-1"></a>            color<span class="op">=</span><span class="st">"red"</span> <span class="cf">if</span> is_optimal <span class="cf">else</span> <span class="st">"gray"</span>,</span>
+<span id="cb1-422"><a href="#cb1-422" aria-hidden="true" tabindex="-1"></a>            ha<span class="op">=</span>label_alignments.get(row[<span class="st">"model"</span>], <span class="st">"left"</span>),</span>
+<span id="cb1-423"><a href="#cb1-423" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb1-424"><a href="#cb1-424" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-425"><a href="#cb1-425" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> x, color, label <span class="kw">in</span> [</span>
+<span id="cb1-426"><a href="#cb1-426" aria-hidden="true" tabindex="-1"></a>        (<span class="dv">1</span>, <span class="st">"green"</span>, <span class="st">"1 microsecond"</span>),</span>
+<span id="cb1-427"><a href="#cb1-427" aria-hidden="true" tabindex="-1"></a>        (<span class="dv">10</span>, <span class="st">"gold"</span>, <span class="st">"10 microseconds"</span>),</span>
+<span id="cb1-428"><a href="#cb1-428" aria-hidden="true" tabindex="-1"></a>        (<span class="dv">1000</span>, <span class="st">"purple"</span>, <span class="st">"1000 microseconds"</span>),</span>
+<span id="cb1-429"><a href="#cb1-429" aria-hidden="true" tabindex="-1"></a>    ]:</span>
+<span id="cb1-430"><a href="#cb1-430" aria-hidden="true" tabindex="-1"></a>        ax.axvline(x<span class="op">=</span>x, color<span class="op">=</span>color, linestyle<span class="op">=</span><span class="st">"--"</span>, linewidth<span class="op">=</span><span class="fl">1.2</span>, label<span class="op">=</span>label)</span>
+<span id="cb1-431"><a href="#cb1-431" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-432"><a href="#cb1-432" aria-hidden="true" tabindex="-1"></a>    ax.set_xscale(<span class="st">"log"</span>)</span>
+<span id="cb1-433"><a href="#cb1-433" aria-hidden="true" tabindex="-1"></a>    ax.set_xlabel(<span class="st">"Inference time (microseconds)"</span>)</span>
+<span id="cb1-434"><a href="#cb1-434" aria-hidden="true" tabindex="-1"></a>    ax.set_ylabel(<span class="st">"QLIKE (lower is better)"</span>)</span>
+<span id="cb1-435"><a href="#cb1-435" aria-hidden="true" tabindex="-1"></a>    ax.set_title(<span class="st">"Pareto Frontier: Volatility Model Selection"</span>)</span>
+<span id="cb1-436"><a href="#cb1-436" aria-hidden="true" tabindex="-1"></a>    ax.legend(loc<span class="op">=</span><span class="st">"upper right"</span>, fontsize<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb1-437"><a href="#cb1-437" aria-hidden="true" tabindex="-1"></a>    ax.grid(<span class="va">True</span>, which<span class="op">=</span><span class="st">"both"</span>, linestyle<span class="op">=</span><span class="st">":"</span>, alpha<span class="op">=</span><span class="fl">0.4</span>)</span>
+<span id="cb1-438"><a href="#cb1-438" aria-hidden="true" tabindex="-1"></a>    ax.set_xlim(</span>
+<span id="cb1-439"><a href="#cb1-439" aria-hidden="true" tabindex="-1"></a>        <span class="bu">max</span>(pareto_frame[<span class="st">"mean_inference_us"</span>].<span class="bu">min</span>() <span class="op">*</span> <span class="fl">0.6</span>, <span class="fl">0.01</span>),</span>
+<span id="cb1-440"><a href="#cb1-440" aria-hidden="true" tabindex="-1"></a>        pareto_frame[<span class="st">"mean_inference_us"</span>].<span class="bu">max</span>() <span class="op">*</span> <span class="dv">2</span>,</span>
+<span id="cb1-441"><a href="#cb1-441" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb1-442"><a href="#cb1-442" aria-hidden="true" tabindex="-1"></a>    ax.set_ylim(</span>
+<span id="cb1-443"><a href="#cb1-443" aria-hidden="true" tabindex="-1"></a>        <span class="bu">max</span>(pareto_frame[<span class="st">"qlike_plot"</span>].<span class="bu">min</span>() <span class="op">-</span> <span class="fl">0.08</span>, <span class="dv">0</span>),</span>
+<span id="cb1-444"><a href="#cb1-444" aria-hidden="true" tabindex="-1"></a>        pareto_frame[<span class="st">"qlike_plot"</span>].<span class="bu">max</span>() <span class="op">+</span> <span class="fl">0.15</span>,</span>
+<span id="cb1-445"><a href="#cb1-445" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb1-446"><a href="#cb1-446" aria-hidden="true" tabindex="-1"></a>    plt.tight_layout()</span>
+<span id="cb1-447"><a href="#cb1-447" aria-hidden="true" tabindex="-1"></a>    plt.show()</span>
+<span id="cb1-448"><a href="#cb1-448" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-449"><a href="#cb1-449" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-450"><a href="#cb1-450" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-451"><a href="#cb1-451" aria-hidden="true" tabindex="-1"></a>We see the model which minimises </span>
+<span id="cb1-452"><a href="#cb1-452" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-453"><a href="#cb1-453" aria-hidden="true" tabindex="-1"></a>Describe what each graph / chart shows.</span>
+<span id="cb1-454"><a href="#cb1-454" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-455"><a href="#cb1-455" aria-hidden="true" tabindex="-1"></a>We see the GJR</span>
+<span id="cb1-456"><a href="#cb1-456" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-459"><a href="#cb1-459" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb1-460"><a href="#cb1-460" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-461"><a href="#cb1-461" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-462"><a href="#cb1-462" aria-hidden="true" tabindex="-1"></a><span class="fu"># Discussion</span></span>
+<span id="cb1-463"><a href="#cb1-463" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-464"><a href="#cb1-464" aria-hidden="true" tabindex="-1"></a>Paragraph 1: Main interpretation of the results. Keep this short. The point is not to repeat the full Results section or Executive Summary, but to interpret the overall finding: there is no single best volatility model across all objectives. Include that model choice depends on the user's metric and latency constraint. Explicitly link this back to the research question by saying the tool supports conditional model choice, rather than producing one universal ranking.</span>
+<span id="cb1-465"><a href="#cb1-465" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-466"><a href="#cb1-466" aria-hidden="true" tabindex="-1"></a>Paragraph 2: Why the loss function changes the conclusion. This is necessary because the Results section shows different winners under RMSE and QLIKE, but does not yet fully explain why that matters. Include a brief explanation that RMSE rewards average closeness, while QLIKE is more relevant for volatility and risk forecasting because under-predicting volatility can be especially costly. Avoid turning this into a formula explanation, because metric definitions belong in Methods. Avoid claiming QLIKE is always superior; instead, say it is better aligned with risk-focused volatility forecasting.</span>
+<span id="cb1-467"><a href="#cb1-467" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-468"><a href="#cb1-468" aria-hidden="true" tabindex="-1"></a>Paragraph 3: Accuracy versus latency tradeoff. This should be one of the strongest discussion paragraphs. Interpret the Pareto frontier and explain that statistical accuracy alone is not enough for model selection. Include that GJR-GARCH may be suitable for slower settings such as portfolio optimisation, VaR, or risk monitoring, while XGBoost may be more useful where inference latency is binding. Avoid overclaiming that GJR-GARCH is unusable in all trading contexts, and avoid repeating the full Aquilina et al. latency argument from the Executive Summary.</span>
+<span id="cb1-469"><a href="#cb1-469" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-470"><a href="#cb1-470" aria-hidden="true" tabindex="-1"></a>Paragraph 4: What the tool currently contributes. Include this, but keep it concise so it does not become a README-style feature list or repeat the Background section. The main claim should be that the tool operationalises the research question by making model comparison interactive across metrics, stocks, and latency. Mention only the most relevant functions: configuring models, choosing PCA or manual features, comparing universe-level and individual-stock results, and viewing latency/error tradeoffs. Avoid describing every UI element.</span>
+<span id="cb1-471"><a href="#cb1-471" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-472"><a href="#cb1-472" aria-hidden="true" tabindex="-1"></a>Paragraph 5: Limitations of the current work. This is necessary for credibility and should be specific rather than apologetic. Include only limitations that affect interpretation or external validity: static historical data rather than live order-book data, anonymous stocks so sector/liquidity context cannot be interpreted, time ids are not temporally ordered, the forecast target is limited to the final 30 seconds of each window, and latency is measured in our local/backend environment rather than production trading infrastructure. Avoid vague statements like "there are some limitations".</span>
+<span id="cb1-473"><a href="#cb1-473" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-474"><a href="#cb1-474" aria-hidden="true" tabindex="-1"></a>Paragraph 6: Future work. This should follow directly from the limitations, not become a wishlist. Include custom model imports, live or streaming data, user-selected loss optimisation such as directly optimising QLIKE, richer model classes only if they address the modelling objective, richer named-stock data if available, and more realistic latency benchmarking. Avoid speculative features that do not connect back to the report's findings.</span>
+<span id="cb1-475"><a href="#cb1-475" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-476"><a href="#cb1-476" aria-hidden="true" tabindex="-1"></a><span class="fu"># Conclusion</span></span>
+<span id="cb1-477"><a href="#cb1-477" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-478"><a href="#cb1-478" aria-hidden="true" tabindex="-1"></a>Paragraph 1: Restate the project aim and answer the research question directly. Say that the project investigated which volatility prediction models are most appropriate for traders under different accuracy and latency requirements. The key conclusion should be that the best model is conditional on the trader's objective, rather than universal. Avoid introducing new evidence or repeating every model result.</span>
+<span id="cb1-479"><a href="#cb1-479" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-480"><a href="#cb1-480" aria-hidden="true" tabindex="-1"></a>Paragraph 2: Summarise the main empirical finding in one tight paragraph. Include the key contrast: XGBoost performed strongly under RMSE and offered very low inference latency, while GJR-GARCH performed strongly under QLIKE but was much slower. The point is to reinforce the accuracy-latency tradeoff, not to reproduce the full Results table. Avoid adding caveats that belong in the Discussion.</span>
+<span id="cb1-481"><a href="#cb1-481" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-482"><a href="#cb1-482" aria-hidden="true" tabindex="-1"></a>Paragraph 3: Close with the contribution of the tool. Explain that the tool is useful because it makes model selection transparent across stocks, metrics, and latency constraints. It should end on the practical implication: traders and researchers can use the tool to choose models that better match their use case. Avoid overstating it as a production-ready trading system; frame it as a decision-support and model-comparison tool.</span>
+<span id="cb1-483"><a href="#cb1-483" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-484"><a href="#cb1-484" aria-hidden="true" tabindex="-1"></a><span class="fu"># Student contributions</span></span>
+<span id="cb1-485"><a href="#cb1-485" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-486"><a href="#cb1-486" aria-hidden="true" tabindex="-1"></a>Eriks wrote most of the front end, back end, and first draft of the report….. Continue this.</span>
+<span id="cb1-487"><a href="#cb1-487" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-488"><a href="#cb1-488" aria-hidden="true" tabindex="-1"></a><span class="fu"># References (use apa 7)</span></span>
+<span id="cb1-489"><a href="#cb1-489" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-490"><a href="#cb1-490" aria-hidden="true" tabindex="-1"></a>Aquilina, M.,Budish, E., &amp; O’Neill, P. (2021). Quantifying the high frequency trading “arms race” (BIS Working Paper No. 955). Bank for International Settlements. https://www.bis.org/publ/work955.pdf</span>
+<span id="cb1-491"><a href="#cb1-491" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-492"><a href="#cb1-492" aria-hidden="true" tabindex="-1"></a>TradingView. (n.d.). Visuals overview. Pine Script documentation. https://www.tradingview.com/pine-script-docs/visuals/overview/</span>
+</code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

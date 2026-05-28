@@ -7,7 +7,7 @@ import pandas as pd
 
 from back_end.config import FeatureConfig, ModelSpec
 from back_end.evaluation import summarize_fold_metrics
-from back_end.models import MIN_PRED_VOL, run_ml_model, run_model_for_fold
+from back_end.models import MIN_PRED_VOL, PRED_VOL_FLOOR_QUANTILE, run_ml_model, run_model_for_fold
 from back_end.universe import LOSS_METRICS, build_model_comparison, build_pca_variance_explained, build_stock_pca, build_universe_summary
 
 
@@ -53,7 +53,7 @@ class PcaFeatureModeTest(unittest.TestCase):
         self.assertEqual(set(importance["feature"]), {"PC1", "PC2"})
         self.assertTrue(np.isfinite(predictions["pred_vol"]).all())
 
-    def test_ml_predictions_use_positive_volatility_floor(self):
+    def test_linear_predictions_use_training_volatility_floor(self):
         feature_cols = ["feature"]
         train = pd.DataFrame(
             {
@@ -82,8 +82,9 @@ class PcaFeatureModeTest(unittest.TestCase):
             fold=1,
         )
 
-        self.assertAlmostEqual(predictions.loc[0, "pred_vol"], MIN_PRED_VOL)
-        self.assertAlmostEqual(predictions.loc[0, "pred_var"], MIN_PRED_VOL**2)
+        expected_floor = max(float(np.quantile(train["target_vol"], PRED_VOL_FLOOR_QUANTILE)), MIN_PRED_VOL)
+        self.assertAlmostEqual(predictions.loc[0, "pred_vol"], expected_floor)
+        self.assertAlmostEqual(predictions.loc[0, "pred_var"], expected_floor**2)
 
     def test_stock_pca_returns_one_coordinate_row_per_stock(self):
         rows = []

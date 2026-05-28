@@ -1,7 +1,14 @@
 
 #Ignore cursor AI rules
 .cursor/rules/codacy.mdc
-AGENTS.md
+.codex
+.cursor/
+.claude
+.Rproj.user
+.venv/
+.DS_Store
+.Rhistory
+*.py[cod]
 
 
 # Data files
@@ -14,3 +21,9 @@ AGENTS.md
 artifacts/runs/**
 !artifacts/runs/
 !artifacts/runs/.gitkeep
+artifacts/diagnostics/**
+.Rproj.user
+__pycache__/
+
+individual_book_train/
+individual_book_train/**

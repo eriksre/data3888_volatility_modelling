@@ -59,8 +59,8 @@ print("Validation 1: Average RV per cluster...")
 
 rv_series = {}
 for sid in cluster_df["stock_id"]:
-    path = os.path.join(DATA_DIR, f"stock_{sid}.parquet")
-    df   = pd.read_parquet(path)
+    path = os.path.join(DATA_DIR, f"stock_{sid}.csv")
+    df   = pd.read_csv(path)
     df["wap"] = compute_wap(df)
     df["log_return"] = df.groupby("time_id")["wap"].transform(lambda x: np.log(x).diff())
     rv = df.groupby("time_id")["log_return"].apply(

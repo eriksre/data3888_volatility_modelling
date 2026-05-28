@@ -1,34 +1,29 @@
 # DATA3888 — Volatility Modelling
 
-Predicting short-term realised volatility for 112 anonymous stocks using Optiver limit order book data. The setup is: use the first 5 minutes of each 10-minute trading window to predict volatility in the second 5 minutes.
-
-## Before you run anything
-
-By default, the app expects parquet files in `individual_book_train_parquet/`.
-
-If your parquet files live somewhere else, update `INDIVIDUAL_PARQUET_DIR` in `back_end/config.py`.
-
-## Run these once. They install the relevant packages you need and compute the feature cache
+## Before you do anything, run this
 
 ```bash
 pip install -r requirements.txt
+```
+
+Now, you are okay to run the report. It uses cached results that have been pre-computed by us to save you 4 hours of computational time :)
+
+---------------------------------------------------------------------------
+
+## Before you run the front end, do this
+
+By default, the app expects CSV files in `individual_book_train/`.
+
+If your CSV files live somewhere else, update `INDIVIDUAL_BOOK_DIR` in `back_end/config.py`.
+
+
+##  Command to run the front end
+
+DO NOT PRESS RUN ALL MODELS UNLESS YOU WANT TO RE-RUN THE MODEL RESULTS WHICH TAKES BETWEEN 30 MINS AND 4 HRS.
+
+```bash
 python precompute_feature_cache.py
-```
 
-# Command to run the app
-```
 streamlit run front_end/app.py
-
 ```
 
-## Clustering Results # DO NOT USE IN FINAL REPORT
-
-| Model | Cluster 1 RMSE | Cluster 2 RMSE |
-|-------|---------------|----------------|
-| Random Forest | 0.2802 | 0.2296 |
-| XGBoost | 0.2773 | 0.2268 |
-| LightGBM | 0.2770 | 0.2268 |
-| HAR-RV | ~0.57 | ~0.59 |
-| GARCH(1,1) | ~0.57 | ~0.59 |
-
-Cluster 1 = 33 high-volatility stocks, Cluster 2 = 79 low-volatility stocks. Individual stock models beat the cluster model on roughly 60% of stocks, most clearly on Cluster 2. ML models outperform HAR-RV and GARCH by ~2x — the gap comes from the richer microstructure features which those models can't use.

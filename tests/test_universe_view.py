@@ -71,6 +71,7 @@ class UniverseViewTest(unittest.TestCase):
                     "model_type": "Linear Regression",
                     "mean_inference_ms": 0.123456,
                     "best_stocks_rmse": 2,
+                    "best_stocks_qlike": 1,
                     "fold_std_rmse": 0.111111,
                     "rmse": 0.222222,
                     "qlike": 0.333333,
@@ -84,6 +85,10 @@ class UniverseViewTest(unittest.TestCase):
         self.assertIn("Mean inference (μs)", view.columns)
         self.assertNotIn("Model type", view.columns)
         self.assertNotIn("RMSE fold std", view.columns)
+        self.assertIn("RMSE model wins", view.columns)
+        self.assertIn("QLIKE model wins", view.columns)
+        self.assertEqual(view.loc[0, "RMSE model wins"], 2)
+        self.assertEqual(view.loc[0, "QLIKE model wins"], 1)
         self.assertAlmostEqual(view.loc[0, "Mean inference (μs)"], 123.456)
 
 if __name__ == "__main__":

@@ -19,6 +19,33 @@ MODEL_ICONS = {model["type"]: model["icon"] for model in MODEL_CATALOG}
 MAX_PCA_COMPONENTS = 30
 DEFAULT_GARCH_N_JOBS = 4
 
+MODEL_PARAMETER_DEFAULTS = {
+    "XGBoost": {
+        "n_estimators": 180,
+        "learning_rate": 0.05,
+        "max_depth": 4,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+    },
+    "Random Forest": {
+        "n_estimators": 60,
+    },
+    "Decision Tree": {
+        "max_depth": 6,
+        "min_samples_leaf": 20,
+    },
+    "LASSO": {
+        "alpha": 0.01,
+        "max_iter": 5000,
+    },
+    "GARCH(1,1)": {
+        "n_jobs": DEFAULT_GARCH_N_JOBS,
+    },
+    "GJR-GARCH(1,1)": {
+        "n_jobs": DEFAULT_GARCH_N_JOBS,
+    },
+}
+
 ALL_FEATURES = [
     "WAP Returns",
     "Bid-Ask Spread",
@@ -87,9 +114,7 @@ def _model_entry(
     selected_features: list[str] | list[int],
     parameters: dict,
 ) -> dict:
-    model_parameters = {}
-    if "GARCH" in model_type:
-        model_parameters["n_jobs"] = int(parameters.get("n_jobs", DEFAULT_GARCH_N_JOBS))
+    model_parameters = _model_parameters_for_type(model_type, parameters)
     return {
         "type": model_type,
         "feature_mode": feature_mode,
@@ -97,6 +122,149 @@ def _model_entry(
         "pred_seconds": 30,
         "parameters": model_parameters,
     }
+
+
+def _model_parameters_for_type(model_type: str, parameters: dict) -> dict:
+    defaults = MODEL_PARAMETER_DEFAULTS.get(model_type, {})
+    return {
+        key: parameters.get(key, default)
+        for key, default in defaults.items()
+    }
+
+
+def _format_parameter_value(value) -> str:
+    if isinstance(value, float):
+        return f"{value:g}"
+    return str(value)
+
+
+def _parameter_summary(parameters: dict | None) -> str:
+    if not parameters:
+        return "Default backend settings"
+    return ", ".join(
+        f"{name}={_format_parameter_value(value)}"
+        for name, value in parameters.items()
+    )
+
+
+def _render_parameter_controls(model_type: str, parameters: dict, key_prefix: str) -> dict:
+    defaults = MODEL_PARAMETER_DEFAULTS.get(model_type)
+    if not defaults:
+        return {}
+
+    values = _model_parameters_for_type(model_type, parameters)
+    st.markdown("**Hyperparameters**")
+    if model_type == "XGBoost":
+        col_a, col_b, col_c = st.columns(3)
+        with col_a:
+            values["n_estimators"] = st.number_input(
+                "Trees",
+                min_value=10,
+                max_value=1000,
+                value=int(values["n_estimators"]),
+                step=10,
+                key=f"{key_prefix}_xgb_ne",
+            )
+        with col_b:
+            values["learning_rate"] = st.number_input(
+                "Learning rate",
+                min_value=0.001,
+                max_value=1.0,
+                value=float(values["learning_rate"]),
+                step=0.01,
+                format="%.3f",
+                key=f"{key_prefix}_xgb_lr",
+            )
+        with col_c:
+            values["max_depth"] = st.number_input(
+                "Max depth",
+                min_value=1,
+                max_value=20,
+                value=int(values["max_depth"]),
+                step=1,
+                key=f"{key_prefix}_xgb_md",
+            )
+        col_d, col_e = st.columns(2)
+        with col_d:
+            values["subsample"] = st.slider(
+                "Subsample",
+                min_value=0.1,
+                max_value=1.0,
+                value=float(values["subsample"]),
+                step=0.05,
+                key=f"{key_prefix}_xgb_ss",
+            )
+        with col_e:
+            values["colsample_bytree"] = st.slider(
+                "Column sample by tree",
+                min_value=0.1,
+                max_value=1.0,
+                value=float(values["colsample_bytree"]),
+                step=0.05,
+                key=f"{key_prefix}_xgb_cs",
+            )
+    elif model_type == "Random Forest":
+        values["n_estimators"] = st.number_input(
+            "Trees",
+            min_value=10,
+            max_value=1000,
+            value=int(values["n_estimators"]),
+            step=10,
+            key=f"{key_prefix}_rf_ne",
+        )
+    elif model_type == "Decision Tree":
+        col_a, col_b = st.columns(2)
+        with col_a:
+            values["max_depth"] = st.number_input(
+                "Max depth",
+                min_value=1,
+                max_value=50,
+                value=int(values["max_depth"]),
+                step=1,
+                key=f"{key_prefix}_dt_md",
+            )
+        with col_b:
+            values["min_samples_leaf"] = st.number_input(
+                "Minimum samples per leaf",
+                min_value=1,
+                max_value=500,
+                value=int(values["min_samples_leaf"]),
+                step=1,
+                key=f"{key_prefix}_dt_msl",
+            )
+    elif model_type == "LASSO":
+        col_a, col_b = st.columns(2)
+        with col_a:
+            values["alpha"] = st.number_input(
+                "Alpha",
+                min_value=0.0001,
+                max_value=10.0,
+                value=float(values["alpha"]),
+                step=0.01,
+                format="%.4f",
+                key=f"{key_prefix}_lasso_alpha",
+            )
+        with col_b:
+            values["max_iter"] = st.number_input(
+                "Maximum iterations",
+                min_value=100,
+                max_value=50000,
+                value=int(values["max_iter"]),
+                step=100,
+                key=f"{key_prefix}_lasso_iter",
+            )
+    elif "GARCH" in model_type:
+        values["n_jobs"] = st.slider(
+            "Parallel workers",
+            min_value=1,
+            max_value=8,
+            value=int(values["n_jobs"]),
+            step=1,
+            key=f"{key_prefix}_gj",
+            help="Runs GARCH fits across stocks in separate worker processes.",
+        )
+
+    return values
 
 
 def _cached_run_label(run: dict) -> str:
@@ -180,21 +348,6 @@ def _render_builder() -> None:
 
     st.divider()
 
-    parameters = {}
-    if "GARCH" in model_type:
-        st.markdown("**Runtime**")
-        n_jobs = st.slider(
-            "Parallel workers",
-            min_value=1,
-            max_value=8,
-            value=DEFAULT_GARCH_N_JOBS,
-            step=1,
-            key=f"gj_{v}",
-            help="Runs GARCH fits across stocks in separate worker processes.",
-        )
-        parameters["n_jobs"] = n_jobs
-        st.divider()
-
     # ---- Loss functions ----
     st.markdown("**Loss function(s)**")
     st.caption(f"Using all built-in loss functions: {', '.join(LOSS_FUNCTIONS)}")
@@ -208,7 +361,7 @@ def _render_builder() -> None:
                 st.error("Cannot add model: no features selected.")
                 return
 
-            entry = _model_entry(model_type, feature_mode, selected_features, parameters)
+            entry = _model_entry(model_type, feature_mode, selected_features, {})
             st.session_state.model_list.append(entry)
             st.session_state.builder_v = v + 1  # reset all widget values
             st.rerun()
@@ -224,7 +377,7 @@ def _render_builder() -> None:
 
             configured_types = {model.get("type") for model in st.session_state.model_list}
             entries = [
-                _model_entry(available_model, feature_mode, selected_features, parameters)
+                _model_entry(available_model, feature_mode, selected_features, {})
                 for available_model in AVAILABLE_MODELS
                 if available_model not in configured_types
             ]
@@ -270,14 +423,22 @@ def _render_model_list() -> None:
                     st.session_state.model_list.pop(i)
                     st.rerun()
 
+            if m["type"] in MODEL_PARAMETER_DEFAULTS:
+                m["parameters"] = _render_parameter_controls(
+                    m["type"],
+                    m.get("parameters") or {},
+                    f"model_{i}",
+                )
+                st.markdown(f"**Hyperparameters:** {_parameter_summary(m['parameters'])}")
+
     st.divider()
 
     stock_options = available_stocks()
     st.subheader("Run Scope")
     st.caption(
-        f"Runs use all {len(stock_options)} stock parquet files and all available time windows per stock."
+        f"Runs use all {len(stock_options)} stock CSV files and all available time windows per stock."
         if stock_options
-        else "No stock parquet files were found."
+        else "No stock CSV files were found."
     )
 
     col_run, col_clear = st.columns([3, 1])
@@ -287,10 +448,10 @@ def _render_model_list() -> None:
             type="primary",
             width="stretch",
             disabled=not stock_options,
-            help="Train and evaluate the configured models on every real stock parquet file.",
+            help="Train and evaluate the configured models on every real stock CSV file.",
         ):
             try:
-                with st.spinner("Running backend pipeline on real parquet data..."):
+                with st.spinner("Running backend pipeline on real CSV data..."):
                     status = start_run_from_ui(models)
                 st.session_state.run_status = status
                 st.session_state.selected_run_id = status["run_id"]

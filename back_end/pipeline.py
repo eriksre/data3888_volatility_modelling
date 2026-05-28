@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import replace
+import os
+import multiprocessing
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
+from dataclasses import asdict, replace
 from typing import Any
 from uuid import uuid4
 
@@ -10,10 +13,90 @@ from .artifacts import utc_timestamp, write_run_artifacts
 from .config import PIPELINE_VERSION, DataConfig, FeatureConfig, ModelSpec, RunConfig, normalize_stock_id
 from .data import load_processed_stock
 from .evaluation import make_time_id_folds, summarize_fold_metrics
-from .feature_cache import load_cached_features
+from .feature_cache import load_cached_features, write_feature_cache
 from .features import load_stock_features, usable_feature_columns
 from .models import is_arch_family_model, model_availability_issue, run_garch_on_processed, run_model_for_fold
 from .universe import build_universe
+
+
+_LAST_FEATURE_BACKEND = "serial"
+_LAST_GARCH_BACKEND = "serial"
+
+
+def _resolved_feature_workers(data_config: DataConfig, n_stocks: int) -> int:
+    requested = data_config.feature_workers
+    if requested is None:
+        requested = max(1, (os.cpu_count() or 2) - 1)
+    return max(1, min(int(requested), max(1, n_stocks)))
+
+
+def _compute_stock_features(payload: dict[str, Any]) -> tuple[str, pd.DataFrame]:
+    stock = payload["stock"]
+    data_config = DataConfig(**payload["data_config"])
+    feature_config = FeatureConfig(**payload["feature_config"])
+    return stock, load_stock_features(stock, data_config, feature_config)
+
+
+def _process_executor_kwargs() -> dict[str, Any]:
+    if "fork" not in multiprocessing.get_all_start_methods():
+        return {}
+    return {"mp_context": multiprocessing.get_context("fork")}
+
+
+def _parallel_stock_features(
+    payloads: list[dict[str, Any]],
+    workers: int,
+    executor_cls,
+    executor_kwargs: dict[str, Any] | None = None,
+) -> dict[str, pd.DataFrame]:
+    frames_by_stock: dict[str, pd.DataFrame] = {}
+    with executor_cls(max_workers=workers, **(executor_kwargs or {})) as executor:
+        futures = {executor.submit(_compute_stock_features, payload): payload["stock"] for payload in payloads}
+        for future in as_completed(futures):
+            stock = futures[future]
+            try:
+                result_stock, frame = future.result()
+            except Exception as exc:
+                raise RuntimeError(f"Failed to compute features for {stock}: {exc}") from exc
+            frames_by_stock[result_stock] = frame
+    return frames_by_stock
+
+
+def load_live_features(data_config: DataConfig, feature_config: FeatureConfig) -> pd.DataFrame:
+    global _LAST_FEATURE_BACKEND
+    stocks = tuple(normalize_stock_id(stock) for stock in data_config.stocks)
+    if not stocks:
+        _LAST_FEATURE_BACKEND = "none"
+        return pd.DataFrame()
+
+    workers = _resolved_feature_workers(data_config, len(stocks))
+    if workers == 1 or len(stocks) == 1:
+        _LAST_FEATURE_BACKEND = "serial"
+        frames = [load_stock_features(stock, data_config, feature_config) for stock in stocks]
+    else:
+        payloads = [
+            {
+                "stock": stock,
+                "data_config": asdict(replace(data_config, stocks=(stock,))),
+                "feature_config": asdict(feature_config),
+            }
+            for stock in stocks
+        ]
+        try:
+            frames_by_stock = _parallel_stock_features(
+                payloads,
+                workers,
+                ProcessPoolExecutor,
+                _process_executor_kwargs(),
+            )
+            _LAST_FEATURE_BACKEND = "processes"
+        except Exception:
+            frames_by_stock = _parallel_stock_features(payloads, workers, ThreadPoolExecutor)
+            _LAST_FEATURE_BACKEND = "threads_fallback"
+        frames = [frames_by_stock[stock] for stock in stocks]
+
+    frames = [frame for frame in frames if not frame.empty]
+    return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
 
 
 def _normalize_config(config: RunConfig) -> RunConfig:
@@ -32,16 +115,15 @@ def _load_feature_inputs(config: RunConfig) -> tuple[pd.DataFrame, dict[str, pd.
         } if needs_processed else {}
         return cached, processed_by_stock, "cache", cache_status
 
-    frames = []
-    processed_by_stock = {}
-    for stock in config.data.stocks:
-        frame = load_stock_features(stock, config.data, config.features)
-        frames.append(frame)
-        if needs_processed:
-            processed_by_stock[stock] = load_processed_stock(stock, config.data)
-    if not frames:
-        return pd.DataFrame(), processed_by_stock, "live", cache_status
-    return pd.concat(frames, ignore_index=True), processed_by_stock, "live", cache_status
+    features = load_live_features(config.data, config.features)
+    written_cache = write_feature_cache(config.data, config.features, features)
+    if written_cache is not None:
+        cache_status = f"{cache_status}; wrote cache: {written_cache}"
+    processed_by_stock = {
+        stock: load_processed_stock(stock, config.data)
+        for stock in config.data.stocks
+    } if needs_processed else {}
+    return features, processed_by_stock, "live", cache_status
 
 
 def _run_garch_for_spec(
@@ -51,12 +133,14 @@ def _run_garch_for_spec(
     fold: int,
     test_ids: set[int],
 ) -> pd.DataFrame:
+    global _LAST_GARCH_BACKEND
     processed_frames = list(processed_by_stock.values())
     if not processed_frames:
         return pd.DataFrame()
 
     n_jobs = int(spec.parameters.get("n_jobs", 1) or 1)
     if n_jobs == 1 or len(processed_frames) == 1:
+        _LAST_GARCH_BACKEND = "serial"
         parts = [
             run_garch_on_processed(processed, spec, horizon, fold, test_ids)
             for processed in processed_frames
@@ -64,10 +148,18 @@ def _run_garch_for_spec(
     else:
         from joblib import Parallel, delayed
 
-        parts = Parallel(n_jobs=n_jobs, backend="loky")(
-            delayed(run_garch_on_processed)(processed, spec, horizon, fold, test_ids)
-            for processed in processed_frames
-        )
+        try:
+            parts = Parallel(n_jobs=n_jobs, backend="loky")(
+                delayed(run_garch_on_processed)(processed, spec, horizon, fold, test_ids)
+                for processed in processed_frames
+            )
+            _LAST_GARCH_BACKEND = "processes"
+        except Exception:
+            parts = Parallel(n_jobs=n_jobs, backend="threading")(
+                delayed(run_garch_on_processed)(processed, spec, horizon, fold, test_ids)
+                for processed in processed_frames
+            )
+            _LAST_GARCH_BACKEND = "threads_fallback"
     return pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
 
 
@@ -180,6 +272,9 @@ def run_pipeline(config: RunConfig | None = None) -> dict[str, Any]:
         "n_folds": int(config.split.n_folds),
         "feature_source": feature_source,
         "feature_cache_status": feature_cache_status,
+        "feature_workers": _resolved_feature_workers(config.data, len(config.data.stocks)),
+        "feature_parallel_backend": _LAST_FEATURE_BACKEND,
+        "garch_parallel_backend": _LAST_GARCH_BACKEND,
     }
     directory = write_run_artifacts(
         run_id,
@@ -198,7 +293,7 @@ def run_pipeline(config: RunConfig | None = None) -> dict[str, Any]:
 def run_smoke_pipeline(stocks: tuple[str, ...] = ("stock_0",), max_time_ids: int = 40) -> dict[str, Any]:
     return run_pipeline(
         RunConfig(
-            data=DataConfig(stocks=stocks, max_time_ids_per_stock=max_time_ids),
+            data=DataConfig(stocks=stocks, max_time_ids_per_stock=max_time_ids, feature_workers=1),
             features=FeatureConfig(forecast_horizon=60, n_pca_components=8),
             models=(
                 ModelSpec(name="HAR-RV", model_type="HAR-RV"),

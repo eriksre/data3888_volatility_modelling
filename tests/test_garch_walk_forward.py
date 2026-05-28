@@ -4,6 +4,7 @@ import json
 import sys
 import types
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
@@ -30,6 +31,7 @@ class _FakeFit:
 
 class _FakeArchModel:
     train_lengths: list[int] = []
+    fit_calls: int = 0
     variance_override: float | None = None
     params_override: pd.Series | None = None
 
@@ -38,6 +40,7 @@ class _FakeArchModel:
         self.train_lengths.append(len(self._returns))
 
     def fit(self, **kwargs):
+        _FakeArchModel.fit_calls += 1
         variance = self.variance_override if self.variance_override is not None else float(len(self._returns))
         params = self.params_override
         if params is None:
@@ -52,6 +55,7 @@ class GarchWalkForwardTest(unittest.TestCase):
         fake_arch.arch_model = _FakeArchModel
         sys.modules["arch"] = fake_arch
         _FakeArchModel.train_lengths = []
+        _FakeArchModel.fit_calls = 0
         _FakeArchModel.variance_override = None
         _FakeArchModel.params_override = None
 
@@ -80,6 +84,28 @@ class GarchWalkForwardTest(unittest.TestCase):
         self.assertEqual(len(json.loads(result.loc[0, "forecast_vol_path"])), 30)
         self.assertEqual(result.loc[0, "stock_id"], "stock_7")
         self.assertEqual(result.loc[0, "time_id"], 101)
+
+    def test_garch_timing_measures_forecast_after_fit_only(self):
+        processed = pd.DataFrame(
+            {
+                "stock_id": ["stock_7"] * 600,
+                "time_id": [101] * 600,
+                "seconds_in_bucket": np.arange(600),
+                "log_price_diff": np.r_[np.nan, np.full(599, 0.0001)],
+            }
+        )
+        spec = ModelSpec(name="GARCH(1,1)", model_type="GARCH(1,1)")
+        fit_calls_at_timer = []
+
+        def fake_perf_counter():
+            fit_calls_at_timer.append(_FakeArchModel.fit_calls)
+            return 10.0 + 0.001 * len(fit_calls_at_timer)
+
+        with patch("back_end.models.time.perf_counter", side_effect=fake_perf_counter):
+            result = run_garch_on_processed(processed, spec, horizon=30, fold=1, test_ids={101})
+
+        self.assertEqual(fit_calls_at_timer, [1, 1])
+        self.assertAlmostEqual(result.loc[0, "inference_ms"], 1.0)
 
     def test_garch_marks_explosive_forecasts_as_missing(self):
         _FakeArchModel.variance_override = 1e8

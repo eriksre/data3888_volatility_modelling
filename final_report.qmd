@@ -1,0 +1,478 @@
+---
+title: "DATA3888 Group 6 - Volatility Modelling"
+format:
+  html:
+    toc: false
+    number-sections: false
+    code-fold: true
+    code-tools: true
+    include-in-header:
+      text: |
+        <style>
+        .quarto-figure,
+        .quarto-float,
+        .cell-output-display {
+          max-width: 100%;
+          overflow-x: hidden;
+        }
+
+        .quarto-figure img,
+        img.figure-img {
+          max-width: 100%;
+          height: auto;
+        }
+        </style>
+jupyter: python3
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{python}
+#| label: setup
+#| results: hide
+
+from pathlib import Path
+import json
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from IPython.display import display
+
+from back_end.config import FeatureConfig
+from back_end.universe import build_model_comparison
+from back_end.universe import build_pca_variance_explained
+
+# Change only this path if the raw data directory is somewhere else.
+INDIVIDUAL_BOOK_TRAIN_DIR = Path("individual_book_train")
+
+
+def project_root_from_data_dir(data_dir: Path) -> Path:
+    return data_dir.expanduser().resolve().parent
+
+
+PROJECT_ROOT = project_root_from_data_dir(INDIVIDUAL_BOOK_TRAIN_DIR)
+
+
+def artifact_path(*parts: str) -> Path:
+    return PROJECT_ROOT.joinpath("artifacts", *parts)
+
+
+RUNS_DIR = artifact_path("runs")
+FEATURE_CACHE_PATH = artifact_path("feature_cache", "features_all_stocks.parquet")
+FEATURE_CACHE_MANIFEST_PATH = artifact_path("feature_cache", "manifest.json")
+
+
+def latest_run_dir() -> Path | None:
+    if not RUNS_DIR.exists():
+        return None
+    run_dirs = sorted([path for path in RUNS_DIR.iterdir() if path.is_dir()], reverse=True)
+    return run_dirs[0] if run_dirs else None
+
+
+RUN_DIR = latest_run_dir()
+
+
+def load_artifact(name: str) -> pd.DataFrame:
+    if RUN_DIR is None:
+        return pd.DataFrame()
+    path = RUN_DIR / name
+    if not path.exists():
+        return pd.DataFrame()
+    return pd.read_parquet(path)
+
+
+def load_feature_targets() -> pd.DataFrame:
+    if not FEATURE_CACHE_PATH.exists():
+        return pd.DataFrame()
+    return pd.read_parquet(
+        FEATURE_CACHE_PATH,
+        columns=["stock_id", "time_id", "target_var", "target_vol"],
+    )
+
+
+def load_feature_cache() -> pd.DataFrame:
+    if not FEATURE_CACHE_PATH.exists():
+        return pd.DataFrame()
+    return pd.read_parquet(FEATURE_CACHE_PATH)
+
+
+def load_json(path: Path) -> dict:
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text())
+
+
+metrics = load_artifact("metrics.parquet")
+predictions = load_artifact("predictions.parquet")
+feature_importance = load_artifact("feature_importance.parquet")
+universe_summary = load_artifact("universe_summary.parquet")
+stock_similarity = load_artifact("stock_similarity.parquet")
+feature_targets = load_feature_targets()
+feature_cache_manifest = load_json(FEATURE_CACHE_MANIFEST_PATH)
+
+
+def model_summary_frame(metrics_df: pd.DataFrame, predictions_df: pd.DataFrame) -> pd.DataFrame:
+    if metrics_df.empty or predictions_df.empty:
+        return pd.DataFrame()
+
+    metric_cols = ["mse", "rmse", "mae", "mape", "rmspe", "qlike", "pearson_r"]
+    available_metrics = [col for col in metric_cols if col in metrics_df.columns]
+    overall = metrics_df.copy()
+    if "fold" in overall.columns:
+        overall = overall[overall["fold"] == 0].copy()
+
+    summary = overall[["model", *available_metrics]].copy()
+    latency = (
+        predictions_df.groupby("model", as_index=False)
+        .agg(
+            mean_inference_us=("inference_ms", lambda values: values.mean() * 1000),
+            n_predictions=("model", "size"),
+        )
+    )
+    return summary.merge(latency, on="model", how="left")
+
+
+def cached_model_comparison_table(metrics_df: pd.DataFrame, predictions_df: pd.DataFrame) -> pd.DataFrame:
+    columns = [
+        "Model",
+        "Mean inference (μs)",
+        "RMSE model wins",
+        "↓ QLIKE model wins",
+        "RMSE",
+        "QLIKE",
+        "MAE",
+        "MSE",
+    ]
+    if metrics_df.empty and predictions_df.empty:
+        return pd.DataFrame(columns=columns)
+
+    comparison = build_model_comparison(predictions_df, metrics_df)
+    if comparison.empty:
+        return pd.DataFrame(columns=columns)
+
+    table = comparison[
+        [
+            "model",
+            "mean_inference_ms",
+            "best_stocks_rmse",
+            "best_stocks_qlike",
+            "rmse",
+            "qlike",
+            "mae",
+            "mse",
+        ]
+    ].copy()
+    table["mean_inference_ms"] = table["mean_inference_ms"] * 1000
+    table = table.rename(
+        columns={
+            "model": "Model",
+            "mean_inference_ms": "Mean inference (μs)",
+            "best_stocks_rmse": "RMSE model wins",
+            "best_stocks_qlike": "↓ QLIKE model wins",
+            "rmse": "RMSE",
+            "qlike": "QLIKE",
+            "mae": "MAE",
+            "mse": "MSE",
+        }
+    )
+    return table.sort_values(
+        ["↓ QLIKE model wins", "RMSE", "Model"],
+        ascending=[False, True, True],
+        na_position="last",
+    ).reset_index(drop=True)
+
+
+def format_report_table(frame: pd.DataFrame) -> pd.DataFrame:
+    formatted = frame.copy()
+    integer_cols = ["RMSE model wins", "↓ QLIKE model wins"]
+    numeric_cols = [col for col in formatted.columns if col not in ["Model", *integer_cols]]
+    for col in integer_cols:
+        if col in formatted.columns:
+            formatted[col] = formatted[col].map(lambda value: "" if pd.isna(value) else f"{int(value)}")
+    for col in numeric_cols:
+        formatted[col] = formatted[col].map(lambda value: "" if pd.isna(value) else f"{float(value):.3f}")
+    return formatted
+
+
+def pareto_optimal_mask(frame: pd.DataFrame, x_col: str, y_col: str) -> pd.Series:
+    mask = []
+    for _, row in frame.iterrows():
+        dominated = (
+            (frame[x_col] <= row[x_col])
+            & (frame[y_col] <= row[y_col])
+            & ((frame[x_col] < row[x_col]) | (frame[y_col] < row[y_col]))
+        ).any()
+        mask.append(not dominated)
+    return pd.Series(mask, index=frame.index)
+
+```
+
+# Executive summary (\~1/2 page)
+
+Our project aims to help traders answer the question: "What is the best volatility prediction model for my goal, given latency constraints and given my desired model accuracy?”. To answer this question, we built a front end tool from the ground up, designed to help market participants who need to predict volatility across one or multiple stocks, and need to be able to choose and optimise the best volatility model for the subset of stocks they’re planning to trade. Importantly, we chose to solely focus on the dataset of 112 anonymous stocks due to the higher abundance of data compared to the named stocks. Importantly, the differing lengths of data within a single time id for each dataset prompted us to have to choose a single dataset to work with, to make our analysis uniform and consistent among the two datasets. We note that by default, our tool predicts the mean volatility for the final 30s of data in each time id window, for each stock. Our results show clear separation among different loss functions, and among different stocks. We define a model as winning on a particular stock if that model produces the lowest overall loss for the most time id’s. When choosing the RMSE loss function and evaluating across all stocks in the dataset, we found XGBoost to perform the best by stock wins, with 31 wins and aggregate RMSE of 9.590. Random Forest and LASSO placed second and third by RMSE stock wins, with 17 and 15 wins respectively. When choosing the QLIKE loss function, we found XGBoost to perform the best by stock wins, winning on 55 out of 112 stocks with aggregate QLIKE of 0.496. LASSO and GJR-Garch(1,1) had the second and third most QLIKE wins, with 30 and 22 wins respectively. Importantly however, we note that both Garch models have markedly higher inference latency, with GJR-Garch(1,1) having mean inference latency of 535.147 microseconds compared to XGBoost’s 0.719 microseconds. The difference in inference latency between GJR-Garch(1,1) and XGBoost carries significant execution implications in modern electronic markets. Evidence from Aquilina et al. (2021) establishes that the competitive latency arbitrage races on exchanges possess a modal duration of just 5 to 10 microseconds. While GJR-Garch(1,1) remains useful where latency is less binding, such as portfolio optimisation or risk analysis, the cached results suggest XGBoost offers the strongest balance of stock level accuracy and speed in this experiment. We find these core findings to be highly relevant for market makers and quantitative researchers who must regularly make the choice between minimising latency and having the models that fit the data best. As shown above, we see clear tradeoffs between model inference latency and model loss. Our tool exposes this to traders, and lets them make informed decisions that most fit their specific strategy and the universe of assets they wish to trade.
+
+
+
+```{python}
+
+```
+
+# Background
+
+Our research question is: what is the most accurate volatility prediction model for a given universe of stocks, given latency constraints?
+
+Traders use volatility forecasting models for many reasons, including but not limited to modelling inventory risk, portfolio optimisation and value at risk VaR analysis. Depending on the application, traders, market makers and portfolio managers require tools which have different accuracy vs latency tradeoffs. For instance, a portfolio manager calculating their 1 day VaR may want the most accurate model (particularly in the tails of a given returns distribution), while a researcher creating an options pricing algorithm for a highly liquid stock may prioritise speed at the cost of some accuracy. Hence, it is highly important for market participants to choose the model that is the best fit for their given problem.
+
+Tools like Tradingview let traders view the price over time, and introduce scripting tools which help traders visualise different functions of price, eg. rolling volatility over time (TradingView, n.d.). However, they do not introduce any way for traders to predict future volatility. In order to do this, traders currently must spend significant time to program a volatility prediction model of their choosing, create visuals for that model etc. Many traders simply want to know the accuracy of a given volatility prediction model, compared to the inference time that that model takes. Our tool innovates on the current tooling landscape by providing a no code interface, which lets traders and market participants view model latency vs model accuracy tradeoffs in a simple, intuitive manner.
+
+We were given two datasets to work with: a dataset of 112 anonymous, no name stocks, and a dataset of 10 named stocks. Each dataset contained the top two levels of orderbook data, where prices series were split up into differing time ids. As the length of the price series within each time id were not constant between the two datasets, we ultimately chose to model the dataset of 112 anonymous stocks, due to it’s higher abundance of data, and to ensure that modelling and data constraints were consistent between stocks. This gave us a wider cross section of assets while keeping the modelling target and preprocessing assumptions consistent across the full experiment. Notably, each time id contains 600 seconds of data and the temporal ordering of each time id has not been preserved.
+
+We introduce two different classes of models: time series models, and parametric models. The parametric models we analysed include XGBoost, multivariate linear regression, lasso, ridge regression, random forest and decision trees. The time series models we analysed include regular GARCH(1,1) and GJR-Garch(1,1).
+
+# Methods
+
+@fig-workflow summarises how data moves through preprocessing, model configuration, prediction, evaluation, and to the dashboard.
+
+```{mermaid}
+%%| label: fig-workflow
+%%| fig-cap: "End to end volatility modelling workflow. Order-book data is transformed into modelling features, passed through user selected model specifications, evaluated against the final 30 second realised volatility target, and displayed in the dashboard."
+flowchart TD
+    A["Raw order-book data"] --> B["Preprocess prices and returns"]
+    B --> C["Load or compute feature cache"]
+    C --> D["Select models and feature mode"]
+
+    D --> E{"Model class"}
+    E -- "Parametric / ML" --> F["Cross validated training"]
+    E -- "GARCH family" --> G["Windo level volatility forecasts"]
+
+    F --> H["Predict final 30 second volatility"]
+    G --> H
+    H --> I["Evaluate accuracy and inference latency"]
+    I --> J["Save run artifacts"]
+    J --> K["Dashboard views"]
+```
+
+```{python}
+
+```
+
+We used two separate approaches for each model class. For parametric models, we randomly assign each stock to one of five folds of data, calculate features based on the first 9 minutes and 30 seconds of data, and train each model using the 4 training folds. We then use those trained models to predict the mean variance of the final 30 seconds of data for each time id, for each stock in the single remaining out of sample fold. We then repeat this process for every stock in the dataset, such that each individual stock has one volatility prediction per model per time id, where the model was not trained on any data from that particular stock. This process effectively means we are training a single model across multiple different time ids. For our time series models, as we do not know the temporal ordering of the time ids, we trained a new model on the first 9.5 minutes of data for each time id for each stock. In inference, we then unconditionally walk each Garch model forward, predicting the point variance for each second of the final 30 seconds of data, then use those point estimates to calculate the mean variance for the final 30 seconds of each time id.
+
+
+traders can select either a subset of features to use, or the top n principal components of those features. 
+
+```{python}
+#| label: fig-pca-cumulative-variance
+#| fig-cap: "Cumulative variance explained by the first 20 principal components calculated from the cached modelling features."
+
+pca_variance = build_pca_variance_explained(load_feature_cache(), FeatureConfig(), 20)
+
+if pca_variance.empty:
+    print("No cached feature data was available for the PCA cumulative variance figure.")
+else:
+    plot_df = pca_variance.copy()
+    plot_df["cumulative_variance_ratio"] = plot_df["explained_variance_ratio"].cumsum()
+
+    fig, ax = plt.subplots(figsize=(12, 4.8))
+    ax.plot(
+        plot_df["component"],
+        plot_df["cumulative_variance_ratio"],
+        color="#f59f00",
+        linewidth=2.5,
+        marker="o",
+        markersize=5,
+    )
+    ax.set_title("Cumulative Variance Explained", fontweight="bold", loc="left")
+    ax.set_xlabel("Principal component")
+    ax.set_ylabel("Cumulative variance")
+    ax.set_ylim(0, 1)
+    ax.yaxis.set_major_formatter(lambda value, _: f"{value:.0%}")
+    ax.grid(axis="y", alpha=0.25)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    plt.xticks(rotation=45, ha="right")
+    plt.tight_layout()
+    plt.show()
+
+```
+
+When a time series in a particular time id was missing data, we forward filled past values such that we have a continuous series of values without any future leakage. If the time id was missing too much data, having \< 20 price updates across the first 570 seconds, or having \< 5 price updates in the final 30 seconds of data, we dropped that particular time id from our calculations, as to not attempt to get models to predict volatility with an inadequate amount of information.
+
+Moreover, we faced some challenges with exploding volatility predictions from unstable Garch fits. To mitigate this, we treated Garch forecasts as missing when the fitted parameters failed the stationarity checks, when boundary parameters were at or above 0.99, or when the forecast variance path was non-finite, negative, or unreasonably large. In a similar fashion, the linear regression models would occasionally predict negative volatility, which was causing significant distortions when measuring QLIKE loss. To prevent negative volatility predictions, we clipped all predictions of negative volatility to the first percentile of training volatility for that fold. Note, this only influenced 3 out of 428,960 time ids across the data, and made the results between models directly comparable. Prior to this change, the volatility predictions for these 3 time ids accounted for approximately \~86% of total QLIKE loss, creating meaningful distortion separate from genuine model accuracy. Our changes helped prevent this distortion.
+
+Hence, the workflow of our product is: If a results cache exists, traders can view the results from that cache without having to recompute results. Otherwise, if they wish to re-calculate their results or specify different models or model parameters, they can move onto the next step Features are pulled from the feature, or computed as soon as the front end is opened if no cache exists Principal components are calculated from those features Traders specify model(s) they want to use Traders then press run, where the platform will predict the the mean volatility for the final 30s of data for each time id for each stock Traders can then observe their data in the individual stock, and stock universe pages
+
+Notably, we chose to include MSE, RMSE, MAE, and QLIKE loss functions in our model evaluation. QLIKE loss is both the industry standard loss metric for volatility prediction, and the main metric we used in our results, as it asymmetrically punishes under predicting volatility. This is especially important in financial applications, because underestimating market risk can lead to more serious consequences than overestimating it.
+
+```{python}
+
+```
+
+# Results
+
+‘Best’ model is subjective. Depends highly on the given loss function you want to optimise and your goal
+
+The cached model comparison table summarises each model's average inference latency, stock level wins under RMSE and QLIKE, and aggregate error metrics.
+
+```{python}
+#| label: tbl-model-comparison
+#| tbl-cap: "Cached model comparison across all stocks. Lower error metrics are better; model wins count the number of stocks where the model had the lowest loss for that metric."
+
+model_comparison = cached_model_comparison_table(metrics, predictions)
+if model_comparison.empty:
+    print("No cached model comparison results were available.")
+else:
+    display(format_report_table(model_comparison))
+
+```
+
+Never the less, we can see the parity frontier on the graph here (insert Vania’s pareto graph here)
+
+```{python}
+#| label: fig-pareto-frontier
+#| fig-cap: "Pareto frontier of model QLIKE against cached mean inference latency. Lower values are better on both axes."
+
+model_summary = model_summary_frame(metrics, predictions)
+pareto_frame = model_summary.dropna(subset=["model", "mean_inference_us", "qlike"]).copy()
+pareto_frame = pareto_frame[pareto_frame["mean_inference_us"] > 0].copy()
+
+if pareto_frame.empty:
+    print("No cached model metrics were available for the Pareto frontier.")
+else:
+    optimal = pareto_optimal_mask(pareto_frame, "mean_inference_us", "qlike")
+    q1, q3 = pareto_frame["qlike"].quantile([0.25, 0.75])
+    iqr = q3 - q1
+    qlike_cap = max(q3 + 1.5 * iqr, pareto_frame["qlike"].median())
+    qlike_cap = min(qlike_cap, pareto_frame["qlike"].max())
+    pareto_frame["qlike_plot"] = pareto_frame["qlike"].clip(upper=qlike_cap)
+    pareto_frame["qlike_clipped"] = pareto_frame["qlike"] > qlike_cap
+    pareto_models = pareto_frame[optimal].sort_values("mean_inference_us")
+    dominated_models = pareto_frame[~optimal].sort_values("mean_inference_us")
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    if not dominated_models.empty:
+        ax.scatter(
+            dominated_models["mean_inference_us"],
+            dominated_models["qlike_plot"],
+            color="gray",
+            s=50,
+            alpha=0.7,
+            label="Dominated models",
+            zorder=3,
+        )
+
+    ax.plot(
+        pareto_models["mean_inference_us"],
+        pareto_models["qlike_plot"],
+        color="red",
+        linewidth=1.5,
+        label="Pareto frontier",
+        zorder=2,
+    )
+    ax.scatter(
+        pareto_models["mean_inference_us"],
+        pareto_models["qlike_plot"],
+        color="red",
+        s=60,
+        zorder=4,
+        label="Pareto optimal models",
+    )
+
+    label_offsets = {
+        "LASSO": (-5, 9),
+        "Ridge Regression": (5, 9),
+        "Decision Tree": (5, -3),
+        "Linear Regression": (7, 6),
+        "Random Forest": (7, -11),
+        "GARCH(1,1)": (6, -10),
+        "GJR-GARCH(1,1)": (6, -10),
+    }
+    label_alignments = {"LASSO": "right"}
+
+    for _, row in pareto_frame.sort_values("mean_inference_us").iterrows():
+        is_optimal = row["model"] in set(pareto_models["model"])
+        label = row["model"]
+        if row["qlike_clipped"]:
+            label = f"{label} ({row['qlike']:.2f})"
+        xytext = label_offsets.get(row["model"], (5, 5 if is_optimal else -10))
+        ax.annotate(
+            label,
+            xy=(row["mean_inference_us"], row["qlike_plot"]),
+            xytext=xytext,
+            textcoords="offset points",
+            fontsize=8,
+            color="red" if is_optimal else "gray",
+            ha=label_alignments.get(row["model"], "left"),
+        )
+
+    for x, color, label in [
+        (1, "green", "1 microsecond"),
+        (10, "gold", "10 microseconds"),
+        (1000, "purple", "1000 microseconds"),
+    ]:
+        ax.axvline(x=x, color=color, linestyle="--", linewidth=1.2, label=label)
+
+    ax.set_xscale("log")
+    ax.set_xlabel("Inference time (microseconds)")
+    ax.set_ylabel("QLIKE (lower is better)")
+    ax.set_title("Pareto Frontier: Volatility Model Selection")
+    ax.legend(loc="upper right", fontsize=8)
+    ax.grid(True, which="both", linestyle=":", alpha=0.4)
+    ax.set_xlim(
+        max(pareto_frame["mean_inference_us"].min() * 0.6, 0.01),
+        pareto_frame["mean_inference_us"].max() * 2,
+    )
+    ax.set_ylim(
+        max(pareto_frame["qlike_plot"].min() - 0.08, 0),
+        pareto_frame["qlike_plot"].max() + 0.15,
+    )
+    plt.tight_layout()
+    plt.show()
+
+```
+
+We see the model which minimises QLIKE loss is the 
+
+Describe what each graph / chart shows.
+
+We see the GJR
+
+```{python}
+
+```
+
+# Discussion
+
+Paragraph 1: Main interpretation of the results. Keep this short. The point is not to repeat the full Results section or Executive Summary, but to interpret the overall finding: there is no single best volatility model across all objectives. Include that model choice depends on the user's metric and latency constraint. Explicitly link this back to the research question by saying the tool supports conditional model choice, rather than producing one universal ranking.
+
+Paragraph 2: Why the loss function changes the conclusion. This is necessary because the Results section shows different winners under RMSE and QLIKE, but does not yet fully explain why that matters. Include a brief explanation that RMSE rewards average closeness, while QLIKE is more relevant for volatility and risk forecasting because under-predicting volatility can be especially costly. Avoid turning this into a formula explanation, because metric definitions belong in Methods. Avoid claiming QLIKE is always superior; instead, say it is better aligned with risk-focused volatility forecasting.
+
+Paragraph 3: Accuracy versus latency tradeoff. This should be one of the strongest discussion paragraphs. Interpret the Pareto frontier and explain that statistical accuracy alone is not enough for model selection. Include that GJR-GARCH may be suitable for slower settings such as portfolio optimisation, VaR, or risk monitoring, while XGBoost may be more useful where inference latency is binding. Avoid overclaiming that GJR-GARCH is unusable in all trading contexts, and avoid repeating the full Aquilina et al. latency argument from the Executive Summary.
+
+Paragraph 4: What the tool currently contributes. Include this, but keep it concise so it does not become a README-style feature list or repeat the Background section. The main claim should be that the tool operationalises the research question by making model comparison interactive across metrics, stocks, and latency. Mention only the most relevant functions: configuring models, choosing PCA or manual features, comparing universe-level and individual-stock results, and viewing latency/error tradeoffs. Avoid describing every UI element.
+
+Paragraph 5: Limitations of the current work. This is necessary for credibility and should be specific rather than apologetic. Include only limitations that affect interpretation or external validity: static historical data rather than live order-book data, anonymous stocks so sector/liquidity context cannot be interpreted, time ids are not temporally ordered, the forecast target is limited to the final 30 seconds of each window, and latency is measured in our local/backend environment rather than production trading infrastructure. Avoid vague statements like "there are some limitations".
+
+Paragraph 6: Future work. This should follow directly from the limitations, not become a wishlist. Include custom model imports, live or streaming data, user-selected loss optimisation such as directly optimising QLIKE, richer model classes only if they address the modelling objective, richer named-stock data if available, and more realistic latency benchmarking. Avoid speculative features that do not connect back to the report's findings.
+
+# Conclusion
+
+Paragraph 1: Restate the project aim and answer the research question directly. Say that the project investigated which volatility prediction models are most appropriate for traders under different accuracy and latency requirements. The key conclusion should be that the best model is conditional on the trader's objective, rather than universal. Avoid introducing new evidence or repeating every model result.
+
+Paragraph 2: Summarise the main empirical finding in one tight paragraph. Include the key contrast: XGBoost performed strongly under RMSE and offered very low inference latency, while GJR-GARCH performed strongly under QLIKE but was much slower. The point is to reinforce the accuracy-latency tradeoff, not to reproduce the full Results table. Avoid adding caveats that belong in the Discussion.
+
+Paragraph 3: Close with the contribution of the tool. Explain that the tool is useful because it makes model selection transparent across stocks, metrics, and latency constraints. It should end on the practical implication: traders and researchers can use the tool to choose models that better match their use case. Avoid overstating it as a production-ready trading system; frame it as a decision-support and model-comparison tool.
+
+# Student contributions
+
+Eriks wrote most of the front end, back end, and first draft of the report….. Continue this.
+
+# References (use apa 7)
+
+Aquilina, M.,Budish, E., & O’Neill, P. (2021). Quantifying the high frequency trading “arms race” (BIS Working Paper No. 955). Bank for International Settlements. https://www.bis.org/publ/work955.pdf
+
+TradingView. (n.d.). Visuals overview. Pine Script documentation. https://www.tradingview.com/pine-script-docs/visuals/overview/

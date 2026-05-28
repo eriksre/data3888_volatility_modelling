@@ -92,7 +92,7 @@ def add_interaction_features(data):
 def load_cluster_data(stock_ids):
     all_feats, all_tgts = [], []
     for sid in stock_ids:
-        df = pd.read_parquet(os.path.join(DATA_DIR, f"stock_{sid}.parquet"))
+        df = pd.read_csv(os.path.join(DATA_DIR, f"stock_{sid}.csv"))
         all_feats.append(extract_features(df[df["seconds_in_bucket"] <  300]))
         all_tgts.append(compute_target(df[df["seconds_in_bucket"]    >= 300]))
         del df
@@ -114,7 +114,7 @@ def load_cluster_data(stock_ids):
 
 
 def load_single_stock(stock_id):
-    df    = pd.read_parquet(os.path.join(DATA_DIR, f"stock_{stock_id}.parquet"))
+    df    = pd.read_csv(os.path.join(DATA_DIR, f"stock_{stock_id}.csv"))
     feats = extract_features(df[df["seconds_in_bucket"] <  300])
     tgt   = compute_target(df[df["seconds_in_bucket"]   >= 300])
     data  = feats.merge(tgt, on=["stock_id", "time_id"])

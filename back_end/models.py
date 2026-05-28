@@ -25,7 +25,9 @@ ARCH_FAMILY_SPECS: dict[str, dict[str, Any]] = {
 }
 MAX_REASONABLE_GARCH_VAR = 1_000_000.0
 GARCH_STABILITY_LIMIT = 0.99
-MIN_PRED_VOL = 1e-3
+MIN_PRED_VOL = 0.001
+DATA_DRIVEN_VOL_FLOOR_MODELS = {"Linear Regression", "Ridge Regression", "LASSO"}
+PRED_VOL_FLOOR_QUANTILE = 0.01
 
 
 def is_arch_family_model(model_type: str) -> bool:
@@ -164,9 +166,13 @@ def run_ml_model(
     estimator = make_estimator(model_type, dict(spec.parameters), pca_components=pca_components)
     y_train_vol = np.sqrt(np.maximum(train["target_var"].to_numpy(dtype=float), 0.0))
     estimator.fit(train[feature_cols], y_train_vol)
+    if spec.model_type in DATA_DRIVEN_VOL_FLOOR_MODELS:
+        min_pred_vol = max(float(np.quantile(y_train_vol, PRED_VOL_FLOOR_QUANTILE)), MIN_PRED_VOL)
+    else:
+        min_pred_vol = MIN_PRED_VOL
 
     start = time.perf_counter()
-    pred_vol = np.maximum(estimator.predict(test[feature_cols]), MIN_PRED_VOL)
+    pred_vol = np.maximum(estimator.predict(test[feature_cols]), min_pred_vol)
     inference_ms = (time.perf_counter() - start) * 1000 / max(len(test), 1)
     pred_var = pred_vol**2
     output_feature_cols = [f"PC{i}" for i in range(1, pca_components + 1)] if pca_components is not None else feature_cols
@@ -247,11 +253,11 @@ def run_garch_on_processed(processed: pd.DataFrame, spec: ModelSpec, horizon: in
         forecast_seconds = seconds[cutoff:].tolist()
         inference_ms = np.nan
         try:
-            start = time.perf_counter()
             model = arch_model(train_ret, mean="Zero", rescale=False, **model_kwargs)
             fit = model.fit(**fit_kwargs)
             if not _is_stable_garch_fit(fit.params):
                 raise ValueError("unstable GARCH fit")
+            start = time.perf_counter()
             forecast = fit.forecast(horizon=horizon, reindex=False, **forecast_kwargs)
             inference_ms = (time.perf_counter() - start) * 1000
             pred_path_var_arr = np.asarray(forecast.variance.values[-1], dtype=float)

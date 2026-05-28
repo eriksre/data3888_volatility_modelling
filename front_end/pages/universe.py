@@ -223,12 +223,12 @@ def _pca_scatter(
 
 
 def _model_comparison_view(model_df: pd.DataFrame, winner_metric: str) -> pd.DataFrame:
-    best_col = f"best_stocks_{winner_metric}"
     metric_cols = [winner_metric, *[metric for metric in ["rmse", "qlike", "mae", "mse", "mape", "rmspe"] if metric != winner_metric]]
     display_cols = [
         "model",
         "mean_inference_ms",
-        best_col,
+        "best_stocks_rmse",
+        "best_stocks_qlike",
         *metric_cols,
         "pearson_r",
     ]
@@ -241,7 +241,8 @@ def _model_comparison_view(model_df: pd.DataFrame, winner_metric: str) -> pd.Dat
         columns={
             "model": "Model",
             "mean_inference_ms": "Mean inference (μs)",
-            best_col: "# model wins",
+            "best_stocks_rmse": "RMSE model wins",
+            "best_stocks_qlike": "QLIKE model wins",
             winner_metric: winner_metric.upper(),
             "qlike": "QLIKE",
             "mae": "MAE",
@@ -348,7 +349,8 @@ def render() -> None:
             width="stretch",
             column_config={
                 "Mean inference (μs)": st.column_config.NumberColumn(format="%.3f"),
-                "# model wins": st.column_config.NumberColumn(format="%d"),
+                "RMSE model wins": st.column_config.NumberColumn(format="%d"),
+                "QLIKE model wins": st.column_config.NumberColumn(format="%d"),
                 "MSE": st.column_config.NumberColumn(format="%.3f"),
                 "RMSE": st.column_config.NumberColumn(format="%.3f"),
                 "MAE": st.column_config.NumberColumn(format="%.3f"),

@@ -23,6 +23,25 @@ class ModelConfigTest(unittest.TestCase):
         self.assertNotIn("metrics", payload)
         self.assertNotIn("custom_loss", payload)
 
+    def test_model_spec_from_ui_preserves_model_hyperparameters(self):
+        entry = {
+            "type": "XGBoost",
+            "feature_mode": "PCA",
+            "features": list(range(15)),
+            "parameters": {
+                "n_estimators": 240,
+                "learning_rate": 0.03,
+                "max_depth": 5,
+            },
+        }
+
+        spec = model_spec_from_ui(entry)
+
+        self.assertEqual(spec.parameters["n_estimators"], 240)
+        self.assertEqual(spec.parameters["learning_rate"], 0.03)
+        self.assertEqual(spec.parameters["max_depth"], 5)
+        self.assertEqual(spec.n_pca_components, 15)
+
     def test_egarch_is_no_longer_supported_or_alias_canonicalized(self):
         spec = model_spec_from_ui({"type": "EGARCH"})
 

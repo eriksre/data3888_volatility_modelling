@@ -25,19 +25,19 @@ BOOK_COLUMNS = [
 
 def list_available_stocks(source_dir: str | Path) -> list[str]:
     source = Path(source_dir)
-    return sorted(path.stem for path in source.glob("stock_*.parquet"))
+    return sorted(path.stem for path in source.glob("stock_*.csv"))
 
 
 def stock_path(stock: str | int, source_dir: str | Path) -> Path:
     stock_name = normalize_stock_id(stock)
-    return Path(source_dir) / f"{stock_name}.parquet"
+    return Path(source_dir) / f"{stock_name}.csv"
 
 
 def load_raw_stock(stock: str | int, data_config: DataConfig) -> pd.DataFrame:
     path = stock_path(stock, data_config.source_dir)
     if not path.exists():
-        raise FileNotFoundError(f"Missing stock parquet: {path}")
-    df = pd.read_parquet(path)
+        raise FileNotFoundError(f"Missing stock CSV: {path}")
+    df = pd.read_csv(path)
     missing = set(BOOK_COLUMNS).difference(df.columns)
     if missing:
         raise ValueError(f"{path.name} is missing columns: {sorted(missing)}")

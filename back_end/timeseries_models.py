@@ -44,7 +44,7 @@ def compute_wap(df):
 
 def load_stock(stock_id):
     """Returns one row per time_id with RV and last WAP."""
-    df = pd.read_parquet(os.path.join(DATA_DIR, f"stock_{stock_id}.parquet"))
+    df = pd.read_csv(os.path.join(DATA_DIR, f"stock_{stock_id}.csv"))
     df["wap"] = compute_wap(df)
     df["log_return"] = df.groupby("time_id")["wap"].transform(lambda x: np.log(x).diff())
 

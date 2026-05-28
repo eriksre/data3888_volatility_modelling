@@ -8,6 +8,8 @@ from .data import load_processed_stock
 
 
 OB_COLS = ["bid_price1", "ask_price1", "bid_size1", "ask_size1", "bid_size2", "ask_size2"]
+MIN_OBSERVED_PRICE_MOVEMENTS = 20
+MIN_TARGET_PRICE_MOVEMENTS = 5
 
 
 def ewma_name(lam: float) -> str:
@@ -177,7 +179,13 @@ def build_feature_frame(processed: pd.DataFrame, stock: str, feature_config: Fea
         if n_obs < horizon + max(30, min(feature_config.return_windows)):
             continue
         cutoff = n_obs - horizon
-        target = float(np.mean(returns[cutoff:] ** 2))
+        observed_returns = returns[:cutoff]
+        target_returns = returns[cutoff:]
+        if np.count_nonzero(observed_returns) < MIN_OBSERVED_PRICE_MOVEMENTS:
+            continue
+        if np.count_nonzero(target_returns) < MIN_TARGET_PRICE_MOVEMENTS:
+            continue
+        target = float(np.mean(target_returns**2))
         row = {
             "stock_id": stock,
             "time_id": int(time_id),

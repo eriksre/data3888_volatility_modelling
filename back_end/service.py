@@ -24,9 +24,8 @@ from .config import (
 from .data import load_processed_stock, list_available_stocks
 from .evaluation import compute_metrics
 from .feature_cache import load_cached_features
-from .features import load_stock_features
 from .models import model_availability_issue
-from .pipeline import run_pipeline
+from .pipeline import load_live_features, run_pipeline
 from .universe import LOSS_METRICS, build_model_comparison, build_pca_variance_explained, build_stock_pca
 
 
@@ -59,7 +58,7 @@ def start_run_from_ui(
         raise ValueError("Add at least one model before running the pipeline.")
     selected_stocks = tuple(normalize_stock_id(stock) for stock in (stocks or available_stocks()))
     if not selected_stocks:
-        raise ValueError("No stock parquet files were found to run.")
+        raise ValueError("No stock CSV files were found to run.")
 
     statuses = []
     grouped_entries: dict[int, list[dict[str, Any]]] = {}
@@ -357,9 +356,7 @@ def load_pca_variance_explained(
     if cached is not None:
         features = cached
     else:
-        frames = [load_stock_features(stock, data_config, feature_config) for stock in selected_stocks]
-        frames = [frame for frame in frames if not frame.empty]
-        features = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
+        features = load_live_features(data_config, feature_config)
 
     return build_pca_variance_explained(features, feature_config, n_components)
 
@@ -388,11 +385,7 @@ def _load_run_features(run_id: str | None) -> tuple[pd.DataFrame, FeatureConfig]
     if cached is not None:
         return cached, feature_config
 
-    frames = [load_stock_features(stock, data_config, feature_config) for stock in data_config.stocks]
-    frames = [frame for frame in frames if not frame.empty]
-    if not frames:
-        return pd.DataFrame(), feature_config
-    return pd.concat(frames, ignore_index=True), feature_config
+    return load_live_features(data_config, feature_config), feature_config
 
 
 def _backfill_universe_summary_loss_metrics(summary: pd.DataFrame, predictions: pd.DataFrame) -> pd.DataFrame:

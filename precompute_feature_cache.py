@@ -18,7 +18,7 @@ from back_end.config import (
     ACF_WINDOWS,
     BOOK_WINDOWS,
     EWMA_LAMBDAS,
-    INDIVIDUAL_PARQUET_DIR,
+    INDIVIDUAL_BOOK_DIR,
     PIPELINE_VERSION,
     RETURN_WINDOWS,
     DataConfig,
@@ -72,7 +72,7 @@ def parse_args() -> argparse.Namespace:
             "Outputs parquet shards plus a combined parquet cache for the app."
         )
     )
-    parser.add_argument("--source-dir", type=Path, default=INDIVIDUAL_PARQUET_DIR)
+    parser.add_argument("--source-dir", type=Path, default=INDIVIDUAL_BOOK_DIR)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) - 1))
     parser.add_argument("--forecast-horizon", type=int, default=DEFAULT_FORECAST_HORIZON)
@@ -109,7 +109,7 @@ def resolve_stocks(source_dir: Path, requested: list[str] | None, stock_limit: i
     if stock_limit is not None:
         stocks = stocks[: max(0, stock_limit)]
     if not stocks:
-        raise ValueError(f"No stock parquet files found in {source_dir}")
+        raise ValueError(f"No stock CSV files found in {source_dir}")
     return stocks
 
 
@@ -193,9 +193,10 @@ def assert_existing_cache_matches(output_dir: Path, source_dir: Path, feature_co
         return
     manifest = json.loads(manifest_path.read_text())
     old_source = Path(manifest.get("source_dir", "")).resolve()
+    old_version = manifest.get("pipeline_version")
     old_config = manifest.get("feature_config")
     requested_config = json.loads(json.dumps(asdict(feature_config)))
-    if old_source == source_dir and old_config == requested_config:
+    if old_source == source_dir and old_version == PIPELINE_VERSION and old_config == requested_config:
         return
     raise ValueError(
         "Existing cache manifest does not match the requested source/config. "
