@@ -2,10 +2,15 @@
 title: "DATA3888 Group 6 - Volatility Modelling"
 format:
   html:
-    toc: false
+    toc: true
+    toc-location: left
+    toc-depth: 2
     number-sections: false
     code-fold: true
     code-tools: true
+    theme:
+      light: cosmo
+      dark: darkly
     include-in-header:
       text: |
         <style>
@@ -21,7 +26,217 @@ format:
           max-width: 100%;
           height: auto;
         }
+
+        @media (min-width: 768px) {
+          #quarto-content.toc-left.page-columns {
+            column-gap: clamp(0.75rem, 2vw, 2.5rem);
+            display: grid;
+            grid-template-columns: minmax(150px, 170px) minmax(0, 1fr) !important;
+            margin: 0;
+            max-width: none;
+            padding: 0 clamp(0.75rem, 1.5vw, 1.5rem);
+            width: 100%;
+          }
+
+          #quarto-sidebar-toc-left {
+            grid-column: 1 !important;
+            width: auto !important;
+          }
+
+          #quarto-margin-sidebar {
+            display: none !important;
+          }
+
+          #quarto-document-content {
+            grid-column: 2 !important;
+            max-width: none !important;
+            width: 100% !important;
+          }
+        }
+
+        #quarto-sidebar-toc-left #toc-title {
+          display: none;
+        }
+
+        #quarto-sidebar-toc-left nav {
+          padding-top: 0;
+        }
+
+        .quarto-color-scheme-toggle.top-right {
+          display: none;
+        }
+
+        .night-mode-control {
+          animation: sidebar-item-in 500ms ease both;
+          margin: 0 0 1.35rem;
+        }
+
+        .night-mode-toggle {
+          align-items: center;
+          background: transparent;
+          border: 0;
+          color: var(--bs-body-color);
+          display: inline-flex;
+          gap: 0.65rem;
+          padding: 0;
+        }
+
+        .night-mode-label {
+          font-size: 0.88rem;
+          letter-spacing: 0;
+          opacity: 0.82;
+        }
+
+        .night-mode-switch {
+          background: #101217;
+          border-radius: 999px;
+          box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+          display: inline-flex;
+          height: 2rem;
+          overflow: hidden;
+          position: relative;
+          transition: background-color 220ms ease, box-shadow 220ms ease, transform 220ms ease;
+          width: 4rem;
+        }
+
+        .night-mode-toggle:hover .night-mode-switch,
+        .night-mode-toggle:focus-visible .night-mode-switch {
+          box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2), 0 0.35rem 1rem rgba(0, 0, 0, 0.18);
+          transform: translateY(-1px);
+        }
+
+        .night-mode-toggle:focus-visible {
+          outline: none;
+        }
+
+        .night-mode-toggle:focus-visible .night-mode-switch {
+          box-shadow:
+            inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+            0 0 0 0.16rem rgba(77, 171, 247, 0.32);
+        }
+
+        .night-mode-knob {
+          background: #ffffff;
+          border-radius: 50%;
+          height: 1.55rem;
+          left: 0.26rem;
+          position: absolute;
+          top: 0.225rem;
+          transition: transform 260ms ease;
+          width: 1.55rem;
+          z-index: 2;
+        }
+
+        .night-mode-toggle.alternate .night-mode-knob {
+          transform: translateX(1.9rem);
+        }
+
+        .night-mode-symbol {
+          border-radius: 50%;
+          height: 1.05rem;
+          position: absolute;
+          top: 0.48rem;
+          transition: left 260ms ease, right 260ms ease, transform 260ms ease;
+          width: 1.05rem;
+          z-index: 1;
+        }
+
+        .night-mode-toggle:not(.alternate) .night-mode-symbol {
+          background: #ffd338;
+          right: 0.55rem;
+          box-shadow:
+            0 -0.48rem 0 -0.18rem #ffd338,
+            0.34rem -0.34rem 0 -0.18rem #ffd338,
+            0.48rem 0 0 -0.18rem #ffd338,
+            0.34rem 0.34rem 0 -0.18rem #ffd338,
+            0 0.48rem 0 -0.18rem #ffd338,
+            -0.34rem 0.34rem 0 -0.18rem #ffd338,
+            -0.48rem 0 0 -0.18rem #ffd338,
+            -0.34rem -0.34rem 0 -0.18rem #ffd338;
+        }
+
+        .night-mode-toggle.alternate .night-mode-symbol {
+          background: radial-gradient(circle at 68% 42%, #101217 0 42%, #ffe96a 44% 100%);
+          left: 0.55rem;
+          transform: rotate(-12deg);
+        }
+
+        #TOC > ul > li {
+          animation: sidebar-item-in 420ms ease both;
+        }
+
+        #TOC > ul > li:nth-child(2) { animation-delay: 35ms; }
+        #TOC > ul > li:nth-child(3) { animation-delay: 70ms; }
+        #TOC > ul > li:nth-child(4) { animation-delay: 105ms; }
+        #TOC > ul > li:nth-child(5) { animation-delay: 140ms; }
+        #TOC > ul > li:nth-child(6) { animation-delay: 175ms; }
+        #TOC > ul > li:nth-child(7) { animation-delay: 210ms; }
+        #TOC > ul > li:nth-child(8) { animation-delay: 245ms; }
+        #TOC > ul > li:nth-child(9) { animation-delay: 280ms; }
+
+        @keyframes sidebar-item-in {
+          from {
+            opacity: 0;
+            transform: translateX(-0.45rem);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .night-mode-control,
+          .night-mode-switch,
+          .night-mode-knob,
+          .night-mode-symbol,
+          #TOC > ul > li {
+            animation: none;
+            transition: none;
+          }
+        }
         </style>
+        <script>
+        window.addEventListener("DOMContentLoaded", () => {
+          window.setTimeout(() => {
+            const sidebar = window.document.querySelector("#quarto-sidebar-toc-left");
+            if (!sidebar || window.document.querySelector(".night-mode-control")) {
+              return;
+            }
+
+            const control = window.document.createElement("div");
+            control.className = "night-mode-control";
+            control.innerHTML = `
+              <button type="button" class="night-mode-toggle quarto-color-scheme-toggle" aria-label="Toggle night mode">
+                <span class="night-mode-label">Night mode</span>
+                <span class="night-mode-switch" aria-hidden="true">
+                  <span class="night-mode-symbol"></span>
+                  <span class="night-mode-knob"></span>
+                </span>
+              </button>
+            `;
+            sidebar.prepend(control);
+
+            const toggle = control.querySelector(".night-mode-toggle");
+            const syncToggle = () => {
+              const isDark = window.document.body.classList.contains("quarto-dark");
+              toggle.classList.toggle("alternate", isDark);
+              toggle.setAttribute("aria-pressed", String(isDark));
+            };
+
+            toggle.addEventListener("click", () => {
+              window.quartoToggleColorScheme();
+              syncToggle();
+            });
+
+            syncToggle();
+            new MutationObserver(syncToggle).observe(window.document.body, {
+              attributes: true,
+              attributeFilter: ["class"],
+            });
+          }, 0);
+        });
+        </script>
 jupyter: python3
 execute:
   echo: false
@@ -39,25 +254,18 @@ import json
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from IPython.display import display
+from IPython.display import HTML, display
 
-from back_end.config import FeatureConfig
+from back_end.config import ARTIFACTS_DIR, FeatureConfig, INDIVIDUAL_BOOK_DIR, ROOT_DIR
 from back_end.universe import build_model_comparison
 from back_end.universe import build_pca_variance_explained
 
-# Change only this path if the raw data directory is somewhere else.
-INDIVIDUAL_BOOK_TRAIN_DIR = Path("individual_book_train")
-
-
-def project_root_from_data_dir(data_dir: Path) -> Path:
-    return data_dir.expanduser().resolve().parent
-
-
-PROJECT_ROOT = project_root_from_data_dir(INDIVIDUAL_BOOK_TRAIN_DIR)
+PROJECT_ROOT = ROOT_DIR
+RAW_DATA_DIR = INDIVIDUAL_BOOK_DIR
 
 
 def artifact_path(*parts: str) -> Path:
-    return PROJECT_ROOT.joinpath("artifacts", *parts)
+    return ARTIFACTS_DIR.joinpath(*parts)
 
 
 RUNS_DIR = artifact_path("runs")
@@ -208,65 +416,55 @@ def pareto_optimal_mask(frame: pd.DataFrame, x_col: str, y_col: str) -> pd.Serie
         mask.append(not dominated)
     return pd.Series(mask, index=frame.index)
 
+
+def stock_label(stock_id: str) -> str:
+    text = str(stock_id)
+    if text.startswith("stock_"):
+        text = text.removeprefix("stock_")
+    try:
+        return f"Stock {int(text)}"
+    except ValueError:
+        return str(stock_id)
+
 ```
 
-# Executive summary (\~1/2 page)
+# Executive summary
 
-Our project aims to help traders answer the question: "What is the best volatility prediction model for my goal, given latency constraints and given my desired model accuracy?”. To answer this question, we built a front end tool from the ground up, designed to help market participants who need to predict volatility across one or multiple stocks, and need to be able to choose and optimise the best volatility model for the subset of stocks they’re planning to trade. [CITATION HERE: strengthen the motivation with a source on why volatility forecasting matters for trading, market making, risk management, or portfolio choice.] Importantly, we chose to solely focus on the dataset of 112 anonymous stocks due to the higher abundance of data compared to the named stocks. Importantly, the differing lengths of data within a single time id for each dataset prompted us to have to choose a single dataset to work with, to make our analysis uniform and consistent among the two datasets. We note that by default, our tool predicts the mean volatility for the final 30s of data in each time id window, for each stock. Our results show clear separation among different loss functions, and among different stocks. We define a model as winning on a particular stock if that model produces the lowest overall loss for the most time id’s. When choosing the RMSE loss function and evaluating across all stocks in the dataset, we found XGBoost to perform the best by stock wins, with 31 wins and aggregate RMSE of 9.590. Random Forest and LASSO placed second and third by RMSE stock wins, with 17 and 15 wins respectively. When choosing the QLIKE loss function, we found XGBoost to perform the best by stock wins, winning on 55 out of 112 stocks with aggregate QLIKE of 0.496. LASSO and GJR-Garch(1,1) had the second and third most QLIKE wins, with 30 and 22 wins respectively. Importantly however, we note that both Garch models have markedly higher inference latency, with GJR-Garch(1,1) having mean inference latency of 535.147 microseconds compared to XGBoost’s 0.719 microseconds. The difference in inference latency between GJR-Garch(1,1) and XGBoost carries significant execution implications in modern electronic markets. Evidence from Aquilina et al. (2021) establishes that the competitive latency arbitrage races on exchanges possess a modal duration of just 5 to 10 microseconds. While GJR-Garch(1,1) remains useful where latency is less binding, such as portfolio optimisation or risk analysis, the cached results suggest XGBoost offers the strongest balance of stock level accuracy and speed in this experiment. We find these core findings to be highly relevant for market makers and quantitative researchers who must regularly make the choice between minimising latency and having the models that fit the data best. As shown above, we see clear tradeoffs between model inference latency and model loss. Our tool exposes this to traders, and lets them make informed decisions that most fit their specific strategy and the universe of assets they wish to trade.
+Problem Description: Volatility forecasting is central to a wide range of financial applications, including option pricing, portfolio optimisation, and risk management. Competitive latency arbitrage races on exchanges have a typical duration of just 5-10 microseconds (Aquilina et al., 2021). Our project aims to help traders answer the question: "What is the best volatility prediction model for my goal, given latency constraints and given my desired model accuracy?" This is especially relevant to traders who compete in ultra high frequency domains.
 
+Findings: Our results show a clear Pareto frontier, where a trader must choose between a faster model and a model which is more accurate. We found the XGBoost model to have the best tradeoff between inference latency and predictive accuracy, though traders competing in ultra high frequency races may choose differently.
 
-
-```{python}
-
-```
+Practical Relevance: Supporting traders in choosing volatility forecasting models under both accuracy and latency constraints. This tool helps users compare models under multiple performance metrics and computational costs, bridging statistical model performance and real-world trading requirements.
 
 # Background
 
-Our research question is: what is the most accurate volatility prediction model for a given universe of stocks, given latency constraints?
+Our research question is: *what is the most accurate volatility prediction model for a given universe of stocks, given latency constraints?*
 
-Traders use volatility forecasting models for many reasons, including but not limited to modelling inventory risk, portfolio optimisation and value at risk VaR analysis. Depending on the application, traders, market makers and portfolio managers require tools which have different accuracy vs latency tradeoffs. [CITATION HERE: cite market microstructure or algorithmic trading work showing latency can be economically meaningful.] For instance, a portfolio manager calculating their 1 day VaR may want the most accurate model (particularly in the tails of a given returns distribution), while a researcher creating an options pricing algorithm for a highly liquid stock may prioritise speed at the cost of some accuracy. Hence, it is highly important for market participants to choose the model that is the best fit for their given problem.
+This project helps quantitative researchers and traders choose forecasting models that balance predictive accuracy with computational efficiency in latency-sensitive financial markets. The aim is to evaluate volatility models using many performance metrics to create a tool that helps users identify their desirable model based on statistical performance and real-world trading constraints.
 
-Tools like Tradingview let traders view the price over time, and introduce scripting tools which help traders visualise different functions of price, eg. rolling volatility over time (TradingView, n.d.). However, they do not introduce any way for traders to predict future volatility. In order to do this, traders currently must spend significant time to program a volatility prediction model of their choosing, create visuals for that model etc. Many traders simply want to know the accuracy of a given volatility prediction model, compared to the inference time that that model takes. Our tool innovates on the current tooling landscape by providing a no code interface, which lets traders and market participants view model latency vs model accuracy tradeoffs in a simple, intuitive manner.
+Traders use volatility forecasting models for many purposes, including but not limited to modelling inventory risk, portfolio optimisation and value at risk (VaR) analysis (Poon and Granger, 2003). Depending on the application, traders, market makers and portfolio managers require tools which have different accuracy vs latency tradeoffs. For instance, a portfolio manager calculating their one day VaR requires the most accurate volatility model and is likely less worried about inference latency, while a researcher creating an options pricing algorithm for a highly liquid stock may prioritise speed at the cost of some accuracy.
 
-We were given two datasets to work with: a dataset of 112 anonymous, no name stocks, and a dataset of 10 named stocks. Each dataset contained the top two levels of orderbook data, where prices series were split up into differing time ids. [CITATION HERE: cite the dataset documentation/course handout for stock counts, order-book levels, time ids, and anonymity.] As the length of the price series within each time id were not constant between the two datasets, we ultimately chose to model the dataset of 112 anonymous stocks, due to it’s higher abundance of data, and to ensure that modelling and data constraints were consistent between stocks. This gave us a wider cross section of assets while keeping the modelling target and preprocessing assumptions consistent across the full experiment. Notably, each time id contains 600 seconds of data and the temporal ordering of each time id has not been preserved.
+Tools like TradingView (TradingView, n.d.) let traders view the price of a given asset over time, and introduce scripting tools which help traders visualise different functions of price, e.g., rolling volatility over time. However, they do not introduce any way for traders to predict future volatility. In order to do this, traders currently must spend significant time to code a volatility prediction model, ensure the correctness of that code, create necessary visualisations, and evaluate against different metrics. Our tool innovates on the current tooling landscape by providing a no code interface, which lets traders and market participants view model latency vs model accuracy tradeoffs in a simple, intuitive manner.
 
-We introduce two different classes of models: time series models, and parametric models. The parametric models we analysed include XGBoost, multivariate linear regression, lasso, ridge regression, random forest and decision trees. The time series models we analysed include regular GARCH(1,1) and GJR-Garch(1,1). [CITATION HERE: cite the original or standard references for GARCH and GJR-GARCH.]
+We were given two datasets to work with: a dataset of 112 anonymous, unnamed stocks, and a dataset of 10 named stocks. Each dataset contained the top two levels of orderbook data, where price series were split up into differing time_id’s. As the length of the price series within each time_id was not constant between the two datasets, we ultimately chose to model the dataset of 112 anonymous stocks, due to its higher abundance of data, and to ensure that modelling was consistent between different stocks. Notably, each time_id contains 600 seconds of data and the temporal ordering of each time_id has not been preserved.
 
 # Methods
 
-@fig-workflow summarises how data moves through preprocessing, model configuration, prediction, evaluation, and to the dashboard.
+## Part A: Process
 
-```{mermaid}
-%%| label: fig-workflow
-%%| fig-cap: "End to end volatility modelling workflow. Order-book data is transformed into modelling features, passed through user selected model specifications, evaluated against the final 30 second realised volatility target, and displayed in the dashboard."
-flowchart TD
-    A["Raw order-book data"] --> B["Preprocess prices and returns"]
-    B --> C["Load or compute feature cache"]
-    C --> D["Select models and feature mode"]
+### Data Preprocessing
 
-    D --> E{"Model class"}
-    E -- "Parametric / ML" --> F["Cross validated training"]
-    E -- "GARCH family" --> G["Windo level volatility forecasts"]
+Each time_id in the dataset contains 600 seconds of order book data. When seconds were missing within a time_id, we forward filled past values to produce a continuous series without introducing future leakage. Time_ids with fewer than 20 price updates across the first 570 seconds, or fewer than 5 price updates in the final 30 seconds, were dropped to ensure models had an adequate amount of information to generate reliable predictions. The modelling target for all models was the mean realised volatility over the final 30 seconds of each time_id window.
 
-    F --> H["Predict final 30 second volatility"]
-    G --> H
-    H --> I["Evaluate accuracy and inference latency"]
-    I --> J["Save run artifacts"]
-    J --> K["Dashboard views"]
-```
+### Feature Engineering
 
-```{python}
+We computed a range of features from the observed portion of each time_id, excluding the final 30 second forecast horizon. Realised volatility features include rolling mean squared returns and volatility proxies across multiple lookback windows, along with ratios between short and long realised variance windows, following the heterogeneous autoregressive framework of Corsi (2009). Order book microstructure features capture relative bid-ask spread, order book imbalance, top-two-level depth, depth ratios, and book pressure. Volatility trend features include exponentially weighted moving averages of squared returns across four decay parameters. Return behaviour features include lag-1 and lag-5 return autocorrelation, return quantiles, zero return proportions, directional realised variance, and jump counts based on large absolute returns. Because many features are computed from overlapping return windows or related order book quantities, substantial collinearity is expected across the feature set.
 
-```
-
-We used two separate approaches for each model class. For parametric models, we randomly assign each stock to one of five folds of data, calculate features based on the first 9 minutes and 30 seconds of data, and train each model using the 4 training folds. [CITATION HERE: cite cross-validation methodology, or explain why stock-level folds are appropriate for testing cross-stock generalisation.] We then use those trained models to predict the mean variance of the final 30 seconds of data for each time id, for each stock in the single remaining out of sample fold. We then repeat this process for every stock in the dataset, such that each individual stock has one volatility prediction per model per time id, where the model was not trained on any data from that particular stock. This process effectively means we are training a single model across multiple different time ids. For our time series models, as we do not know the temporal ordering of the time ids, we trained a new model on the first 9.5 minutes of data for each time id for each stock. In inference, we then unconditionally walk each Garch model forward, predicting the point variance for each second of the final 30 seconds of data, then use those point estimates to calculate the mean variance for the final 30 seconds of each time id.
-
-
-traders can select either a subset of features to use, or the top n principal components of those features.
+To address this, our tool offers two feature modes. In Auto mode, the top N principal components of the full feature set (15 by default) are used as model inputs, extracting the maximum amount of orthogonal information while minimising multicollinearity. In Manual mode, the user selects a specific subset of features directly. The appropriate number of components to retain can be guided by the cumulative variance explained plot shown in @fig-pca-cumulative-variance, where the first 15 principal components capture approximately 82% of total feature variance, justifying the default setting.
 
 ```{python}
 #| label: fig-pca-cumulative-variance
-#| fig-cap: "Cumulative variance explained by the first 20 principal components calculated from the cached modelling features."
+#| fig-cap: "Cumulative PCA variance."
 
 pca_variance = build_pca_variance_explained(load_feature_cache(), FeatureConfig(), 20)
 
@@ -299,25 +497,239 @@ else:
 
 ```
 
-When a time series in a particular time id was missing data, we forward filled past values such that we have a continuous series of values without any future leakage. If the time id was missing too much data, having \< 20 price updates across the first 570 seconds, or having \< 5 price updates in the final 30 seconds of data, we dropped that particular time id from our calculations, as to not attempt to get models to predict volatility with an inadequate amount of information.
+### Model Training
 
-Moreover, we faced some challenges with exploding volatility predictions from unstable Garch fits. To mitigate this, we treated Garch forecasts as missing when the fitted parameters failed the stationarity checks, when boundary parameters were at or above 0.99, or when the forecast variance path was non-finite, negative, or unreasonably large. [CITATION HERE: cite GARCH stationarity/positivity constraints, and consider adding the exact stationarity condition used in the code.] In a similar fashion, the linear regression models would occasionally predict negative volatility, which was causing significant distortions when measuring QLIKE loss. To prevent negative volatility predictions, we clipped all predictions of negative volatility to the first percentile of training volatility for that fold. Note, this only influenced 3 out of 428,960 time ids across the data, and made the results between models directly comparable. Prior to this change, the volatility predictions for these 3 time ids accounted for approximately \~86% of total QLIKE loss, creating meaningful distortion separate from genuine model accuracy. Our changes helped prevent this distortion.
+We implemented two distinct training approaches corresponding to the two model classes. For parametric and machine learning models, including linear regression, ridge regression, LASSO, HAR-RV, decision tree, random forest, and XGBoost, we used a 5-fold cross-validation scheme stratified by stock. Each stock is assigned to one of five folds, and a single model is trained on the four remaining folds before generating out of sample predictions for every time_id in the held-out stock. This process is repeated until every stock has one prediction per model per time_id, where the model was never trained on data from that stock. This design effectively trains cross stock models that capture general volatility patterns across stocks and time_id windows, rather than stock-specific behaviour, and is consistent with large-scale forecasting comparison approaches used in the literature (Makridakis et al., 2018).
 
-Hence, the workflow of our product is: If a results cache exists, traders can view the results from that cache without having to recompute results. Otherwise, if they wish to re-calculate their results or specify different models or model parameters, they can move onto the next step Features are pulled from the feature, or computed as soon as the front end is opened if no cache exists Principal components are calculated from those features Traders specify model(s) they want to use Traders then press run, where the platform will predict the the mean volatility for the final 30s of data for each time id for each stock Traders can then observe their data in the individual stock, and stock universe pages
+For GARCH-family models, specifically GARCH(1,1) and GJR-GARCH(1,1) (Glosten et al., 1993), the absence of temporal ordering across time_ids meant a sequential training approach was not feasible. Instead, a separate model is fitted independently on the first 570 seconds of each time_id for each stock. The fitted model is then walked forward unconditionally, producing a point variance estimate for each of the final 30 seconds, which are averaged to obtain the mean variance prediction for that window. Fits where predicted variance exceeded reasonable bounds, produced boundary parameters at or above 0.99, or generated non-finite or negative forecast paths were treated as missing to prevent unstable models from distorting aggregate results.
 
-Notably, we chose to include MSE, RMSE, MAE, and QLIKE loss functions in our model evaluation. QLIKE loss is both the industry standard loss metric for volatility prediction, and the main metric we used in our results, as it asymmetrically punishes under predicting volatility. [CITATION HERE: cite volatility forecast evaluation literature for QLIKE, especially its use with noisy realised volatility proxies.] This is especially important in financial applications, because underestimating market risk can lead to more serious consequences than overestimating it.
+### Numerical Stability
 
-SHOULD MENTION WHAT THE HAR-RV MODEL IS EXACTLY.
+Linear regression models occasionally predicted negative volatility values, causing issues in computing QLIKE loss due to the logarithmic term being unable to handle negative inputs. To address this, all negative predictions were clipped to the first percentile of training volatility for that fold. This adjustment affected only 3 out of 428,960 predictions across the dataset, but those 3 cases accounted for approximately 86% of total QLIKE loss prior to the correction, representing a distortion entirely unrelated to genuine model accuracy.
+
+### Evaluation Framework
+
+Model performance was assessed using four loss functions: mean squared error (MSE), root mean squared error (RMSE), mean absolute error (MAE), and QLIKE. QLIKE is the industry-standard loss metric for volatility forecasting (Patton, 2011) and serves as our primary evaluation criterion. Unlike symmetric metrics such as RMSE, QLIKE asymmetrically penalises under-predictions of volatility, which is appropriate in financial contexts where underestimating risk carries greater consequences than overestimating it (Lopez, 2001). Alongside predictive accuracy, we recorded mean inference latency in microseconds for each model, enabling direct comparison of the accuracy-latency tradeoff across the full model set. Results from prior runs are cached locally so that users do not need to re-run expensive computational workloads unnecessarily.
+
+## Part B: Industry Problem Formulation
+
+Volatility forecasting is central to a wide range of trading and risk management decisions, including option pricing, inventory risk management, and value at risk estimation (Poon & Granger, 2003). However, translating this financial requirement into a practical modelling system requires careful consideration of both statistical methodology and operational trading constraints, particularly inference latency. Hence, the project relies on both trading knowledge and data science methods to be used effectively.
+
+Existing tools available to traders, such as TradingView (TradingView, n.d.), provide historical volatility visualisation and scripting capabilities but offer no mechanism for forward-looking volatility prediction or model comparison. From a data science perspective, building such a system requires decisions around feature engineering, model selection, cross validation design, and evaluation metrics. From a finance perspective, these decisions must be grounded in the realities of how traders actually use volatility forecasts, where the cost of underestimating volatility differs from overestimating it, and where inference speed can be as important as accuracy. Our choice of QLIKE as the primary evaluation metric directly reflects this financial reality, as it asymmetrically penalises under-prediction of volatility in a way that aligns with the risk management priorities of market participants (Patton, 2011).
+
+Our tool directly addresses this gap by providing a no-code interface that allows traders and quantitative researchers to configure, run, and compare volatility models across a universe of stocks, with results presented across multiple accuracy metrics and inference latency simultaneously. @fig-workflow summarises the workflow of our product, which we cover in more detail in the Deployment Process portion of our report below.
 
 ```{python}
+#| label: fig-workflow
+#| fig-cap: "End-to-end volatility modelling workflow."
 
+from matplotlib.patches import FancyArrowPatch, FancyBboxPatch, Polygon
+
+
+def add_box(ax, x, y, w, h, text, color, fontsize=9.5):
+    box = FancyBboxPatch(
+        (x, y),
+        w,
+        h,
+        boxstyle="round,pad=0.012,rounding_size=0.01",
+        linewidth=1,
+        edgecolor="#59636e",
+        facecolor=color,
+    )
+    ax.add_patch(box)
+    ax.text(x + w / 2, y + h / 2, text, ha="center", va="center", fontsize=fontsize, color="#303842")
+    return (x, y, w, h)
+
+
+def add_group(ax, x, y, w, h, title):
+    group = FancyBboxPatch(
+        (x, y),
+        w,
+        h,
+        boxstyle="round,pad=0.01,rounding_size=0.006",
+        linewidth=1,
+        edgecolor="#59636e",
+        facecolor="none",
+    )
+    ax.add_patch(group)
+    ax.text(x + w / 2, y + h - 0.22, title, ha="center", va="center", fontsize=10.5, color="#303842")
+
+
+def add_diamond(ax, cx, cy, w, h, text, color):
+    diamond = Polygon(
+        [[cx, cy + h / 2], [cx + w / 2, cy], [cx, cy - h / 2], [cx - w / 2, cy]],
+        closed=True,
+        linewidth=1,
+        edgecolor="#59636e",
+        facecolor=color,
+    )
+    ax.add_patch(diamond)
+    ax.text(cx, cy, text, ha="center", va="center", fontsize=9.0, color="#303842")
+    return (cx - w / 2, cy - h / 2, w, h)
+
+
+def mid_right(box):
+    x, y, w, h = box
+    return (x + w, y + h / 2)
+
+
+def mid_left(box):
+    x, y, w, h = box
+    return (x, y + h / 2)
+
+
+def mid_top(box):
+    x, y, w, h = box
+    return (x + w / 2, y + h)
+
+
+def mid_bottom(box):
+    x, y, w, h = box
+    return (x + w / 2, y)
+
+
+def add_arrow(
+    ax,
+    start,
+    end,
+    color="#59636e",
+    text=None,
+    text_offset=(0, 0),
+    connectionstyle="arc3,rad=0",
+    linestyle="-",
+):
+    arrow = FancyArrowPatch(
+        start,
+        end,
+        arrowstyle="-|>",
+        mutation_scale=13,
+        linewidth=1.2,
+        color=color,
+        linestyle=linestyle,
+        connectionstyle=connectionstyle,
+    )
+    ax.add_patch(arrow)
+    if text:
+        ax.text(
+            (start[0] + end[0]) / 2 + text_offset[0],
+            (start[1] + end[1]) / 2 + text_offset[1],
+            text,
+            ha="center",
+            va="center",
+            fontsize=8.3,
+            color=color,
+            fontweight="bold",
+            bbox=dict(facecolor="white", edgecolor="none", pad=1.2),
+        )
+
+
+def add_bent_arrow(ax, points, color="#59636e", text=None, text_xy=None, linestyle="-"):
+    xs, ys = zip(*points)
+    ax.plot(xs[:-1], ys[:-1], color=color, linewidth=1.2, linestyle=linestyle)
+    add_arrow(ax, points[-2], points[-1], color=color, linestyle=linestyle)
+    if text and text_xy:
+        ax.text(
+            *text_xy,
+            text,
+            ha="center",
+            va="center",
+            fontsize=8.3,
+            color=color,
+            fontweight="bold",
+            bbox=dict(facecolor="white", edgecolor="none", pad=1.2),
+        )
+
+
+fig, ax = plt.subplots(figsize=(15, 8.6))
+ax.set_xlim(0, 16)
+ax.set_ylim(0, 8.4)
+ax.axis("off")
+
+source = "#fcebea"
+process = "#ffe0a3"
+model = "#cfe8ff"
+decision = "#e4f1ff"
+product = "#b8f0c8"
+
+raw = add_box(ax, 0.25, 4.30, 1.55, 0.90, "Raw\norder-book\ndata", source, 9.5)
+cache = add_diamond(ax, 2.90, 4.75, 1.40, 0.95, "Cached\nresults?", decision)
+
+load = add_box(ax, 4.10, 5.70, 1.50, 0.62, "Feature\ncache", process, 9.0)
+clean = add_box(ax, 4.10, 4.70, 1.50, 0.62, "Clean time\nwindows", process, 9.0)
+extract = add_box(ax, 4.10, 3.70, 1.50, 0.62, "Order-book\nfeatures", process, 9.0)
+
+features = add_box(ax, 6.70, 5.70, 1.55, 0.62, "Feature set\nor PCA", model, 9.0)
+select = add_box(ax, 6.70, 4.70, 1.55, 0.62, "Selected\nmodels", model, 9.0)
+model_class = add_diamond(ax, 7.48, 3.60, 1.35, 0.82, "Model\nclass", decision)
+ml = add_box(ax, 9.10, 4.62, 1.42, 0.62, "ML:\n5-fold CV", model, 8.8)
+garch = add_box(ax, 9.10, 3.22, 1.42, 0.62, "GARCH:\nwindow fit", model, 8.8)
+
+forecast = add_box(ax, 11.85, 4.62, 1.55, 0.62, "Forecast final\n30 seconds", model, 8.5)
+evaluate = add_box(ax, 11.85, 3.55, 1.55, 0.62, "Accuracy +\nlatency", model, 8.5)
+
+dashboard = add_box(ax, 14.35, 4.55, 1.25, 0.82, "Dashboard\nviews", product, 9.0)
+stock = add_box(ax, 14.35, 3.20, 1.25, 0.72, "Individual\nstock page", product, 8.4)
+universe = add_box(ax, 14.35, 2.10, 1.25, 0.72, "Stock\nuniverse page", product, 8.4)
+
+add_arrow(ax, mid_right(raw), mid_left(cache))
+add_bent_arrow(
+    ax,
+    [(2.90, 4.28), (2.90, 1.20), (13.90, 1.20), (13.90, 4.96), mid_left(dashboard)],
+    text="Yes",
+    text_xy=(8.40, 1.00),
+    linestyle="--",
+)
+add_bent_arrow(ax, [(3.60, 4.75), (3.78, 4.75), (3.78, 6.01), mid_left(load)], text="No", text_xy=(3.64, 5.55))
+add_arrow(ax, mid_bottom(load), mid_top(clean))
+add_arrow(ax, mid_bottom(clean), mid_top(extract))
+add_bent_arrow(ax, [mid_right(extract), (6.15, 4.01), (6.15, 6.01), mid_left(features)])
+add_arrow(ax, mid_bottom(features), mid_top(select))
+add_arrow(ax, mid_bottom(select), mid_top(model_class))
+add_bent_arrow(ax, [(8.15, 3.60), (8.62, 3.60), (8.62, 4.93), mid_left(ml)])
+add_bent_arrow(ax, [(8.15, 3.60), (8.62, 3.60), (8.62, 3.53), mid_left(garch)])
+add_bent_arrow(ax, [mid_right(ml), (11.20, 4.93), mid_left(forecast)])
+add_bent_arrow(ax, [mid_right(garch), (11.20, 3.53), (11.20, 4.93), mid_left(forecast)])
+add_arrow(ax, mid_bottom(forecast), mid_top(evaluate))
+add_bent_arrow(ax, [mid_right(evaluate), (13.82, 3.86), (13.82, 4.96), mid_left(dashboard)])
+ax.text(
+    13.86,
+    4.42,
+    "Run\nartifacts",
+    ha="center",
+    va="center",
+    fontsize=8.3,
+    color="#59636e",
+    fontweight="bold",
+    bbox=dict(facecolor="white", edgecolor="none", pad=1.2),
+)
+add_arrow(ax, mid_bottom(dashboard), mid_top(stock))
+add_arrow(ax, mid_bottom(stock), mid_top(universe))
+
+legend_y = 7.78
+legend_items = [
+    ("Input data", source, "box"),
+    ("Processing", process, "box"),
+    ("Models / metrics", model, "box"),
+    ("Decision", decision, "diamond"),
+    ("Dashboard output", product, "box"),
+]
+ax.text(0.30, legend_y, "Legend:", ha="left", va="center", fontsize=9.0, color="#303842", fontweight="bold")
+legend_x = 1.20
+for label, color, shape in legend_items:
+    if shape == "diamond":
+        add_diamond(ax, legend_x + 0.10, legend_y, 0.22, 0.18, "", color)
+    else:
+        add_box(ax, legend_x, legend_y - 0.09, 0.22, 0.18, "", color, 1)
+    ax.text(legend_x + 0.30, legend_y, label, ha="left", va="center", fontsize=8.2, color="#303842")
+    legend_x += 1.95
+
+fig.subplots_adjust(left=0.02, right=0.98, top=0.98, bottom=0.05)
+plt.show()
 ```
 
 # Results
 
-‘Best’ model is subjective. Depends highly on the given loss function you want to optimise and your goal
-
-The cached model comparison table summarises each model's average inference latency, stock level wins under RMSE and QLIKE, and aggregate error metrics.
+## Part A: Final Approach Justification
 
 ```{python}
 #| label: tbl-model-comparison
@@ -331,11 +743,17 @@ else:
 
 ```
 
-We see the model with both the lowest QLIKE loss on average, and the most wins on all stocks is XGBoost, with 55 wins and the lowest mean QLIKE loss of 0.496. This is followed closely by lasso with 30 wins and mean QLIKE loss of 0.518, and trailed farther behind by GJR-Garch(1,1) with 22 wins, though worse tail performance in QLIKE loss increasing it's mean QLIKE loss to 0.596. No other models win on more than 2 stocks, though we note consistent performance from the Random Forest, decision tree, and linear regression models.
+Using multiple forecasting loss functions and inference latency was crucial in identifying practical strengths and weaknesses of each approach. Under RMSE-based evaluation, XGBoost achieved the highest number of stock wins (31/112), followed by Random Forest (17/112) and Decision Tree (11/112). Under QLIKE, XGBoost again led with 55/112 wins, while LASSO (30/112) and GJR-GARCH(1,1) (22/112) ranked second and third, respectively. This divergence reflects the fundamentally different behaviour of the two metrics. RMSE penalises large absolute errors symmetrically, while QLIKE penalises under prediction of volatility more heavily, making it better aligned with the asymmetric risk associated with under predicting volatility.
+
+Mean inference latency reveals significant separation between model classes. Lightweight models such as HAR-RV (0.044 μs), LASSO (0.227 μs), Ridge Regression (0.231 μs), and Decision Tree (0.295 μs) operate at sub-microsecond speeds. XGBoost (0.719 μs) remains fast despite its ensemble complexity. In contrast, GARCH-family models are substantially more expensive, with GARCH(1,1) and GJR-GARCH(1,1) being approximately 700 times slower than XGBoost. Given that latency arbitrage races typically resolve within 5-10 μs (Aquilina et al., 2021), these differences significantly impact real-time trading applications.
+
+XGBoost has both the lowest average QLIKE loss and the most wins across stocks, with 55 wins and the lowest mean QLIKE loss of 0.496. This is followed closely by LASSO with 30 wins and mean QLIKE loss of 0.518, and trailed farther behind by GJR-GARCH(1,1) with 22 wins, though worse tail performance in QLIKE loss increases its mean QLIKE loss to 0.596. No other models win on more than 2 stocks, though we note consistent performance from the Random Forest, decision tree, and linear regression models.
 
 ```{python}
 #| label: fig-pareto-frontier
-#| fig-cap: "Pareto frontier of model QLIKE against cached mean inference latency. Lower values are better on both axes."
+#| fig-cap: "Accuracy-latency Pareto frontier."
+
+import plotly.graph_objects as go
 
 model_summary = model_summary_frame(metrics, predictions)
 pareto_frame = model_summary.dropna(subset=["model", "mean_inference_us", "qlike"]).copy()
@@ -345,44 +763,72 @@ if pareto_frame.empty:
     print("No cached model metrics were available for the Pareto frontier.")
 else:
     optimal = pareto_optimal_mask(pareto_frame, "mean_inference_us", "qlike")
+
     q1, q3 = pareto_frame["qlike"].quantile([0.25, 0.75])
     iqr = q3 - q1
     qlike_cap = max(q3 + 1.5 * iqr, pareto_frame["qlike"].median())
     qlike_cap = min(qlike_cap, pareto_frame["qlike"].max())
     pareto_frame["qlike_plot"] = pareto_frame["qlike"].clip(upper=qlike_cap)
     pareto_frame["qlike_clipped"] = pareto_frame["qlike"] > qlike_cap
+    pareto_frame["plot_label"] = pareto_frame.apply(
+        lambda row: f"{row['model']} ({row['qlike']:.2f})"
+        if row["qlike_clipped"]
+        else row["model"],
+        axis=1,
+    )
+
     pareto_models = pareto_frame[optimal].sort_values("mean_inference_us")
     dominated_models = pareto_frame[~optimal].sort_values("mean_inference_us")
 
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig = go.Figure()
 
     if not dominated_models.empty:
-        ax.scatter(
-            dominated_models["mean_inference_us"],
-            dominated_models["qlike_plot"],
-            color="gray",
-            s=50,
-            alpha=0.7,
-            label="Dominated models",
-            zorder=3,
-        )
+        fig.add_trace(go.Scatter(
+            x=dominated_models["mean_inference_us"],
+            y=dominated_models["qlike_plot"],
+            mode="markers",
+            name="Dominated models",
+            marker=dict(color="gray", size=10, opacity=0.7),
+            text=dominated_models["model"],
+            customdata=dominated_models[["qlike", "rmse", "mae", "mse"]].round(3).values,
+            hovertemplate=(
+                "<b>%{text}</b><br>"
+                "Latency: %{x:.3f} μs<br>"
+                "QLIKE: %{customdata[0]:.4f}<br>"
+                "RMSE: %{customdata[1]}<br>"
+                "MAE: %{customdata[2]}<br>"
+                "MSE: %{customdata[3]}<br>"
+                "<extra></extra>"
+            ),
+        ))
 
-    ax.plot(
-        pareto_models["mean_inference_us"],
-        pareto_models["qlike_plot"],
-        color="red",
-        linewidth=1.5,
-        label="Pareto frontier",
-        zorder=2,
-    )
-    ax.scatter(
-        pareto_models["mean_inference_us"],
-        pareto_models["qlike_plot"],
-        color="red",
-        s=60,
-        zorder=4,
-        label="Pareto optimal models",
-    )
+    fig.add_trace(go.Scatter(
+        x=pareto_models["mean_inference_us"],
+        y=pareto_models["qlike_plot"],
+        mode="lines",
+        name="Pareto frontier",
+        line=dict(color="red", width=2),
+        hoverinfo="skip",
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=pareto_models["mean_inference_us"],
+        y=pareto_models["qlike_plot"],
+        mode="markers",
+        name="Pareto optimal",
+        marker=dict(color="red", size=12),
+        text=pareto_models["model"],
+        customdata=pareto_models[["qlike", "rmse", "mae", "mse"]].round(3).values,
+        hovertemplate=(
+            "<b>%{text}</b><br>"
+            "Latency: %{x:.3f} μs<br>"
+            "QLIKE: %{customdata[0]:.4f}<br>"
+            "RMSE: %{customdata[1]}<br>"
+            "MAE: %{customdata[2]}<br>"
+            "MSE: %{customdata[3]}<br>"
+            "<extra></extra>"
+        ),
+    ))
 
     label_offsets = {
         "LASSO": (-5, 9),
@@ -394,67 +840,789 @@ else:
         "GJR-GARCH(1,1)": (6, -10),
     }
     label_alignments = {"LASSO": "right"}
+    pareto_model_names = set(pareto_models["model"])
 
     for _, row in pareto_frame.sort_values("mean_inference_us").iterrows():
-        is_optimal = row["model"] in set(pareto_models["model"])
-        label = row["model"]
-        if row["qlike_clipped"]:
-            label = f"{label} ({row['qlike']:.2f})"
-        xytext = label_offsets.get(row["model"], (5, 5 if is_optimal else -10))
-        ax.annotate(
-            label,
-            xy=(row["mean_inference_us"], row["qlike_plot"]),
-            xytext=xytext,
-            textcoords="offset points",
-            fontsize=8,
-            color="red" if is_optimal else "gray",
-            ha=label_alignments.get(row["model"], "left"),
+        is_optimal = row["model"] in pareto_model_names
+        xshift, yshift = label_offsets.get(row["model"], (5, 5 if is_optimal else -10))
+        fig.add_annotation(
+            x=np.log10(row["mean_inference_us"]),
+            y=row["qlike_plot"],
+            text=row["plot_label"],
+            showarrow=False,
+            xshift=xshift,
+            yshift=yshift,
+            xanchor=label_alignments.get(row["model"], "left"),
+            font=dict(color="red" if is_optimal else "gray", size=11),
         )
 
-    for x, color, label in [
-        (1, "green", "1 microsecond"),
-        (10, "gold", "10 microseconds"),
-        (1000, "purple", "1000 microseconds"),
+    for x_val, color, label in [
+        (1, "green", "1 μs"),
+        (10, "goldenrod", "10 μs"),
+        (1000, "purple", "1000 μs"),
     ]:
-        ax.axvline(x=x, color=color, linestyle="--", linewidth=1.2, label=label)
+        fig.add_vline(
+            x=x_val,
+            line_dash="dash",
+            line_color=color,
+            line_width=1.2,
+            annotation_text=label,
+            annotation_position="top",
+            annotation_font_color=color,
+        )
 
-    ax.set_xscale("log")
-    ax.set_xlabel("Inference time (microseconds)")
-    ax.set_ylabel("QLIKE (lower is better)")
-    ax.set_title("Pareto Frontier: Volatility Model Selection")
-    ax.legend(loc="upper right", fontsize=8)
-    ax.grid(True, which="both", linestyle=":", alpha=0.4)
-    ax.set_xlim(
-        max(pareto_frame["mean_inference_us"].min() * 0.6, 0.01),
-        pareto_frame["mean_inference_us"].max() * 2,
+    fig.update_xaxes(
+        type="log",
+        title_text="Mean inference latency (μs, log scale)",
+        showgrid=True,
+        gridcolor="rgba(0,0,0,0.1)",
+        range=[
+            np.log10(max(pareto_frame["mean_inference_us"].min() * 0.6, 0.01)),
+            np.log10(pareto_frame["mean_inference_us"].max() * 2),
+        ],
     )
-    ax.set_ylim(
-        max(pareto_frame["qlike_plot"].min() - 0.08, 0),
-        pareto_frame["qlike_plot"].max() + 0.15,
+
+    fig.update_yaxes(
+        title_text="QLIKE (lower is better)",
+        showgrid=True,
+        gridcolor="rgba(0,0,0,0.1)",
+        range=[
+            max(pareto_frame["qlike_plot"].min() - 0.08, 0),
+            pareto_frame["qlike_plot"].max() + 0.15,
+        ],
     )
-    plt.tight_layout()
-    plt.show()
+
+    fig.update_layout(
+        title="Pareto Frontier: Volatility Model Selection",
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        height=500,
+        font=dict(family="Arial", size=12),
+        margin=dict(l=60, r=40, t=80, b=60),
+    )
+
+    fig.show()
+```
+
+@fig-pareto-frontier shows the Pareto frontier of QLIKE loss against inference latency. The Pareto-optimal set consists of HAR-RV, LASSO, and XGBoost, where no alternative achieves simultaneously lower prediction error and lower latency. HAR-RV occupies the low latency extreme, XGBoost has the lowest QLIKE loss and LASSO provides an intermediate between the two. All remaining models are dominated, meaning at least one Pareto-optimal alternative performs better. Overall, we find a tradeoff between inference latency and accuracy. While XGBoost has the best overall balance between computational efficiency and predictive performance, our Pareto analysis supports that no single model is universally optimal across all evaluation criteria. Hence, model selection should depend on traders' latency tolerance and accuracy requirements.
+
+## Part B: Deployment process
+
+The final product is deployed as an interactive Streamlit web application, organised into three pages accessible through a fixed top navigation bar: a Model Specification page, an Individual Stock page, and a Universe page for cross-stock comparisons. To keep the tool responsive, all model results are pre-computed and cached during an initial backend run lasting between thirty minutes and four hours depending on models selected and available hardware. Once cached, results load instantly, with the specific backend run displayed to the user to ensure traceability. @fig-individual-stock-widget illustrates the Individual Stock page, where the user selects a stock and time_id to view observed realised volatility alongside forecasts from every model for the final thirty seconds. A clearly marked forecast start line separates the observed period from the forecast horizon, with held-out realised volatility overlaid for direct visual assessment.
+
+From a data science perspective, the individual stock view lets a practitioner diagnose where models fail at a granular level, for example, whether a fast linear model like LASSO tracked a volatility spike as closely as XGBoost, or whether GARCH predictions diverged during periods of rapid order book activity. Aggregate win counts and average QLIKE scores alone obscure this stock level and window level variation. From a trader's perspective, this granularity matters because a model which performs well on average may still behave poorly on the specific assets in a trader's portfolio. By surfacing both the universe-level Pareto frontier and per stock diagnostic detail in a single interface, the dashboard gives traders the high-level model selection guidance and the asset specific insight needed to deploy a volatility model with confidence. Give the demo a try yourself below.
+
+```{python}
+#| label: fig-individual-stock-widget
+#| fig-cap: "Individual stock dashboard view."
+
+from back_end.config import DataConfig
+from back_end.data import list_available_stocks, load_processed_stock
+from back_end.service import build_prediction_curves
+
+
+REPORT_WIDGET_STOCK_LIMIT = 12
+REPORT_WIDGET_TIME_LIMIT = 20
+
+
+def stock_sort_key(value: object) -> tuple[int, int, str]:
+    text = str(value)
+    if text.startswith("stock_"):
+        suffix = text.removeprefix("stock_")
+        if suffix.isdigit():
+            return (0, int(suffix), text)
+    return (1, 0, text)
+
+
+def realised_series_from_processed(processed: pd.DataFrame, time_id: int, horizon: int) -> pd.DataFrame:
+    chunk = processed[processed["time_id"] == time_id].sort_values("seconds_in_bucket").copy()
+    if chunk.empty:
+        return pd.DataFrame()
+
+    returns = chunk["log_price_diff"].to_numpy(dtype=float) * 10000
+    seconds = chunk["seconds_in_bucket"].to_numpy(dtype=int)
+    valid = np.isfinite(returns)
+    returns = returns[valid]
+    seconds = seconds[valid]
+    if len(returns) <= horizon:
+        return pd.DataFrame()
+
+    cutoff_idx = len(returns) - horizon
+    split_second = int(seconds[cutoff_idx])
+    rolling_vol = (
+        pd.Series(returns ** 2)
+        .rolling(30, min_periods=5)
+        .mean()
+        .pow(0.5)
+        .to_numpy()
+    )
+    observed = pd.DataFrame({
+        "seconds_in_bucket": seconds[:cutoff_idx],
+        "realized_vol": rolling_vol[:cutoff_idx],
+        "segment": "observed",
+        "split_second": split_second,
+        "forecast_horizon": horizon,
+    })
+    heldout = pd.DataFrame({
+        "seconds_in_bucket": seconds[cutoff_idx:],
+        "realized_vol": rolling_vol[cutoff_idx:],
+        "segment": "heldout_actual",
+        "split_second": split_second,
+        "forecast_horizon": horizon,
+    })
+    return pd.concat([observed, heldout], ignore_index=True).dropna(subset=["realized_vol"])
+
+
+def series_points(frame: pd.DataFrame) -> dict:
+    return {
+        "x": frame["seconds_in_bucket"].astype(int).tolist(),
+        "y": frame["realized_vol"].round(6).tolist(),
+    }
+
+
+def curve_points(frame: pd.DataFrame) -> dict:
+    return {
+        "model": str(frame["model"].iloc[0]),
+        "kind": str(frame["prediction_kind"].iloc[0]),
+        "x": frame["seconds_in_bucket"].astype(int).tolist(),
+        "y": frame["pred_vol"].round(6).tolist(),
+    }
+
+
+if predictions.empty:
+    print("No cached predictions were available for the individual-stock report widget.")
+else:
+    run_id = RUN_DIR.name if RUN_DIR is not None else "cached run"
+    raw_stocks = set(list_available_stocks(RAW_DATA_DIR))
+    available_stocks = sorted(
+        set(predictions["stock_id"].dropna().unique().tolist()).intersection(raw_stocks),
+        key=stock_sort_key,
+    )
+    available_time_ids = [int(value) for value in sorted(predictions["time_id"].dropna().unique())]
+    if not raw_stocks:
+        print(f"No raw stock CSV subset was found in {RAW_DATA_DIR}. The report still renders from cached artifacts, but the individual-stock widget is omitted.")
+    elif not available_stocks:
+        print("The raw stock CSV subset does not overlap the cached prediction stock IDs, so the individual-stock widget is omitted.")
+    else:
+        widget_stocks = available_stocks[:REPORT_WIDGET_STOCK_LIMIT]
+        widget_time_ids = available_time_ids[:REPORT_WIDGET_TIME_LIMIT]
+        if "stock_0" in available_stocks and "stock_0" not in widget_stocks:
+            widget_stocks = ["stock_0", *widget_stocks[:-1]]
+        if 5 in available_time_ids and 5 not in widget_time_ids:
+            widget_time_ids = [5, *widget_time_ids[:-1]]
+        widget_time_ids = sorted(set(widget_time_ids))
+
+        horizon = int(load_json(RUN_DIR / "config.json").get("features", {}).get("forecast_horizon", 30)) if RUN_DIR else 30
+        data_payload = {}
+        data_config = DataConfig(source_dir=str(RAW_DATA_DIR))
+
+        for stock_id in widget_stocks:
+            processed = load_processed_stock(stock_id, data_config)
+            stock_payload = {}
+            stock_predictions = predictions[predictions["stock_id"] == stock_id]
+            for time_id in widget_time_ids:
+                realised = realised_series_from_processed(processed, time_id, horizon)
+                if realised.empty:
+                    continue
+                selected_predictions = stock_predictions[stock_predictions["time_id"] == time_id].reset_index(drop=True)
+                curves = build_prediction_curves(realised, selected_predictions)
+                observed = realised[realised["segment"] == "observed"]
+                heldout = realised[realised["segment"] == "heldout_actual"]
+                forecast_curves = []
+                if not curves.empty and "model" in curves.columns:
+                    forecast_curves = [
+                        curve_points(frame)
+                        for _, frame in curves.groupby("model", sort=False)
+                        if not frame.empty
+                    ]
+                stock_payload[str(time_id)] = {
+                    "observed": series_points(observed),
+                    "heldout": series_points(heldout),
+                    "splitSecond": int(realised["split_second"].dropna().iloc[0]),
+                    "maxSecond": int(realised["seconds_in_bucket"].max()),
+                    "curves": forecast_curves,
+                }
+            if stock_payload:
+                data_payload[stock_id] = stock_payload
+
+        widget_data = {
+            "runId": run_id,
+            "defaultStock": "stock_0" if "stock_0" in data_payload else next(iter(data_payload), ""),
+            "defaultTimeId": "5",
+            "stocks": list(data_payload),
+            "series": data_payload,
+        }
+        widget_json = json.dumps(widget_data).replace("</", "<\\/")
+
+        display(HTML(f"""
+    <div id="individual-stock-report-widget" class="individual-stock-widget">
+      <style>
+        .individual-stock-widget {{
+          background: #0e1117;
+          color: #f8fafc;
+          border-radius: 8px;
+          padding: 1.2rem 1.35rem 1.4rem;
+          margin: 1rem 0;
+          font-family: Arial, sans-serif;
+        }}
+        .individual-stock-widget h3 {{
+          margin: 0 0 1rem;
+          font-size: 1.45rem;
+          line-height: 1.2;
+        }}
+        .individual-stock-controls {{
+          display: grid;
+          grid-template-columns: minmax(0, 3fr) minmax(160px, 1fr);
+          gap: 1rem;
+          margin-bottom: 0.75rem;
+        }}
+        .individual-stock-control label {{
+          display: block;
+          color: #d7dce2;
+          font-size: 0.78rem;
+          font-weight: 650;
+          margin-bottom: 0.45rem;
+        }}
+        .individual-stock-control select {{
+          width: 100%;
+          background: #262933;
+          color: #f8fafc;
+          border: 1px solid #262933;
+          border-radius: 7px;
+          padding: 0.62rem 0.75rem;
+          font-size: 0.9rem;
+        }}
+        .individual-stock-caption {{
+          color: #aab1bd;
+          font-size: 0.78rem;
+          margin: 0.4rem 0 1.2rem;
+        }}
+        .individual-stock-caption code {{
+          color: #35b779;
+          background: transparent;
+          padding: 0;
+        }}
+        .individual-stock-chart-title {{
+          font-weight: 700;
+          color: #f8fafc;
+          margin: 0 0 0.45rem;
+        }}
+        .individual-stock-chart-message {{
+          align-items: center;
+          color: #aab1bd;
+          display: flex;
+          height: 100%;
+          justify-content: center;
+          text-align: center;
+        }}
+        .individual-stock-note {{
+          color: #aab1bd;
+          font-size: 0.75rem;
+          margin-top: 0.55rem;
+        }}
+        @media (max-width: 760px) {{
+          .individual-stock-controls {{
+            grid-template-columns: 1fr;
+          }}
+        }}
+      </style>
+      <h3>Individual Stock</h3>
+      <div class="individual-stock-controls">
+        <div class="individual-stock-control">
+          <label for="report-stock-select">Select stock</label>
+          <select id="report-stock-select"></select>
+        </div>
+        <div class="individual-stock-control">
+          <label for="report-time-select">Time window (10-min period)</label>
+          <select id="report-time-select"></select>
+        </div>
+      </div>
+      <div class="individual-stock-caption">Showing backend run <code>{run_id}</code>.</div>
+      <div id="report-chart-title" class="individual-stock-chart-title"></div>
+      <div id="report-individual-stock-chart" style="width:100%;height:520px;"></div>
+      <div class="individual-stock-note">
+        Report widget embeds {len(widget_stocks)} stocks and {len(widget_time_ids)} time windows to keep the HTML responsive; the Streamlit app supports the full cached run.
+      </div>
+      <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+      <script>
+      (() => {{
+        const data = {widget_json};
+        const colors = ["#4dabf7", "#dee2e6", "#90be6d", "#ffd43b", "#ffb703", "#f15bb5", "#00bbf9", "#ffe066", "#8ecae6", "#fb8500", "#9b5de5"];
+        const widget = document.getElementById("individual-stock-report-widget");
+        const stockSelect = widget.querySelector("#report-stock-select");
+        const timeSelect = widget.querySelector("#report-time-select");
+        const chartTitle = widget.querySelector("#report-chart-title");
+        const chart = widget.querySelector("#report-individual-stock-chart");
+
+        function stockOrder(value) {{
+          const match = String(value).match(/^stock_(\\d+)$/);
+          return match ? Number(match[1]) : Number.MAX_SAFE_INTEGER;
+        }}
+
+        function populateStocks() {{
+          data.stocks.sort((a, b) => stockOrder(a) - stockOrder(b)).forEach((stock) => {{
+            const option = document.createElement("option");
+            option.value = stock;
+            option.textContent = stock;
+            stockSelect.appendChild(option);
+          }});
+          if (data.defaultStock) stockSelect.value = data.defaultStock;
+        }}
+
+        function populateTimes() {{
+          const stockPayload = data.series[stockSelect.value] || {{}};
+          const selected = timeSelect.value;
+          timeSelect.innerHTML = "";
+          Object.keys(stockPayload).map(Number).sort((a, b) => a - b).forEach((timeId) => {{
+            const option = document.createElement("option");
+            option.value = String(timeId);
+            option.textContent = String(timeId);
+            timeSelect.appendChild(option);
+          }});
+          if (stockPayload[selected]) {{
+            timeSelect.value = selected;
+          }} else if (stockPayload[data.defaultTimeId]) {{
+            timeSelect.value = data.defaultTimeId;
+          }}
+        }}
+
+        function lineTrace(points, name, color, dash = "solid", width = 2.4) {{
+          return {{
+            x: points.x,
+            y: points.y,
+            type: "scatter",
+            mode: "lines",
+            name,
+            line: {{ color, width, dash }},
+            hovertemplate: "Time: %{{x}}s<br>Volatility: %{{y:.6f}}<extra>" + name + "</extra>"
+          }};
+        }}
+
+        function render() {{
+          const stock = stockSelect.value;
+          const timeId = timeSelect.value;
+          const payload = data.series?.[stock]?.[timeId];
+          chartTitle.textContent = `Realised Volatility — ${{stock}} · Window ${{timeId}}`;
+
+          if (!payload) {{
+            chart.innerHTML = '<div class="individual-stock-chart-message">No cached data is available for this stock and time window.</div>';
+            return;
+          }}
+          if (!window.Plotly) {{
+            chart.innerHTML = '<div class="individual-stock-chart-message">The chart library did not load. Reopen the report with an internet connection and refresh.</div>';
+            return;
+          }}
+
+          const traces = [
+            lineTrace(payload.observed, "Observed realised volatility", colors[0], "solid", 2.6),
+            lineTrace(payload.heldout, "Held-out realised volatility", colors[1], "dot", 2.4),
+          ];
+          payload.curves.forEach((curve, index) => {{
+            traces.push(lineTrace(
+              {{ x: curve.x, y: curve.y }},
+              `${{curve.model}} forecast`,
+              colors[(index + 2) % colors.length],
+              curve.kind === "garch_path" ? "solid" : "dash",
+              2.1
+            ));
+          }});
+
+          const maxY = Math.max(
+            0.001,
+            ...traces.flatMap((trace) => trace.y || []).filter((value) => Number.isFinite(value))
+          );
+          const layout = {{
+            height: 520,
+            margin: {{ t: 82, r: 14, b: 52, l: 64 }},
+            paper_bgcolor: "#0e1117",
+            plot_bgcolor: "#141922",
+            font: {{ color: "#dce2ea", family: "Arial, sans-serif", size: 12 }},
+            xaxis: {{
+              title: {{ text: "Time (seconds)" }},
+              range: [0, 600],
+              tickvals: [0, 60, 120, 180, 240, 300, 360, 420, 480, 540, 600],
+              ticktext: ["0m", "1m", "2m", "3m", "4m", "5m", "6m", "7m", "8m", "9m", "10m"],
+              gridcolor: "rgba(210, 220, 230, 0.16)",
+              zerolinecolor: "rgba(210, 220, 230, 0.18)"
+            }},
+            yaxis: {{
+              title: {{ text: "Realised Volatility" }},
+              range: [0, maxY * 1.08],
+              tickformat: ".4f",
+              gridcolor: "rgba(210, 220, 230, 0.16)",
+              zerolinecolor: "rgba(210, 220, 230, 0.18)"
+            }},
+            legend: {{
+              orientation: "h",
+              yanchor: "bottom",
+              y: 1.08,
+              xanchor: "left",
+              x: 0,
+              font: {{ size: 11 }}
+            }},
+            hovermode: "x unified",
+            shapes: [
+              {{
+                type: "rect",
+                xref: "x",
+                yref: "paper",
+                x0: 0,
+                x1: payload.splitSecond,
+                y0: 0,
+                y1: 1,
+                fillcolor: "rgba(77, 171, 247, 0.05)",
+                line: {{ width: 0 }},
+                layer: "below"
+              }},
+              {{
+                type: "rect",
+                xref: "x",
+                yref: "paper",
+                x0: payload.splitSecond,
+                x1: payload.maxSecond,
+                y0: 0,
+                y1: 1,
+                fillcolor: "rgba(251, 133, 0, 0.08)",
+                line: {{ width: 0 }},
+                layer: "below"
+              }},
+              {{
+                type: "line",
+                xref: "x",
+                yref: "paper",
+                x0: payload.splitSecond,
+                x1: payload.splitSecond,
+                y0: 0,
+                y1: 1,
+                line: {{ color: "#adb5bd", width: 1.5, dash: "dot" }}
+              }}
+            ],
+            annotations: [{{
+              x: payload.splitSecond,
+              y: 1,
+              xref: "x",
+              yref: "paper",
+              text: "Forecast start",
+              showarrow: false,
+              xanchor: "left",
+              yanchor: "bottom",
+              font: {{ color: "#adb5bd", size: 11 }}
+            }}]
+          }};
+
+          Plotly.react(chart, traces, layout, {{ responsive: true, displayModeBar: false }});
+        }}
+
+        function renderWhenPlotlyIsReady() {{
+          if (window.Plotly) {{
+            render();
+          }} else {{
+            window.setTimeout(render, 1200);
+          }}
+        }}
+
+        populateStocks();
+        populateTimes();
+        stockSelect.addEventListener("change", () => {{
+          populateTimes();
+          renderWhenPlotlyIsReady();
+        }});
+        timeSelect.addEventListener("change", renderWhenPlotlyIsReady);
+        renderWhenPlotlyIsReady();
+      }})();
+      </script>
+    </div>
+    """))
 
 ```
 
-
-We see the pareto frontier of model accuracy (measured in QLIKE) plotted against inference time (measured in microseconds). We see the XGBoost model dominates in terms of overall loss, though has marginally higher inference time of 719 nanoseconds compared to lasso's 227 nanoseconds. Hence, for ultra high frequency applications, traders may prefer the lower latency of lasso, while traders optimising for model accuracy may prefer XGBoost. Notably, we see the significant gap between the inference time of the Garch models and the parametric models. Garch models have mean inference latency on the order of 500 microseconds while parametric models are up to 4 orders of magnitude faster in the case of the HAR-RV model. [CITATION HERE: check this mentions HAR-RV even though HAR-RV is not listed in the model set above; either cite/introduce HAR-RV or change this to the correct model.] This makes contextual sense considering the nature of unconditional volatility forecasting, where Garch models must in this case, run inference on for 30 different points separately and then average each of those predictions, as opposed to the parametric models which can predict the mean volatility of the final 30 seconds of data with a single forward pass.
-
 # Discussion
 
-RE-WRITE THIS WHOLE DISCUSSION SECTION. IT'S A CHATGPT GENERATED SUGGESTION. 
+Our results show that no single volatility model is universally optimal across all evaluation criteria. Model selection should instead depend on the trader's objective function, latency requirements and asset universe. Hence, we should evaluate models using multiple measures instead of a single accuracy metric. We found that XGBoost produces the strongest overall performance across both the RMSE and QLIKE loss functions while maintaining low inference latency. We reiterate that this tradeoff between inference latency and volatility prediction accuracy shown in @fig-pareto-frontier is the core finding of our analysis.
 
+From a data science perspective, our analysis was performed using a static historical dataset containing 112 anonymised stocks. While justifiable in controlled experimentation, the dynamic nature of financial markets is not fully captured. Market regimes, volatility clustering patterns and liquidity conditions evolve over time, so model performance may differ when deployed on live market data. Future work may extend our volatility models to incorporate the most up to date market data and continuously re-fit on live market data to generate the most accurate predictions.
+
+From a finance perspective, traders are primarily concerned with the economic value associated with forecasts, including profitability, transaction costs, market impact and risk adjusted returns. A model which produces marginally better volatility forecasts may not produce superior trading performance once these practical considerations are incorporated. Furthermore, since the stocks are anonymised, it is not possible to investigate if model performance varies systematically across sectors, market capitalisations or liquidity profiles. Future work may add more systematic features and incorporate information from additional data feeds such as trades or news.
+
+Currently, users are limited to selecting from a predefined set of implemented models. To increase flexibility, users should be able to import their own custom forecasting models and compare them alongside existing approaches. From a modelling perspective, models are traditionally trained using standard objectives (e.g., RSS) when they are later evaluated using volatility specific metrics (e.g., QLIKE). Future work may investigate models trained directly to minimize user specified objective functions, allowing the optimisation of models for metrics most relevant to their application. Additionally, since our analysis was limited to a predefined set of volatility models and hyperparameter configurations, more advanced machine learning architectures and automated hyperparameter optimisation may further improve predictive performance, particularly if the computational power available to a user is increased.
 
 # Conclusion
 
-
+In conclusion, we built a tool that helps traders choose the best model for their specific use case, by simultaneously evaluating model accuracy against latency for any combination of assets and loss functions. While the current implementation is limited by static data and a pre-defined list of models, our tool provides a strong foundation for future work. In particular, we suggest future authors expand the product to let traders bring in their own models and integrate the tool with additional or live data feeds. Our product helps outline the clear Pareto frontier that exists between volatility prediction model latency and accuracy, informing traders which model best fits their use case.
 
 # Student contributions
 
-Eriks wrote most of the front end, back end, and first draft of the report….. Continue this.
+Eriks Reinfelds wrote most of the front end, back end and caching layer (to ensure heavy results did not need to be unnecessarily recomputed) of the product. He also wrote part of the draft for the final report.
 
-# References (use apa 7)
+Zhan Su contributed to the front end (universe page), the first and second versions of the report code, and figure/table generation.
 
-Aquilina, M.,Budish, E., & O’Neill, P. (2021). Quantifying the high frequency trading “arms race” (BIS Working Paper No. 955). Bank for International Settlements. https://www.bis.org/publ/work955.pdf
+Zhan participated in writing the Results and Conclusion sections of the report. Wendi Ding contributed to backend model exploration, model evaluation, testing, and part of the report.
+
+Vania Kumar performed the backend model development by completing data exploration and implementing baseline volatility models. She also prepared and formatted the project presentation and drafted initial sections of the report.
+
+Kin Wang Yau contributed to the backend code, particularly the implementation of the models.py file which correctly specifies each of the models. Kin helped ensure the team was prepared for our presentation.
+
+Ayush Arora was involved in the ideation phase, contributing to discussions around clustering and individual stock comparisons. He assisted in the implementation of the back end. Ayush designed the presentation template and helped write and polish the final report.
+
+# AI Acknowledgement
+
+Generative AI was used to assist in planning the structure of this report, editing, proof reading and programming. We note that a first draft of the report was entirely hand written and proofed by humans before being passed over with AI for brevity and to improve the precision of how we worded our ideas. Model used: GPT 5.5 thinking.
+
+# References
+
+Aquilina, M., Budish, E., & O'Neill, P. (2021). Quantifying the high frequency trading "arms race" (BIS Working Paper No. 955). Bank for International Settlements. https://www.bis.org/publ/work955.pdf
+
+Corsi, F. (2009). A simple approximate long-memory model of realized volatility. Journal of Financial Econometrics, 7(2), 174–196. https://doi.org/10.1093/jjfinec/nbp001
+
+Glosten, L. R., Jagannathan, R., & Runkle, D. E. (1993). On the relation between the expected value and the volatility of the nominal excess return on stocks. Journal of Finance, 48(5), 1779–1801. https://doi.org/10.1111/j.1540-6261.1993.tb05128.x
+
+Lopez, J. A. (2001). Evaluating the predictive accuracy of volatility models. Journal of Forecasting, 20(2), 87–109. https://doi.org/10.1002/1099-131X(200103)20:2\<87::AID-FOR782\>3.0.CO;2-7
+
+Makridakis, S., Spiliotis, E., & Assimakopoulos, V. (2018). The M4 competition: Results, findings, conclusion and way forward. International Journal of Forecasting, 34(4), 802–808. https://doi.org/10.1016/j.ijforecast.2018.06.001
+
+Patton, A. J. (2011). Volatility forecast comparison using imperfect volatility proxies. Journal of Econometrics, 160(1), 246–256. https://doi.org/10.1016/j.jeconom.2010.03.034
+
+Poon, S. H., & Granger, C. W. J. (2003). Forecasting volatility in financial markets: A review. Journal of Economic Literature, 41(2), 478–539. https://doi.org/10.1257/002205103765762743
 
 TradingView. (n.d.). Visuals overview. Pine Script documentation. https://www.tradingview.com/pine-script-docs/visuals/overview/
+
+
+# Appendix
+
+The appendix records supporting definitions, run metadata, and additional static outputs from the volatility modelling product. These materials are excluded from the main report because they support reproducibility and interpretation, rather than changing the core conclusion that model selection depends on the user's accuracy-latency tradeoff.
+
+## A.1 Terminology
+
+| Term | Description |
+|------------------------------------|------------------------------------|
+| Realised volatility | The observed volatility computed from high-frequency log returns within a time window. In this project it is the target the models attempt to forecast. |
+| Forecast horizon | The final 30 seconds of each 600-second time_id window. Features are computed before this horizon, while model predictions are evaluated against this held-out interval. |
+| QLIKE | The main volatility-forecast loss used in the report. It is useful for risk applications because under-predicting volatility is penalised more heavily than over-predicting it. |
+| Inference latency | The recorded time required to generate a prediction after features are available. This is reported in microseconds to connect model performance with latency-sensitive trading use cases. |
+| PCA feature mode | A feature mode where correlated raw features are transformed into principal components before modelling. The cached production run used 15 principal components for the fitted models. |
+| Manual feature mode | A product mode where the user selects specific engineered features directly instead of using PCA components. |
+| Pareto frontier | The set of models where no other model is both faster and more accurate under the selected metric. |
+| Cross-stock validation | The validation design where each fold holds out entire stocks, so predictions for a stock come from a model not trained on that stock. |
+| GARCH window fit | The GARCH-family approach used here, where a separate model is fitted within each time_id window because the original chronological ordering of time_id values is unavailable. |
+| Cached run artifact | A stored output from the backend pipeline, such as metrics, predictions, feature importance, or stock similarity. The dashboard reads these files instead of recomputing models interactively. |
+
+## A.2 Cached Run Metadata
+
+```{python}
+#| label: tbl-appendix-run-metadata
+#| tbl-cap: "Metadata for the cached backend run used by the report."
+
+run_config = load_json(RUN_DIR / "config.json") if RUN_DIR is not None else {}
+run_status = load_json(RUN_DIR / "status.json") if RUN_DIR is not None else {}
+feature_config = run_config.get("features", {})
+data_config = run_config.get("data", {})
+
+metadata_rows = [
+    ("Run ID", RUN_DIR.name if RUN_DIR is not None else "No cached run"),
+    ("Pipeline version", run_status.get("pipeline_version", feature_cache_manifest.get("pipeline_version", ""))),
+    ("Run status", run_status.get("status", "")),
+    ("Stocks modelled", run_status.get("n_stocks", len(data_config.get("stocks", [])))),
+    ("Feature rows", f"{int(run_status.get('n_feature_rows', 0)):,}" if run_status else ""),
+    ("Predictions", f"{int(run_status.get('n_predictions', 0)):,}" if run_status else ""),
+    ("Cross-validation folds", run_status.get("n_folds", "")),
+    ("Forecast horizon", f"{feature_config.get('forecast_horizon', '')} seconds"),
+    ("Feature mode", feature_config.get("feature_mode", "")),
+    ("PCA components in run config", feature_config.get("n_pca_components", "")),
+    ("Feature source", run_status.get("feature_source", "")),
+    ("Feature cache created", feature_cache_manifest.get("created_at_utc", "")),
+]
+
+display(pd.DataFrame(metadata_rows, columns=["Item", "Value"]))
+```
+
+## A.3 Static Product Outputs
+
+The figures below are static versions of product-level outputs. They are generated from the same cached artifacts used by the Streamlit dashboard, but they avoid embedding another live interface inside the report.
+
+```{python}
+#| label: fig-appendix-model-wins
+#| fig-cap: "Number of stocks won by each model under RMSE and QLIKE."
+
+appendix_comparison = build_model_comparison(predictions, metrics)
+if appendix_comparison.empty:
+    print("No cached model comparison data was available.")
+else:
+    wins = appendix_comparison[
+        ["model", "best_stocks_rmse", "best_stocks_qlike"]
+    ].copy()
+    wins = wins.sort_values("best_stocks_qlike", ascending=True)
+
+    fig, ax = plt.subplots(figsize=(10.5, 5.6))
+    y = np.arange(len(wins))
+    width = 0.38
+    ax.barh(y - width / 2, wins["best_stocks_rmse"], height=width, label="RMSE wins", color="#4dabf7")
+    ax.barh(y + width / 2, wins["best_stocks_qlike"], height=width, label="QLIKE wins", color="#f59f00")
+    ax.set_yticks(y)
+    ax.set_yticklabels(wins["model"])
+    ax.set_xlabel("Number of stocks")
+    ax.set_title("Per-stock model wins", fontweight="bold", loc="left")
+    ax.grid(axis="x", alpha=0.25)
+    ax.legend(frameon=False, loc="lower right")
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    plt.tight_layout()
+    plt.show()
+```
+
+```{python}
+#| label: fig-appendix-feature-importance
+#| fig-cap: "Largest average PCA-component importances across fitted models."
+
+if feature_importance.empty:
+    print("No cached feature importance data was available.")
+else:
+    importance = (
+        feature_importance.groupby(["model", "feature"], as_index=False)["importance"]
+        .mean()
+        .sort_values("importance", ascending=False)
+    )
+    top_features = importance.groupby("feature", as_index=False)["importance"].sum()
+    top_features = top_features.nlargest(10, "importance")["feature"].tolist()
+    plot_importance = importance[importance["feature"].isin(top_features)].copy()
+    plot_importance = plot_importance.pivot_table(
+        index="feature",
+        columns="model",
+        values="importance",
+        aggfunc="mean",
+        fill_value=0,
+    )
+    plot_importance = plot_importance.loc[top_features]
+
+    fig, ax = plt.subplots(figsize=(11, 5.8))
+    plot_importance.plot(kind="bar", ax=ax, width=0.82)
+    ax.set_title("Feature importance by principal component", fontweight="bold", loc="left")
+    ax.set_xlabel("Principal component")
+    ax.set_ylabel("Average importance")
+    ax.grid(axis="y", alpha=0.25)
+    ax.legend(title="Model", frameon=False, ncol=2, fontsize=8)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    plt.xticks(rotation=0)
+    plt.tight_layout()
+    plt.show()
+```
+
+```{python}
+#| label: fig-appendix-individual-static
+#| fig-cap: "Static individual-stock forecast example from the cached product run."
+
+from back_end.config import DataConfig
+from back_end.data import list_available_stocks, load_processed_stock
+from back_end.service import build_prediction_curves
+
+
+if predictions.empty:
+    print("No cached predictions were available for the static individual-stock example.")
+else:
+    raw_stocks = set(list_available_stocks(RAW_DATA_DIR))
+    prediction_stocks = set(predictions["stock_id"].dropna().unique())
+    available_stocks = sorted(raw_stocks.intersection(prediction_stocks), key=stock_sort_key)
+
+    if not raw_stocks:
+        print(f"No raw stock CSV subset was found in {RAW_DATA_DIR}. The static individual-stock example is omitted.")
+    elif not available_stocks:
+        print("The raw stock CSV subset does not overlap the cached prediction stock IDs, so the static individual-stock example is omitted.")
+    else:
+        example_stock = "stock_10" if "stock_10" in available_stocks else available_stocks[0]
+        available_times = sorted(predictions.loc[predictions["stock_id"] == example_stock, "time_id"].dropna().unique())
+        example_time = 5 if 5 in available_times else int(available_times[0])
+        horizon = int(feature_config.get("forecast_horizon", 30))
+
+        processed = load_processed_stock(example_stock, DataConfig(source_dir=str(RAW_DATA_DIR)))
+        realised = realised_series_from_processed(processed, example_time, horizon)
+        selected_predictions = predictions[
+            (predictions["stock_id"] == example_stock)
+            & (predictions["time_id"] == example_time)
+        ].reset_index(drop=True)
+        selected_predictions = selected_predictions[
+            selected_predictions["model"].isin(["HAR-RV", "LASSO", "XGBoost", "GJR-GARCH(1,1)"])
+        ].copy()
+        curves = build_prediction_curves(realised, selected_predictions)
+
+        if realised.empty or curves.empty:
+            print("No realised series or forecast curves were available for the selected stock/time_id.")
+        else:
+            fig, ax = plt.subplots(figsize=(12, 5.8))
+            observed = realised[realised["segment"] == "observed"]
+            heldout = realised[realised["segment"] == "heldout_actual"]
+            split_second = int(realised["split_second"].dropna().iloc[0])
+
+            ax.plot(
+                observed["seconds_in_bucket"],
+                observed["realized_vol"],
+                color="#4dabf7",
+                linewidth=2.2,
+                label="Observed realised volatility",
+            )
+            ax.plot(
+                heldout["seconds_in_bucket"],
+                heldout["realized_vol"],
+                color="#495057",
+                linewidth=2.0,
+                linestyle=":",
+                label="Held-out realised volatility",
+            )
+
+            palette = {
+                "HAR-RV": "#2f9e44",
+                "LASSO": "#845ef7",
+                "XGBoost": "#f59f00",
+                "GJR-GARCH(1,1)": "#e03131",
+            }
+            for model, frame in curves.groupby("model", sort=False):
+                frame = frame.sort_values("seconds_in_bucket")
+                ax.plot(
+                    frame["seconds_in_bucket"],
+                    frame["pred_vol"],
+                    linewidth=1.8,
+                    linestyle="--" if frame["prediction_kind"].iloc[0] != "garch_path" else "-",
+                    color=palette.get(model, "#6c757d"),
+                    label=f"{model} forecast",
+                )
+
+            ax.axvline(split_second, color="#868e96", linewidth=1.4, linestyle="--")
+            ax.text(split_second + 3, ax.get_ylim()[1] * 0.96, "Forecast start", color="#868e96", fontsize=9, va="top")
+            ax.set_title(f"Individual stock view: {stock_label(example_stock)} / time_id {example_time}", fontweight="bold", loc="left")
+            ax.set_xlabel("Seconds in bucket")
+            ax.set_ylabel("Realised volatility")
+            ax.grid(alpha=0.22)
+            ax.legend(frameon=False, ncol=2, fontsize=8)
+            ax.spines["top"].set_visible(False)
+            ax.spines["right"].set_visible(False)
+            plt.tight_layout()
+            plt.show()
+```
+
+```{python}
+#| label: fig-appendix-stock-similarity
+#| fig-cap: "Realised-volatility similarity heatmap for a high-volatility subset of stocks."
+
+if stock_similarity.empty or universe_summary.empty:
+    print("No cached stock similarity data was available.")
+else:
+    top_stocks = (
+        universe_summary.sort_values("mean_volatility", ascending=False)
+        .head(18)["stock_id"]
+        .tolist()
+    )
+    similarity_subset = stock_similarity.loc[top_stocks, top_stocks].copy()
+    labels = [stock_label(stock) for stock in top_stocks]
+
+    fig, ax = plt.subplots(figsize=(9.5, 8.0))
+    image = ax.imshow(similarity_subset.to_numpy(dtype=float), cmap="RdBu_r", vmin=-1, vmax=1, aspect="auto")
+    ax.set_xticks(np.arange(len(labels)))
+    ax.set_yticks(np.arange(len(labels)))
+    ax.set_xticklabels(labels, rotation=45, ha="right", fontsize=8)
+    ax.set_yticklabels(labels, fontsize=8)
+    ax.set_title("Stock similarity by target variance correlation", fontweight="bold", loc="left")
+    cbar = fig.colorbar(image, ax=ax, fraction=0.046, pad=0.04)
+    cbar.set_label("Correlation")
+    plt.tight_layout()
+    plt.show()
+```
